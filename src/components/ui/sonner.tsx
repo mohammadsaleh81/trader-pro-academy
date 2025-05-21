@@ -1,14 +1,14 @@
 
 import { useTheme } from "next-themes"
-import { Toaster as Sonner } from "sonner"
+import { Toaster as SonnerToaster, toast as sonnerToast } from "sonner"
 
-type ToasterProps = React.ComponentProps<typeof Sonner>
+type ToasterProps = React.ComponentProps<typeof SonnerToaster>
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme()
 
   return (
-    <Sonner
+    <SonnerToaster
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
       toastOptions={{
@@ -38,10 +38,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
 // Re-export with enhanced toast icons
 const toast = {
   // Original methods
-  ...Sonner,
+  ...sonnerToast,
   // Enhanced methods with icons
   success: (message: string, data?: any) => 
-    Sonner.success(message, { 
+    sonnerToast.success(message, { 
       ...data,
       icon: <span className="flex items-center justify-center rounded-full bg-green-100 p-1.5">
         <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,7 +50,7 @@ const toast = {
       </span>
     }),
   error: (message: string, data?: any) => 
-    Sonner.error(message, { 
+    sonnerToast.error(message, { 
       ...data,
       icon: <span className="flex items-center justify-center rounded-full bg-red-100 p-1.5">
         <svg className="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -59,7 +59,7 @@ const toast = {
       </span>
     }),
   warning: (message: string, data?: any) => 
-    Sonner.message(message, { 
+    sonnerToast.message(message, { 
       ...data,
       icon: <span className="flex items-center justify-center rounded-full bg-amber-100 p-1.5">
         <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -68,7 +68,7 @@ const toast = {
       </span>
     }),
   info: (message: string, data?: any) => 
-    Sonner.message(message, { 
+    sonnerToast.message(message, { 
       ...data, 
       icon: <span className="flex items-center justify-center rounded-full bg-blue-100 p-1.5">
         <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
