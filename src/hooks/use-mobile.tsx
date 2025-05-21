@@ -1,19 +1,9 @@
+
 import * as React from "react"
 
-const MOBILE_BREAKPOINT = 768
-
+// Modified to always return true since we want the mobile layout everywhere
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
-
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    }
-    mql.addEventListener("change", onChange)
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    return () => mql.removeEventListener("change", onChange)
-  }, [])
-
-  return !!isMobile
+  // No need to check media queries anymore since we always want mobile mode
+  const [isMobile] = React.useState(true)
+  return isMobile
 }

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Star, ShoppingCart } from "lucide-react";
@@ -85,7 +84,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
   return (
     <div className="trader-card h-full flex flex-col">
       <Link to={`/courses/${id}`} className="block">
-        <div className="relative h-44 w-full">
+        <div className="relative h-36 w-full">
           <img
             src={thumbnail}
             alt={title}

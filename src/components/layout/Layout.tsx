@@ -2,7 +2,6 @@
 import React from "react";
 import Header from "./Header";
 import MobileNavigation from "./MobileNavigation";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,15 +9,14 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, fullWidth = false }) => {
-  const isMobile = useIsMobile();
-
+  // We're always in mobile mode now, so no need for the hook
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
-      <main className={`flex-1 pb-20 ${!fullWidth && "max-w-7xl mx-auto w-full"}`}>
+      <main className={`flex-1 pb-20 ${!fullWidth && "max-w-lg mx-auto w-full"}`}>
         {children}
       </main>
-      {isMobile && <MobileNavigation />}
+      <MobileNavigation />
     </div>
   );
 };
