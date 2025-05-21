@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -6,13 +7,14 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_REMOVE_DELAY = 5000
 
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  variant?: "default" | "destructive" | "success" | "info" | "warning"
 }
 
 const actionTypes = {
@@ -90,8 +92,6 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -167,6 +167,19 @@ function toast({ ...props }: Toast) {
     update,
   }
 }
+
+// Enhanced toast functions with predefined variants
+toast.success = (props: Omit<ToasterToast, "id" | "variant">) => 
+  toast({ ...props, variant: "success" });
+
+toast.info = (props: Omit<ToasterToast, "id" | "variant">) => 
+  toast({ ...props, variant: "info" });
+
+toast.warning = (props: Omit<ToasterToast, "id" | "variant">) => 
+  toast({ ...props, variant: "warning" });
+
+toast.destructive = (props: Omit<ToasterToast, "id" | "variant">) => 
+  toast({ ...props, variant: "destructive" });
 
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)

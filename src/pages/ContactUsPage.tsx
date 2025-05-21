@@ -4,7 +4,7 @@ import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { FormField } from "@/components/ui/form-field";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Form,
   FormField as ShadcnFormField,
@@ -27,6 +27,7 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 const ContactUsPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
   
   // Initialize the form with react-hook-form
   const form = useForm<ContactFormValues>({
@@ -50,7 +51,7 @@ const ContactUsPage = () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Show success toast
-      toast({
+      toast.success({
         title: "پیام شما با موفقیت ارسال شد",
         description: "با تشکر از تماس شما. به زودی با شما تماس خواهیم گرفت.",
       });
@@ -58,14 +59,42 @@ const ContactUsPage = () => {
       // Reset form
       form.reset();
     } catch (error) {
-      toast({
+      toast.destructive({
         title: "خطا در ارسال پیام",
         description: "متأسفانه مشکلی در ارسال پیام شما پیش آمد. لطفاً دوباره تلاش کنید.",
-        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
+  };
+  
+  // Demo toast functions
+  const showSuccessToast = () => {
+    toast.success({
+      title: "عملیات موفق",
+      description: "این یک پیام موفقیت‌آمیز است"
+    });
+  };
+  
+  const showErrorToast = () => {
+    toast.destructive({
+      title: "خطا رخ داد",
+      description: "این یک پیام خطا است"
+    });
+  };
+  
+  const showWarningToast = () => {
+    toast.warning({
+      title: "هشدار",
+      description: "این یک پیام هشدار است"
+    });
+  };
+  
+  const showInfoToast = () => {
+    toast.info({
+      title: "اطلاعات",
+      description: "این یک پیام اطلاع‌رسانی است"
+    });
   };
 
   return (
@@ -105,6 +134,25 @@ const ContactUsPage = () => {
                 <div>
                   <p className="font-semibold">آدرس</p>
                   <p className="text-gray-600">تهران، خیابان ولیعصر، مرکز آموزش مستر تریدر</p>
+                </div>
+              </div>
+              
+              {/* Toast demo buttons */}
+              <div className="mt-6 pt-6 border-t">
+                <h3 className="text-lg font-semibold mb-3">نمایش انواع پیام‌ها</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button onClick={showSuccessToast} variant="outline" className="text-green-600 border-green-600 hover:bg-green-50">
+                    نمایش پیام موفقیت
+                  </Button>
+                  <Button onClick={showErrorToast} variant="outline" className="text-red-600 border-red-600 hover:bg-red-50">
+                    نمایش پیام خطا
+                  </Button>
+                  <Button onClick={showWarningToast} variant="outline" className="text-amber-600 border-amber-600 hover:bg-amber-50">
+                    نمایش پیام هشدار
+                  </Button>
+                  <Button onClick={showInfoToast} variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50">
+                    نمایش پیام اطلاعات
+                  </Button>
                 </div>
               </div>
             </div>

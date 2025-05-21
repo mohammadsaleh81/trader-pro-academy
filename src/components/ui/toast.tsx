@@ -1,7 +1,8 @@
+
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
-import { X } from "lucide-react"
+import { X, CheckCircle, XCircle, AlertTriangle, Info } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -30,6 +31,12 @@ const toastVariants = cva(
         default: "border bg-background text-foreground",
         destructive:
           "destructive group border-destructive bg-destructive text-destructive-foreground",
+        success: 
+          "success group border-green-200 bg-green-50 text-green-800",
+        info:
+          "info group border-blue-200 bg-blue-50 text-blue-800",
+        warning:
+          "warning group border-amber-200 bg-amber-50 text-amber-800",
       },
     },
     defaultVariants: {
@@ -46,7 +53,7 @@ const Toast = React.forwardRef<
   return (
     <ToastPrimitives.Root
       ref={ref}
-      className={cn(toastVariants({ variant }), className)}
+      className={cn(toastVariants({ variant }), "animate-fade-in", className)}
       {...props}
     />
   )
@@ -110,6 +117,29 @@ const ToastDescription = React.forwardRef<
 ))
 ToastDescription.displayName = ToastPrimitives.Description.displayName
 
+// Toast icon component
+const ToastIcon = ({ variant }: { variant?: "default" | "destructive" | "success" | "info" | "warning" }) => {
+  if (variant === "success") return <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+  if (variant === "destructive") return <XCircle className="h-5 w-5 text-red-500 mr-2" />
+  if (variant === "warning") return <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />
+  if (variant === "info") return <Info className="h-5 w-5 text-blue-500 mr-2" />
+  return null
+}
+
+// Enhanced Toast with Icon
+const ToastWithIcon = React.forwardRef<
+  React.ElementRef<typeof Toast>,
+  React.ComponentPropsWithoutRef<typeof Toast>
+>(({ variant, children, className, ...props }, ref) => (
+  <Toast ref={ref} variant={variant} className={cn("flex", className)} {...props}>
+    <div className="flex items-center">
+      <ToastIcon variant={variant} />
+      {children}
+    </div>
+  </Toast>
+))
+ToastWithIcon.displayName = "ToastWithIcon"
+
 type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
 
 type ToastActionElement = React.ReactElement<typeof ToastAction>
@@ -124,4 +154,5 @@ export {
   ToastDescription,
   ToastClose,
   ToastAction,
+  ToastWithIcon
 }
