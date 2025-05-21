@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import CourseList from "@/components/course/CourseList";
 import ContentList from "@/components/content/ContentList";
@@ -11,6 +11,16 @@ import { BookOpen, FileText, Headphones, Video } from "lucide-react";
 
 const HomePage: React.FC = () => {
   const { courses, articles, videos, podcasts } = useData();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate data fetching delay
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <Layout>
@@ -32,7 +42,7 @@ const HomePage: React.FC = () => {
             viewAllLink="/courses"
             icon={<BookOpen className="text-trader-500 h-5 w-5" />}
           />
-          <CourseList courses={courses} />
+          <CourseList courses={courses} isLoading={isLoading} skeletonCount={4} />
         </section>
 
         {/* Latest Articles */}
@@ -44,7 +54,12 @@ const HomePage: React.FC = () => {
               icon={<FileText className="text-trader-500 h-5 w-5" />}
               className="mb-6"
             />
-            <ContentList items={articles.slice(0, 4)} type="article" showCarousel={true} />
+            <ContentList 
+              items={articles.slice(0, 4)} 
+              type="article" 
+              showCarousel={true} 
+              isLoading={isLoading} 
+            />
           </div>
         </section>
 
@@ -55,7 +70,11 @@ const HomePage: React.FC = () => {
             viewAllLink="/content?type=videos"
             icon={<Video className="text-trader-500 h-5 w-5" />}
           />
-          <ContentList items={videos.slice(0, 4)} type="video" />
+          <ContentList 
+            items={videos.slice(0, 4)} 
+            type="video" 
+            isLoading={isLoading} 
+          />
         </section>
 
         {/* Latest Podcasts */}
@@ -67,7 +86,11 @@ const HomePage: React.FC = () => {
               icon={<Headphones className="text-trader-500 h-5 w-5" />}
               className="mb-6"
             />
-            <ContentList items={podcasts.slice(0, 2)} type="podcast" />
+            <ContentList 
+              items={podcasts.slice(0, 2)} 
+              type="podcast" 
+              isLoading={isLoading} 
+            />
           </div>
         </section>
       </div>

@@ -1,14 +1,35 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import ContentListWithLinks from "@/components/content/ContentListWithLinks";
 import { useData } from "@/contexts/DataContext";
+import ContentCardSkeleton from "@/components/content/ContentCardSkeleton";
 
 type ContentTab = "articles" | "podcasts" | "videos" | "webinars" | "files";
 
 const ContentHubPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ContentTab>("articles");
   const { articles, podcasts, videos, webinars, files } = useData();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate data loading
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Reset loading state when tab changes
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [activeTab]);
 
   const tabs = [
     { id: "articles", label: "مقالات" },
@@ -44,24 +65,34 @@ const ContentHubPage: React.FC = () => {
         
         {/* Content */}
         <div className="mt-6">
-          {activeTab === "articles" && (
-            <ContentListWithLinks items={articles} type="article" />
-          )}
-          
-          {activeTab === "podcasts" && (
-            <ContentListWithLinks items={podcasts} type="podcast" />
-          )}
-          
-          {activeTab === "videos" && (
-            <ContentListWithLinks items={videos} type="video" />
-          )}
-          
-          {activeTab === "webinars" && (
-            <ContentListWithLinks items={webinars} type="webinar" />
-          )}
-          
-          {activeTab === "files" && (
-            <ContentListWithLinks items={files} type="file" />
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <ContentCardSkeleton key={`skeleton-${index}`} />
+              ))}
+            </div>
+          ) : (
+            <>
+              {activeTab === "articles" && (
+                <ContentListWithLinks items={articles} type="article" />
+              )}
+              
+              {activeTab === "podcasts" && (
+                <ContentListWithLinks items={podcasts} type="podcast" />
+              )}
+              
+              {activeTab === "videos" && (
+                <ContentListWithLinks items={videos} type="video" />
+              )}
+              
+              {activeTab === "webinars" && (
+                <ContentListWithLinks items={webinars} type="webinar" />
+              )}
+              
+              {activeTab === "files" && (
+                <ContentListWithLinks items={files} type="file" />
+              )}
+            </>
           )}
         </div>
       </div>

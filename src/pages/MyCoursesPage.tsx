@@ -1,14 +1,25 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import CourseList from "@/components/course/CourseList";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
+import { Loader } from "lucide-react";
 
 const MyCoursesPage: React.FC = () => {
   const { myCourses } = useData();
   const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate data loading
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   if (!user) {
     return (
@@ -28,7 +39,9 @@ const MyCoursesPage: React.FC = () => {
       <div className="trader-container py-6">
         <h1 className="text-2xl font-bold mb-6">دوره‌های من</h1>
         
-        {myCourses.length > 0 ? (
+        {isLoading ? (
+          <CourseList courses={[]} isLoading={true} showProgress skeletonCount={8} />
+        ) : myCourses.length > 0 ? (
           <CourseList courses={myCourses} showProgress />
         ) : (
           <div className="text-center py-12">

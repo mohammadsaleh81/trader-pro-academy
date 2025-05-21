@@ -1,6 +1,7 @@
 
 import React from "react";
 import ContentCard from "./ContentCard";
+import ContentCardSkeleton from "./ContentCardSkeleton";
 import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import CarouselCard from "../ui/carousel-card";
@@ -18,6 +19,8 @@ type ContentListProps<T> = {
   title?: string;
   viewAllLink?: string;
   showCarousel?: boolean;
+  isLoading?: boolean;
+  skeletonCount?: number;
 };
 
 type ContentItem = Article | Podcast | Video | Webinar | FileType;
@@ -27,7 +30,9 @@ const ContentList = <T extends ContentItem>({
   type, 
   title,
   viewAllLink,
-  showCarousel = false
+  showCarousel = false,
+  isLoading = false,
+  skeletonCount = 4
 }: ContentListProps<T>) => {
   
   if (showCarousel) {
@@ -39,7 +44,7 @@ const ContentList = <T extends ContentItem>({
               <span className="w-1 h-6 bg-trader-500 rounded-sm ml-2"></span>
               <h2 className="text-xl font-bold">{title}</h2>
             </div>
-            {items.length > 3 && viewAllLink && (
+            {items.length > 3 && viewAllLink && !isLoading && (
               <Link to={viewAllLink} className="text-trader-500 text-sm flex items-center">
                 <span>مشاهده همه</span>
                 <ChevronLeft className="h-4 w-4 mr-1" />
@@ -49,7 +54,12 @@ const ContentList = <T extends ContentItem>({
         )}
         
         <CarouselCard controlsClassName="bg-white shadow-md">
-          {items.map((item, index) => renderContentCard(item, type, `carousel-${index}`))}
+          {isLoading 
+            ? Array.from({ length: skeletonCount }).map((_, index) => (
+                <ContentCardSkeleton key={`carousel-skeleton-${index}`} />
+              ))
+            : items.map((item, index) => renderContentCard(item, type, `carousel-${index}`))
+          }
         </CarouselCard>
       </div>
     );
@@ -63,7 +73,7 @@ const ContentList = <T extends ContentItem>({
             <span className="w-1 h-6 bg-trader-500 rounded-sm ml-2"></span>
             <h2 className="text-xl font-bold">{title}</h2>
           </div>
-          {items.length > 3 && viewAllLink && (
+          {items.length > 3 && viewAllLink && !isLoading && (
             <Link to={viewAllLink} className="text-trader-500 text-sm flex items-center">
               <span>مشاهده همه</span>
               <ChevronLeft className="h-4 w-4 mr-1" />
@@ -73,7 +83,12 @@ const ContentList = <T extends ContentItem>({
       )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-        {items.map((item, index) => renderContentCard(item, type, index.toString()))}
+        {isLoading 
+          ? Array.from({ length: skeletonCount }).map((_, index) => (
+              <ContentCardSkeleton key={`skeleton-${index}`} />
+            ))
+          : items.map((item, index) => renderContentCard(item, type, index.toString()))
+        }
       </div>
     </div>
   );

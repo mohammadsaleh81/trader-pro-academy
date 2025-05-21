@@ -4,8 +4,9 @@ import Layout from "@/components/layout/Layout";
 import { useData } from "@/contexts/DataContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, ChevronDown } from "lucide-react";
+import { Search, Filter, ChevronDown, Loader } from "lucide-react";
 import CourseCard from "@/components/course/CourseCard";
+import CourseCardSkeleton from "@/components/course/CourseCardSkeleton";
 import { Course } from "@/contexts/DataContext";
 import {
   Popover,
@@ -22,6 +23,7 @@ const CourseListPage = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<string>("all");
+  const [isLoading, setIsLoading] = useState(true);
 
   // Collect all unique categories
   const allCategories = Array.from(
@@ -32,6 +34,15 @@ const CourseListPage = () => {
   const allLevels = Array.from(
     new Set(courses.map((course) => course.level).filter(Boolean))
   );
+
+  // Simulate loading state
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Filter courses based on search term and filters
   useEffect(() => {
@@ -119,13 +130,14 @@ const CourseListPage = () => {
                 className="pr-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                disabled={isLoading}
               />
             </div>
             
             <div className="flex gap-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="flex gap-2">
+                  <Button variant="outline" className="flex gap-2" disabled={isLoading}>
                     <Filter className="h-4 w-4" />
                     فیلترها
                     <ChevronDown className="h-4 w-4" />
@@ -237,7 +249,7 @@ const CourseListPage = () => {
           </div>
           
           {/* Selected Filters */}
-          {(selectedCategories.length > 0 || selectedLevels.length > 0 || priceRange !== "all") && (
+          {!isLoading && (selectedCategories.length > 0 || selectedLevels.length > 0 || priceRange !== "all") && (
             <div className="flex flex-wrap gap-2 mt-4">
               {selectedCategories.map((category) => (
                 <div
@@ -288,7 +300,13 @@ const CourseListPage = () => {
         
         {/* Courses Grid */}
         <div className="mb-8">
-          {filteredCourses.length > 0 ? (
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 12 }).map((_, index) => (
+                <CourseCardSkeleton key={`skeleton-${index}`} />
+              ))}
+            </div>
+          ) : filteredCourses.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {filteredCourses.map((course) => (
                 <CourseCard

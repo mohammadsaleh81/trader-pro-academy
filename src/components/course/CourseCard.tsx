@@ -1,7 +1,7 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Star, ShoppingCart } from "lucide-react";
+import { Star, ShoppingCart, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
@@ -31,55 +31,70 @@ const CourseCard: React.FC<CourseCardProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { myCourses, wallet, updateWallet, enrollCourse } = useData();
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const isEnrolled = myCourses.some(c => c.id === id);
 
-  const handleQuickBuy = (e: React.MouseEvent) => {
+  const handleQuickBuy = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigating to course detail
+    setIsProcessing(true);
     
-    if (!user) {
-      navigate("/login");
-      return;
-    }
+    try {
+      if (!user) {
+        navigate("/login");
+        return;
+      }
 
-    if (isFree || isEnrolled) {
-      navigate(`/courses/${id}`);
-      return;
-    }
+      if (isFree || isEnrolled) {
+        navigate(`/courses/${id}`);
+        return;
+      }
 
-    if (!wallet || wallet.balance < price) {
-      const shortfall = price - (wallet?.balance || 0);
-      
+      if (!wallet || wallet.balance < price) {
+        const shortfall = price - (wallet?.balance || 0);
+        
+        toast({
+          title: "موجودی ناکافی",
+          description: `برای خرید این دوره نیاز به ${shortfall.toLocaleString()} تومان شارژ اضافی دارید`,
+          variant: "destructive",
+        });
+        
+        // Store course ID in localStorage to complete purchase after recharge
+        localStorage.setItem("pendingCourseId", id);
+        navigate("/wallet");
+        return;
+      }
+
+      // Process purchase
+      const newTransaction = {
+        id: Date.now().toString(),
+        amount: price,
+        type: "purchase" as const,
+        description: `خرید دوره ${title}`,
+        date: new Date().toLocaleDateString("fa-IR"),
+      };
+
+      updateWallet(wallet.balance - price, [...wallet.transactions, newTransaction]);
+      enrollCourse(id, user.id);
+
       toast({
-        title: "موجودی ناکافی",
-        description: `برای خرید این دوره نیاز به ${shortfall.toLocaleString()} تومان شارژ اضافی دارید`,
+        title: "خرید موفق",
+        description: `دوره ${title} با موفقیت خریداری شد`,
+      });
+
+      // Simulate processing delay
+      setTimeout(() => {
+        setIsProcessing(false);
+        navigate("/my-courses");
+      }, 1000);
+    } catch (error) {
+      toast({
+        title: "خطا در پردازش",
+        description: "مشکلی در خرید دوره پیش آمده است. لطفا دوباره تلاش کنید.",
         variant: "destructive",
       });
-      
-      // Store course ID in localStorage to complete purchase after recharge
-      localStorage.setItem("pendingCourseId", id);
-      navigate("/wallet");
-      return;
+      setIsProcessing(false);
     }
-
-    // Process purchase
-    const newTransaction = {
-      id: Date.now().toString(),
-      amount: price,
-      type: "purchase" as const,
-      description: `خرید دوره ${title}`,
-      date: new Date().toLocaleDateString("fa-IR"),
-    };
-
-    updateWallet(wallet.balance - price, [...wallet.transactions, newTransaction]);
-    enrollCourse(id, user.id);
-
-    toast({
-      title: "خرید موفق",
-      description: `دوره ${title} با موفقیت خریداری شد`,
-    });
-
-    navigate("/my-courses");
   };
 
   return (
@@ -122,9 +137,16 @@ const CourseCard: React.FC<CourseCardProps> = ({
             variant={isEnrolled ? "outline" : "default"}
             className="w-full text-xs py-1 h-8"
             onClick={handleQuickBuy}
+            disabled={isProcessing}
           >
-            <ShoppingCart className="h-4 w-4 ml-1" />
-            {isEnrolled ? "مشاهده دوره" : isFree ? "ثبت‌نام رایگان" : "خرید سریع"}
+            {isProcessing ? (
+              <Loader className="h-4 w-4 animate-spin mx-auto" />
+            ) : (
+              <>
+                <ShoppingCart className="h-4 w-4 ml-1" />
+                {isEnrolled ? "مشاهده دوره" : isFree ? "ثبت‌نام رایگان" : "خرید سریع"}
+              </>
+            )}
           </Button>
         </div>
       </div>

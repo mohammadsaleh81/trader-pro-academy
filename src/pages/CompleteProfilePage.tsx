@@ -4,26 +4,37 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UserIcon, MailIcon } from "lucide-react";
+import { UserIcon, MailIcon, Loader } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const CompleteProfilePage: React.FC = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const { user, completeProfile, isLoading, error } = useAuth();
   const navigate = useNavigate();
+  const [pageLoading, setPageLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate initial page loading
+    const timer = setTimeout(() => {
+      setPageLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // If user is not logged in, redirect to login page
-    if (!user) {
+    if (!user && !pageLoading) {
       navigate("/login");
       return;
     }
     
     // If user profile is already complete, redirect to profile page
-    if (user.isProfileComplete) {
+    if (user?.isProfileComplete && !pageLoading) {
       navigate("/profile");
     }
-  }, [user, navigate]);
+  }, [user, navigate, pageLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +47,27 @@ const CompleteProfilePage: React.FC = () => {
     navigate("/profile");
   };
 
-  if (!user || isLoading) {
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-md">
+          <div className="text-center">
+            <Skeleton className="h-8 w-3/4 mx-auto mb-4" />
+            <Skeleton className="h-6 w-1/2 mx-auto mb-2" />
+            <Skeleton className="h-4 w-5/6 mx-auto" />
+          </div>
+          
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-12 w-full mt-4" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -113,7 +144,14 @@ const CompleteProfilePage: React.FC = () => {
             className="w-full bg-trader-500 hover:bg-trader-600 py-3"
             disabled={isLoading || !name}
           >
-            {isLoading ? "در حال ثبت اطلاعات..." : "ذخیره اطلاعات"}
+            {isLoading ? (
+              <span className="flex items-center justify-center">
+                <Loader className="h-4 w-4 animate-spin mr-2" />
+                در حال ثبت اطلاعات...
+              </span>
+            ) : (
+              "ذخیره اطلاعات"
+            )}
           </Button>
         </form>
       </div>
