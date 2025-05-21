@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Bookmark, Home, User, FileText, Video } from "lucide-react";
@@ -12,7 +13,7 @@ const MobileNavigation: React.FC = () => {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] h-16 z-50">
-      <div className="grid grid-cols-5 h-full max-w-[500px] mx-auto">
+      <div className="grid grid-cols-5 h-full">
         <Link 
           to="/" 
           className={cn(

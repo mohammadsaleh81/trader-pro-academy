@@ -18,7 +18,7 @@ const CourseList: React.FC<CourseListProps> = ({
   className
 }) => {
   return (
-    <div className={cn("my-4 px-3", className)}>
+    <div className={cn("my-4", className)}>
       {title && (
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">{title}</h2>
@@ -30,7 +30,7 @@ const CourseList: React.FC<CourseListProps> = ({
         </div>
       )}
       
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {courses.map((course, index) => (
           <CourseCard
             key={course.id}

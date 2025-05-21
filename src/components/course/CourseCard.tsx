@@ -83,29 +83,31 @@ const CourseCard: React.FC<CourseCardProps> = ({
   };
 
   return (
-    <div className="trader-card flex h-full overflow-hidden">
-      <div className="w-1/3 h-full min-h-[160px]">
-        <img
-          src={thumbnail}
-          alt={title}
-          className="w-full h-full object-cover"
-        />
-      </div>
-      <div className="w-2/3 p-3 flex flex-col relative">
-        <h3 className="font-bold text-sm mb-1">{title}</h3>
-        <p className="text-gray-600 text-xs mb-2">مدرس: {instructor}</p>
-        
-        {progress !== undefined && (
-          <div className="mb-2">
-            <div className="progress-bar">
-              <div className="progress-value" style={{ width: `${progress}%` }}></div>
+    <div className="trader-card h-full flex flex-col">
+      <Link to={`/courses/${id}`} className="block">
+        <div className="relative h-44 w-full">
+          <img
+            src={thumbnail}
+            alt={title}
+            className="w-full h-full object-cover rounded-t-xl"
+          />
+          {progress !== undefined && (
+            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 py-1 px-2">
+              <div className="progress-bar">
+                <div className="progress-value" style={{ width: `${progress}%` }}></div>
+              </div>
+              <p className="text-white text-xs mt-1 text-center">
+                {progress}% تکمیل شده
+              </p>
             </div>
-            <p className="text-gray-500 text-xs mt-1">
-              {progress}% تکمیل شده
-            </p>
-          </div>
-        )}
-        
+          )}
+        </div>
+      </Link>
+      <div className="p-3 flex-1 flex flex-col">
+        <Link to={`/courses/${id}`} className="block">
+          <h3 className="font-bold text-sm line-clamp-2 mb-1">{title}</h3>
+          <p className="text-gray-600 text-xs mb-2">مدرس: {instructor}</p>
+        </Link>
         <div className="mt-auto">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center">

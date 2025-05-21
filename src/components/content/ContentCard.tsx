@@ -77,15 +77,15 @@ const ContentCard: React.FC<ContentCardProps> = ({
 
   return (
     <Link to={getContentUrl()}>
-      <div className="trader-card flex flex-col h-full overflow-hidden">
-        <div className="w-full h-48">
+      <div className="trader-card flex h-full overflow-hidden">
+        <div className="w-1/3 h-full min-h-[120px]">
           <img
             src={thumbnail}
             alt={title}
             className="w-full h-full object-cover"
           />
         </div>
-        <div className="p-3 flex flex-col relative">
+        <div className="w-2/3 p-3 flex flex-col relative">
           <div className="flex justify-between">
             <span className="text-xs text-trader-500 font-medium mb-1">
               {getTypeLabel()}
@@ -93,8 +93,8 @@ const ContentCard: React.FC<ContentCardProps> = ({
             <span className="text-xs text-gray-500">{date}</span>
           </div>
           
-          <h3 className="font-bold text-sm mb-1 line-clamp-2">{title}</h3>
-          <p className="text-gray-600 text-xs line-clamp-3 mb-2">{description}</p>
+          <h3 className="font-bold text-sm mb-1 line-clamp-1">{title}</h3>
+          <p className="text-gray-600 text-xs line-clamp-2 mb-2">{description}</p>
           
           <div className="flex items-center justify-between mt-auto">
             <span className="text-xs text-gray-500">
@@ -117,7 +117,7 @@ const ContentCard: React.FC<ContentCardProps> = ({
           {user && (
             <button 
               onClick={handleBookmark}
-              className="absolute top-3 right-3 text-trader-500"
+              className="absolute top-3 left-3 text-trader-500"
             >
               {bookmark ? (
                 <BookmarkCheck className="h-5 w-5" />

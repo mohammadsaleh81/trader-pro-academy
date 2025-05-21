@@ -1,3 +1,4 @@
+
 import React from "react";
 import { FileText, Headphones, Video, Calendar, File } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -44,7 +45,7 @@ const categories: Category[] = [
 
 const ContentCategories: React.FC = () => {
   return (
-    <div className="flex justify-between my-6 px-3 overflow-x-auto pb-2 gap-3">
+    <div className="flex justify-between my-6 overflow-x-auto pb-2 gap-3">
       {categories.map((category) => (
         <a 
           key={category.id}

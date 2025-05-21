@@ -27,7 +27,7 @@ const ContentList = <T extends ContentItem>({
   viewAllLink 
 }: ContentListProps<T>) => {
   return (
-    <div className="my-6 px-3">
+    <div className="my-6">
       {title && (
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center">
