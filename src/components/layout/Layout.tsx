@@ -20,9 +20,24 @@ const Layout: React.FC<LayoutProps> = ({
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(initialLoading);
   const [mounted, setMounted] = useState(false);
+  const [browserInfo, setBrowserInfo] = useState({
+    isFirefox: false,
+    isSafari: false,
+    isIE: false,
+    isEdge: false
+  });
 
   useEffect(() => {
     setMounted(true);
+    
+    // Detect browser types
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    setBrowserInfo({
+      isFirefox: userAgent.indexOf('firefox') > -1,
+      isSafari: userAgent.indexOf('safari') > -1 && userAgent.indexOf('chrome') === -1,
+      isIE: userAgent.indexOf('trident') > -1,
+      isEdge: userAgent.indexOf('edge') > -1 || userAgent.indexOf('edg/') > -1
+    });
     
     if (initialLoading) {
       const timer = setTimeout(() => {
@@ -51,8 +66,25 @@ const Layout: React.FC<LayoutProps> = ({
     };
   }, [isMobile]);
 
+  // Add browser-specific classes
+  useEffect(() => {
+    if (browserInfo.isFirefox) {
+      document.documentElement.classList.add('firefox');
+    }
+    if (browserInfo.isSafari) {
+      document.documentElement.classList.add('safari');
+    }
+    if (browserInfo.isIE || browserInfo.isEdge) {
+      document.documentElement.classList.add('ms-browser');
+    }
+
+    return () => {
+      document.documentElement.classList.remove('firefox', 'safari', 'ms-browser');
+    };
+  }, [browserInfo]);
+
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50" dir="rtl">
+    <div className={`flex flex-col min-h-screen bg-gray-50 ${browserInfo.isSafari ? 'safari-flex-fix' : ''}`} dir="rtl">
       <Header />
       <main className={`flex-1 pb-20 px-4 sm:px-6 ${!fullWidth && "max-w-7xl mx-auto w-full"}`}>
         {isLoading ? (

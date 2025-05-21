@@ -77,6 +77,9 @@
   body {
     @apply bg-background text-foreground font-vazirmatn;
     -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   
   /* Touch Device Optimizations */
@@ -86,7 +89,7 @@
     @apply scale-95 transition-transform duration-100;
   }
   
-  /* RTL Support */
+  /* RTL Support with cross-browser fixes */
   html[dir="rtl"] {
     @apply font-vazirmatn;
   }
@@ -95,9 +98,40 @@
     @apply font-montserrat;
   }
 
+  /* RTL text alignment fixes for Firefox and Safari */
+  html[dir="rtl"] input,
+  html[dir="rtl"] textarea,
+  html[dir="rtl"] select {
+    text-align: right;
+  }
+
+  /* Fix Safari RTL layout issues */
+  @supports (-webkit-touch-callout: none) {
+    html[dir="rtl"] .safari-flex-fix {
+      display: -webkit-box;
+      display: -webkit-flex;
+      display: flex;
+    }
+  }
+
   /* Improved focus states for keyboard navigation */
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-trader-500;
+  }
+
+  /* Form element cross-browser consistency */
+  input, textarea, select, button {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  /* Firefox specific fixes */
+  @-moz-document url-prefix() {
+    html[dir="rtl"] .firefox-rtl-fix {
+      direction: rtl;
+      text-align: right;
+    }
   }
 }
 
@@ -113,15 +147,21 @@
   .trader-btn-primary {
     @apply bg-trader-500 text-white py-2 px-4 rounded-md hover:bg-trader-600 transition-colors duration-200 font-medium min-h-[44px] min-w-[44px];
     touch-action: manipulation;
+    -webkit-appearance: none;
+    appearance: none;
   }
   
   .trader-btn-outline {
     @apply border border-trader-500 text-trader-500 py-2 px-4 rounded-md hover:bg-trader-50 transition-colors duration-200 font-medium min-h-[44px] min-w-[44px];
     touch-action: manipulation;
+    -webkit-appearance: none;
+    appearance: none;
   }
   
   .trader-input {
     @apply w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-trader-500 focus:border-transparent min-h-[44px];
+    -webkit-appearance: none;
+    appearance: none;
   }
   
   .progress-bar {
@@ -181,5 +221,27 @@
   /* Touch optimization utility */
   .touch-manipulation {
     touch-action: manipulation;
+  }
+
+  /* Cross-browser flexbox compatibility */
+  .flex-fix {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+  }
+
+  .items-center-fix {
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+  }
+
+  .justify-center-fix {
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
   }
 }

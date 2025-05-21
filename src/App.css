@@ -41,3 +41,33 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Cross-browser RTL fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Safari specific RTL fixes */
+  html[dir="rtl"] input,
+  html[dir="rtl"] textarea {
+    text-align: right;
+  }
+}
+
+@-moz-document url-prefix() {
+  /* Firefox specific RTL fixes */
+  html[dir="rtl"] input,
+  html[dir="rtl"] textarea {
+    text-align: right;
+  }
+}
+
+/* Fix for legacy Microsoft browsers */
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+  .flex {
+    display: flex;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .justify-center {
+    justify-content: center;
+  }
+}
