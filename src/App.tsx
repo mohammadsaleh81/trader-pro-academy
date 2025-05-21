@@ -13,6 +13,7 @@ import BookmarksPage from "./pages/BookmarksPage";
 import ProfilePage from "./pages/ProfilePage";
 import WalletPage from "./pages/WalletPage";
 import LoginPage from "./pages/LoginPage";
+import CompleteProfilePage from "./pages/CompleteProfilePage";
 import CourseDetailPage from "./pages/CourseDetailPage";
 import NotFound from "./pages/NotFound";
 
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/wallet" element={<WalletPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/complete-profile" element={<CompleteProfilePage />} />
               <Route path="/courses/:id" element={<CourseDetailPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

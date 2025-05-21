@@ -1,31 +1,61 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { PhoneIcon } from "lucide-react";
+
+enum AuthStep {
+  PHONE_ENTRY,
+  OTP_VERIFICATION
+}
 
 const LoginPage: React.FC = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const { login, register, error, isLoading } = useAuth();
+  const [step, setStep] = useState<AuthStep>(AuthStep.PHONE_ENTRY);
+  const [phone, setPhone] = useState("");
+  const [otp, setOTP] = useState("");
+  const { requestOTP, verifyOTP, isLoading, error, user } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (isLogin) {
-      await login(email, password);
-      if (!error) {
+  // If user is already logged in and profile is complete, redirect to profile page
+  useEffect(() => {
+    if (user) {
+      if (user.isProfileComplete) {
         navigate("/profile");
-      }
-    } else {
-      await register(name, email, password);
-      if (!error) {
-        navigate("/profile");
+      } else {
+        navigate("/complete-profile");
       }
     }
+  }, [user, navigate]);
+
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Basic validation
+    if (!phone || phone.length < 10) {
+      return; // Could add error state here
+    }
+    
+    await requestOTP(phone);
+    setStep(AuthStep.OTP_VERIFICATION);
   };
+
+  const handleOTPSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await verifyOTP(otp);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-lg">در حال پردازش...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -35,7 +65,7 @@ const LoginPage: React.FC = () => {
             مستر تریدر آکادمی
           </h2>
           <h3 className="mt-2 text-xl font-medium">
-            {isLogin ? "ورود به حساب کاربری" : "ثبت نام در سایت"}
+            {step === AuthStep.PHONE_ENTRY ? "ورود / ثبت نام" : "تایید کد"}
           </h3>
         </div>
         
@@ -45,77 +75,84 @@ const LoginPage: React.FC = () => {
           </div>
         )}
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {!isLogin && (
+        {step === AuthStep.PHONE_ENTRY ? (
+          <form className="mt-8 space-y-6" onSubmit={handlePhoneSubmit}>
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                نام و نام خانوادگی
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                شماره موبایل
               </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="trader-input"
-              />
+              <div className="relative">
+                <PhoneIcon className="absolute top-3 right-3 h-5 w-5 text-gray-400" />
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  dir="ltr"
+                  className="text-left pr-10"
+                  placeholder="09123456789"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                کد تایید به این شماره ارسال خواهد شد
+              </p>
             </div>
-          )}
-          
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              ایمیل
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="trader-input"
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              رمز عبور
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="trader-input"
-            />
-          </div>
-          
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full trader-btn-primary py-3 flex justify-center"
+            
+            <Button 
+              type="submit" 
+              className="w-full bg-trader-500 hover:bg-trader-600 py-3"
+              disabled={isLoading || phone.length < 10}
             >
-              {isLoading ? (
-                <span>در حال پردازش...</span>
-              ) : (
-                <span>{isLogin ? "ورود" : "ثبت نام"}</span>
-              )}
-            </button>
-          </div>
-        </form>
-        
-        <div className="text-center mt-4">
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-trader-500 hover:underline text-sm"
-          >
-            {isLogin ? "ثبت نام در سایت" : "ورود به حساب کاربری"}
-          </button>
-        </div>
+              {isLoading ? "در حال ارسال کد..." : "ارسال کد تایید"}
+            </Button>
+          </form>
+        ) : (
+          <form className="mt-8 space-y-6" onSubmit={handleOTPSubmit}>
+            <div className="space-y-2">
+              <label htmlFor="otp" className="block text-sm font-medium text-gray-700">
+                کد تایید ارسال شده به {phone}
+              </label>
+              
+              <div className="flex justify-center py-4">
+                <InputOTP maxLength={5} value={otp} onChange={setOTP}>
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+              
+              <p className="text-xs text-gray-500 text-center">
+                کد 5 رقمی ارسال شده را وارد کنید
+              </p>
+            </div>
+            
+            <div className="flex flex-col space-y-2">
+              <Button 
+                type="submit" 
+                className="w-full bg-trader-500 hover:bg-trader-600 py-3"
+                disabled={isLoading || otp.length !== 5}
+              >
+                {isLoading ? "در حال تایید..." : "تایید کد"}
+              </Button>
+              
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full py-3"
+                onClick={() => setStep(AuthStep.PHONE_ENTRY)}
+                disabled={isLoading}
+              >
+                تغییر شماره موبایل
+              </Button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
