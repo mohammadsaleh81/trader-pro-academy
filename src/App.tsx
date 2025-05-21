@@ -17,6 +17,8 @@ import LoginPage from "./pages/LoginPage";
 import CompleteProfilePage from "./pages/CompleteProfilePage";
 import CourseDetailPage from "./pages/CourseDetailPage";
 import CourseListPage from "./pages/CourseListPage";
+import ContactUsPage from "./pages/ContactUsPage";
+import AboutUsPage from "./pages/AboutUsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +43,8 @@ const App = () => (
               <Route path="/complete-profile" element={<CompleteProfilePage />} />
               <Route path="/courses" element={<CourseListPage />} />
               <Route path="/courses/:id" element={<CourseDetailPage />} />
+              <Route path="/contact-us" element={<ContactUsPage />} />
+              <Route path="/about-us" element={<AboutUsPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
