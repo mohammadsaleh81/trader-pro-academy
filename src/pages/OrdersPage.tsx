@@ -1,13 +1,16 @@
 
-import React from "react";
+import React, { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { ArrowRight, FileText, Clock, Check, AlertTriangle } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ArrowRight, FileText, Clock, Check, AlertTriangle, Search } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
 
 const OrdersPage: React.FC = () => {
   const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Sample order data (in a real app, this would come from an API)
   const orders = [
@@ -33,6 +36,14 @@ const OrdersPage: React.FC = () => {
       status: "processing",
     },
   ];
+
+  // Filter orders based on search query
+  const filteredOrders = searchQuery 
+    ? orders.filter(order => 
+        order.title.includes(searchQuery) || 
+        order.id.includes(searchQuery)
+      )
+    : orders;
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -83,44 +94,76 @@ const OrdersPage: React.FC = () => {
           </Link>
           <h1 className="text-2xl font-bold mr-auto">سفارش‌های من</h1>
         </div>
+        
+        {/* Search Box */}
+        {orders.length > 0 && (
+          <div className="mb-6">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="جستجو در سفارش‌ها..."
+                className="w-full border border-gray-200 rounded-lg py-2 px-10 focus:outline-none focus:ring-2 focus:ring-trader-500"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            </div>
+          </div>
+        )}
 
         {orders.length > 0 ? (
-          <div className="grid gap-4">
-            {orders.map((order) => (
-              <Card key={order.id} className="overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between p-6 border-b border-gray-100">
-                    <div className="mb-3 md:mb-0">
-                      <h3 className="font-bold text-lg mb-1">{order.title}</h3>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <span className="ml-3">شماره سفارش: {order.id}</span>
-                        <span>تاریخ: {order.date}</span>
+          filteredOrders.length > 0 ? (
+            <div className="grid gap-4">
+              {filteredOrders.map((order) => (
+                <Card key={order.id} className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between p-6 border-b border-gray-100">
+                      <div className="mb-3 md:mb-0">
+                        <h3 className="font-bold text-lg mb-1">{order.title}</h3>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <span className="ml-3">شماره سفارش: {order.id}</span>
+                          <span>تاریخ: {order.date}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="flex items-center ml-4">
+                          {getStatusIcon(order.status)}
+                          <span className="mr-1 text-sm">{getStatusText(order.status)}</span>
+                        </div>
+                        <div className="font-bold">{order.price} تومان</div>
                       </div>
                     </div>
-                    <div className="flex items-center">
-                      <div className="flex items-center ml-4">
-                        {getStatusIcon(order.status)}
-                        <span className="mr-1 text-sm">{getStatusText(order.status)}</span>
-                      </div>
-                      <div className="font-bold">{order.price} تومان</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <EmptyState 
+              icon={<Search className="h-16 w-16" />}
+              title="نتیجه‌ای یافت نشد"
+              description={`هیچ سفارشی منطبق با عبارت "${searchQuery}" یافت نشد`}
+              action={
+                <Button 
+                  onClick={() => setSearchQuery("")}
+                  variant="outline" 
+                  className="mt-4"
+                >
+                  پاک کردن جستجو
+                </Button>
+              }
+            />
+          )
         ) : (
-          <div className="bg-white rounded-xl shadow-md p-8 text-center">
-            <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-            <h2 className="text-xl font-bold mb-2">هنوز سفارشی ثبت نکرده‌اید</h2>
-            <p className="text-gray-500 mb-6">تاریخچه سفارش‌های شما در اینجا نمایش داده خواهد شد</p>
-            <Link
-              to="/courses"
-              className="inline-block bg-trader-500 text-white px-6 py-3 rounded-lg hover:bg-trader-600 transition-colors"
-            >
-              مشاهده دوره‌های آموزشی
-            </Link>
-          </div>
+          <EmptyState
+            icon={<FileText className="h-16 w-16" />}
+            title="هنوز سفارشی ثبت نکرده‌اید"
+            description="تاریخچه سفارش‌های شما در اینجا نمایش داده خواهد شد"
+            action={
+              <Button asChild className="mt-4 bg-trader-500 hover:bg-trader-600">
+                <Link to="/courses">مشاهده دوره‌های آموزشی</Link>
+              </Button>
+            }
+          />
         )}
       </div>
     </Layout>

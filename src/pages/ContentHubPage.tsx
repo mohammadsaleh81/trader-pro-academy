@@ -4,6 +4,10 @@ import Layout from "@/components/layout/Layout";
 import ContentListWithLinks from "@/components/content/ContentListWithLinks";
 import { useData } from "@/contexts/DataContext";
 import ContentCardSkeleton from "@/components/content/ContentCardSkeleton";
+import { FileText, Search } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 type ContentTab = "articles" | "podcasts" | "videos" | "webinars" | "files";
 
@@ -39,6 +43,19 @@ const ContentHubPage: React.FC = () => {
     { id: "files", label: "فایل‌ها" },
   ];
 
+  const getActiveContent = () => {
+    switch (activeTab) {
+      case "articles": return articles;
+      case "podcasts": return podcasts;
+      case "videos": return videos;
+      case "webinars": return webinars;
+      case "files": return files;
+      default: return [];
+    }
+  };
+  
+  const activeContent = getActiveContent();
+
   return (
     <Layout>
       <div className="trader-container py-6">
@@ -71,28 +88,23 @@ const ContentHubPage: React.FC = () => {
                 <ContentCardSkeleton key={`skeleton-${index}`} />
               ))}
             </div>
+          ) : activeContent.length > 0 ? (
+            <ContentListWithLinks items={activeContent} type={activeTab.slice(0, -1) as any} />
           ) : (
-            <>
-              {activeTab === "articles" && (
-                <ContentListWithLinks items={articles} type="article" />
-              )}
-              
-              {activeTab === "podcasts" && (
-                <ContentListWithLinks items={podcasts} type="podcast" />
-              )}
-              
-              {activeTab === "videos" && (
-                <ContentListWithLinks items={videos} type="video" />
-              )}
-              
-              {activeTab === "webinars" && (
-                <ContentListWithLinks items={webinars} type="webinar" />
-              )}
-              
-              {activeTab === "files" && (
-                <ContentListWithLinks items={files} type="file" />
-              )}
-            </>
+            <EmptyState
+              icon={<FileText className="h-16 w-16" />}
+              title={`هنوز محتوایی در بخش ${tabs.find(tab => tab.id === activeTab)?.label} وجود ندارد`}
+              description="به‌زودی محتوای جدیدی در این بخش منتشر خواهد شد"
+              action={
+                <Button 
+                  onClick={() => setActiveTab("articles")} 
+                  className="mt-4 bg-trader-500 hover:bg-trader-600"
+                  variant="default"
+                >
+                  مشاهده سایر محتوا
+                </Button>
+              }
+            />
           )}
         </div>
       </div>

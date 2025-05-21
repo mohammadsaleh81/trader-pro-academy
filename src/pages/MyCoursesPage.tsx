@@ -5,7 +5,9 @@ import CourseList from "@/components/course/CourseList";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { Loader } from "lucide-react";
+import { Loader, BookOpen } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
 
 const MyCoursesPage: React.FC = () => {
   const { myCourses } = useData();
@@ -44,12 +46,16 @@ const MyCoursesPage: React.FC = () => {
         ) : myCourses.length > 0 ? (
           <CourseList courses={myCourses} showProgress />
         ) : (
-          <div className="text-center py-12">
-            <h2 className="text-xl font-bold mb-4">هنوز در دوره‌ای ثبت‌نام نکرده‌اید</h2>
-            <Link to="/" className="trader-btn-primary">
-              مشاهده دوره‌ها
-            </Link>
-          </div>
+          <EmptyState
+            icon={<BookOpen className="h-16 w-16" />}
+            title="هنوز در دوره‌ای ثبت‌نام نکرده‌اید"
+            description="از بین دوره‌های متنوع ما، دوره‌های مورد علاقه خود را انتخاب کنید"
+            action={
+              <Button asChild className="mt-4 bg-trader-500 hover:bg-trader-600">
+                <Link to="/">مشاهده دوره‌ها</Link>
+              </Button>
+            }
+          />
         )}
       </div>
     </Layout>

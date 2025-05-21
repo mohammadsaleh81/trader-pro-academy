@@ -6,6 +6,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
 import CourseCard from "@/components/course/CourseCard";
 import ContentCard from "@/components/content/ContentCard";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 // Define the bookmark category types
 type BookmarkCategory = "courses" | "articles" | "podcasts" | "videos" | "webinars" | "files";
@@ -107,11 +110,16 @@ const BookmarksPage: React.FC = () => {
         {/* Content Section */}
         <div>
           {content.length === 0 ? (
-            <div className="text-center py-12">
-              <Bookmark className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-600 mb-1">هنوز نشانی ذخیره نکرده‌اید</h3>
-              <p className="text-gray-500 text-sm">آیتم‌های مورد علاقه خود را ذخیره کنید تا بعداً به آن‌ها دسترسی داشته باشید</p>
-            </div>
+            <EmptyState
+              icon={<Bookmark className="h-16 w-16" />}
+              title="هنوز نشانی ذخیره نکرده‌اید"
+              description="آیتم‌های مورد علاقه خود را ذخیره کنید تا بعداً به آن‌ها دسترسی داشته باشید"
+              action={
+                <Button asChild className="mt-4 bg-trader-500 hover:bg-trader-600">
+                  <Link to="/content">مشاهده محتوا</Link>
+                </Button>
+              }
+            />
           ) : (
             <>
               {activeCategory === "courses" ? (
