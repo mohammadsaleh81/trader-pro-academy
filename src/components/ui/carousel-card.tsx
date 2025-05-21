@@ -24,7 +24,7 @@ const CarouselCard: React.FC<CarouselCardProps> = ({
 }) => {
   return (
     <Carousel 
-      className={cn("w-full touch-pan-x", className)}
+      className={cn("w-full", className)}
       opts={{
         dragFree: true,
         loop: true,
@@ -46,15 +46,17 @@ const CarouselCard: React.FC<CarouselCardProps> = ({
         <>
           <CarouselPrevious 
             className={cn(
-              "-left-3 md:-left-5 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center", 
+              "-left-3 md:-left-5 min-w-[44px] min-h-[44px] flex items-center justify-center", 
               controlsClassName
             )} 
+            style={{ touchAction: "manipulation" }}
           />
           <CarouselNext 
             className={cn(
-              "-right-3 md:-right-5 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center", 
+              "-right-3 md:-right-5 min-w-[44px] min-h-[44px] flex items-center justify-center", 
               controlsClassName
             )} 
+            style={{ touchAction: "manipulation" }}
           />
         </>
       )}

@@ -111,11 +111,13 @@
   }
   
   .trader-btn-primary {
-    @apply bg-trader-500 text-white py-2 px-4 rounded-md hover:bg-trader-600 transition-colors duration-200 font-medium touch-manipulation min-h-[44px] min-w-[44px];
+    @apply bg-trader-500 text-white py-2 px-4 rounded-md hover:bg-trader-600 transition-colors duration-200 font-medium min-h-[44px] min-w-[44px];
+    touch-action: manipulation;
   }
   
   .trader-btn-outline {
-    @apply border border-trader-500 text-trader-500 py-2 px-4 rounded-md hover:bg-trader-50 transition-colors duration-200 font-medium touch-manipulation min-h-[44px] min-w-[44px];
+    @apply border border-trader-500 text-trader-500 py-2 px-4 rounded-md hover:bg-trader-50 transition-colors duration-200 font-medium min-h-[44px] min-w-[44px];
+    touch-action: manipulation;
   }
   
   .trader-input {
@@ -123,7 +125,8 @@
   }
   
   .progress-bar {
-    @apply h-2 bg-gray-200 rounded-full overflow-hidden touch-manipulation;
+    @apply h-2 bg-gray-200 rounded-full overflow-hidden;
+    touch-action: manipulation;
   }
   
   .progress-value {
@@ -153,7 +156,8 @@
   }
   
   .btn-click {
-    @apply transition-transform duration-100 touch-manipulation;
+    @apply transition-transform duration-100;
+    touch-action: manipulation;
   }
   
   .btn-click:active {
@@ -176,6 +180,6 @@
   
   /* Touch optimization utility */
   .touch-manipulation {
-    @apply touch-manipulation;
+    touch-action: manipulation;
   }
 }
