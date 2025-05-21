@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from "react";
 
 // Course Types
@@ -93,15 +92,32 @@ export type Bookmark = {
   createdAt: string;
 };
 
+// Transaction Type for Wallet
+export type Transaction = {
+  id: string;
+  amount: number;
+  type: "deposit" | "withdrawal" | "purchase";
+  description: string;
+  date: string;
+};
+
+// Wallet Type
+export type Wallet = {
+  balance: number;
+  transactions: Transaction[];
+};
+
 // Context Type
 interface DataContextType {
   courses: Course[];
+  myCourses: Course[];
   articles: Article[];
   podcasts: Podcast[];
   videos: Video[];
   webinars: Webinar[];
   files: File[];
   bookmarks: Bookmark[];
+  wallet: Wallet;
   addBookmark: (itemId: string, itemType: ItemType, userId: string) => void;
   removeBookmark: (id: string) => void;
 }
@@ -296,54 +312,161 @@ const mockWebinars: Webinar[] = [
     id: "1",
     title: "وبینار زنده: تحلیل بازار کریپتو",
     description: "در این وبینار به تحلیل زنده بازار کریپتو می‌پردازیم",
-    thumbnail: "https://images.unsplash.com/photo-1591115765373-5207764f72e7?q=80I'll implement the design style from your uploaded images to create a similar look and feel for the Mr. Trader Academy platform. I'll fix the current build error first and then enhance the design.
+    thumbnail: "https://images.unsplash.com/photo-1591115765373-5207764f72e7?q=80&w=2070&auto=format&fit=crop",
+    videoUrl: "/webinars/1.mp4",
+    author: "مستر تریدر",
+    date: "1402/04/15",
+    duration: "60 دقیقه",
+    tags: ["کریپتو", "تحلیل بازار"],
+    isLive: true,
+    startTime: "1402/04/15 18:00"
+  },
+  {
+    id: "2",
+    title: "وبینار آموزشی: اصول سرمایه‌گذاری بلندمدت",
+    description: "در این وبینار اصول و استراتژی‌های سرمایه‌گذاری بلندمدت را بررسی می‌کنیم",
+    thumbnail: "https://images.unsplash.com/photo-1642543348745-235244227c2d?q=80&w=2070&auto=format&fit=crop",
+    videoUrl: "/webinars/2.mp4",
+    author: "علی رضایی",
+    date: "1402/03/25",
+    duration: "45 دقیقه",
+    tags: ["سرمایه‌گذاری", "بلندمدت"],
+    isLive: false,
+    startTime: "1402/03/25 17:00"
+  }
+];
 
-<lov-code>
-Let's start by fixing the build error in BookmarksPage.tsx and then implement the design inspired by the uploaded images:
+const mockFiles: File[] = [
+  {
+    id: "1",
+    title: "راهنمای کامل تحلیل تکنیکال",
+    description: "کتاب الکترونیکی جامع برای یادگیری تحلیل تکنیکال",
+    thumbnail: "https://images.unsplash.com/photo-1618044733300-9472054094ee?q=80&w=2071&auto=format&fit=crop",
+    fileUrl: "/files/technical-analysis-guide.pdf",
+    author: "مستر تریدر",
+    date: "1402/02/10",
+    fileSize: "2.5 MB",
+    fileType: "PDF",
+    tags: ["تحلیل تکنیکال", "آموزش"]
+  },
+  {
+    id: "2",
+    title: "قالب اکسل برای ردیابی معاملات",
+    description: "یک قالب اکسل برای ثبت و تحلیل معاملات شما",
+    thumbnail: "https://images.unsplash.com/photo-1633613286991-611fe299c4be?q=80&w=2070&auto=format&fit=crop",
+    fileUrl: "/files/trading-tracker.xlsx",
+    author: "سارا محمدی",
+    date: "1402/01/15",
+    fileSize: "1.2 MB",
+    fileType: "XLSX",
+    tags: ["اکسل", "ردیابی معاملات"]
+  }
+];
 
-First, let's fix the type error in BookmarksPage.tsx:
-<lov-write file_path="src/components/ui/carousel-card.tsx">
-import React from "react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { cn } from "@/lib/utils";
+const mockBookmarks: Bookmark[] = [
+  {
+    id: "1",
+    itemId: "1",
+    itemType: "course",
+    userId: "user1",
+    createdAt: "2023-05-01"
+  },
+  {
+    id: "2",
+    itemId: "1",
+    itemType: "article",
+    userId: "user1",
+    createdAt: "2023-05-02"
+  }
+];
 
-type CarouselCardProps = {
-  children: React.ReactNode;
-  className?: string;
-  controlsClassName?: string;
-  showControls?: boolean;
+const mockWallet: Wallet = {
+  balance: 1850000,
+  transactions: [
+    {
+      id: "1",
+      amount: 1000000,
+      type: "deposit",
+      description: "شارژ کیف پول",
+      date: "1402/03/10"
+    },
+    {
+      id: "2",
+      amount: 1200000,
+      type: "purchase",
+      description: "خرید دوره آموزش ترید و تحلیل تکنیکال",
+      date: "1402/03/12"
+    },
+    {
+      id: "3",
+      amount: 2000000,
+      type: "deposit",
+      description: "شارژ کیف پول",
+      date: "1402/03/20"
+    },
+    {
+      id: "4",
+      amount: 50000,
+      type: "withdrawal",
+      description: "برداشت وجه",
+      date: "1402/03/25"
+    }
+  ]
 };
 
-const CarouselCard: React.FC<CarouselCardProps> = ({
-  children,
-  className,
-  controlsClassName,
-  showControls = true
-}) => {
+// Data Provider Component
+export const DataProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
+  const [courses] = useState<Course[]>(mockCourses);
+  const [myCourses] = useState<Course[]>(mockCourses.slice(0, 2)); // User's purchased courses
+  const [articles] = useState<Article[]>(mockArticles);
+  const [podcasts] = useState<Podcast[]>(mockPodcasts);
+  const [videos] = useState<Video[]>(mockVideos);
+  const [webinars] = useState<Webinar[]>(mockWebinars);
+  const [files] = useState<File[]>(mockFiles);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>(mockBookmarks);
+  const [wallet] = useState<Wallet>(mockWallet);
+
+  const addBookmark = (itemId: string, itemType: ItemType, userId: string) => {
+    const newBookmark: Bookmark = {
+      id: Date.now().toString(),
+      itemId,
+      itemType,
+      userId,
+      createdAt: new Date().toISOString(),
+    };
+    setBookmarks([...bookmarks, newBookmark]);
+  };
+
+  const removeBookmark = (id: string) => {
+    setBookmarks(bookmarks.filter(bookmark => bookmark.id !== id));
+  };
+
   return (
-    <Carousel className={cn("w-full", className)}>
-      <CarouselContent>
-        {React.Children.map(children, (child, index) => (
-          <CarouselItem key={index}>
-            {child}
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-      
-      {showControls && (
-        <>
-          <CarouselPrevious className={cn("-left-3 md:-left-5", controlsClassName)} />
-          <CarouselNext className={cn("-right-3 md:-right-5", controlsClassName)} />
-        </>
-      )}
-    </Carousel>
+    <DataContext.Provider
+      value={{
+        courses,
+        myCourses,
+        articles,
+        podcasts,
+        videos,
+        webinars,
+        files,
+        bookmarks,
+        wallet,
+        addBookmark,
+        removeBookmark,
+      }}
+    >
+      {children}
+    </DataContext.Provider>
   );
 };
 
-export default CarouselCard;
+// Custom Hook for using the context
+export const useData = () => {
+  const context = useContext(DataContext);
+  if (context === undefined) {
+    throw new Error("useData must be used within a DataProvider");
+  }
+  return context;
+};
