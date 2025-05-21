@@ -33,6 +33,24 @@ const Layout: React.FC<LayoutProps> = ({
     }
   }, [initialLoading]);
 
+  // Add touch optimizations
+  useEffect(() => {
+    // Increase active/focus states for touch devices
+    if (isMobile) {
+      document.documentElement.classList.add('touch-device');
+      
+      // Prevent double-tap zoom on interactive elements
+      const interactiveElements = document.querySelectorAll('button, a, input, select, textarea');
+      interactiveElements.forEach(el => {
+        el.addEventListener('touchend', (e) => e.preventDefault(), { passive: true });
+      });
+    }
+    
+    return () => {
+      document.documentElement.classList.remove('touch-device');
+    };
+  }, [isMobile]);
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50" dir="rtl">
       <Header />

@@ -76,6 +76,14 @@
   }
   body {
     @apply bg-background text-foreground font-vazirmatn;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Touch Device Optimizations */
+  .touch-device button:active,
+  .touch-device a:active,
+  .touch-device [role="button"]:active {
+    @apply scale-95 transition-transform duration-100;
   }
   
   /* RTL Support */
@@ -85,6 +93,11 @@
   
   html[dir="ltr"] {
     @apply font-montserrat;
+  }
+
+  /* Improved focus states for keyboard navigation */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-trader-500;
   }
 }
 
@@ -98,19 +111,19 @@
   }
   
   .trader-btn-primary {
-    @apply bg-trader-500 text-white py-2 px-4 rounded-md hover:bg-trader-600 transition-colors duration-200 font-medium;
+    @apply bg-trader-500 text-white py-2 px-4 rounded-md hover:bg-trader-600 transition-colors duration-200 font-medium touch-manipulation min-h-[44px] min-w-[44px];
   }
   
   .trader-btn-outline {
-    @apply border border-trader-500 text-trader-500 py-2 px-4 rounded-md hover:bg-trader-50 transition-colors duration-200 font-medium;
+    @apply border border-trader-500 text-trader-500 py-2 px-4 rounded-md hover:bg-trader-50 transition-colors duration-200 font-medium touch-manipulation min-h-[44px] min-w-[44px];
   }
   
   .trader-input {
-    @apply w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-trader-500 focus:border-transparent;
+    @apply w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-trader-500 focus:border-transparent min-h-[44px];
   }
   
   .progress-bar {
-    @apply h-2 bg-gray-200 rounded-full overflow-hidden;
+    @apply h-2 bg-gray-200 rounded-full overflow-hidden touch-manipulation;
   }
   
   .progress-value {
@@ -140,7 +153,7 @@
   }
   
   .btn-click {
-    @apply transition-transform duration-100;
+    @apply transition-transform duration-100 touch-manipulation;
   }
   
   .btn-click:active {
@@ -154,5 +167,15 @@
   /* Page transitions */
   .page-transition {
     @apply animate-fade-in;
+  }
+  
+  /* Ripple effect container */
+  .ripple-container {
+    @apply relative overflow-hidden;
+  }
+  
+  /* Touch optimization utility */
+  .touch-manipulation {
+    @apply touch-manipulation;
   }
 }

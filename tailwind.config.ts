@@ -104,6 +104,10 @@ export default {
                 'pulse-once': {
                     '0%, 100%': { transform: 'scale(1)' },
                     '50%': { transform: 'scale(1.05)' },
+                },
+                'ripple': {
+                    '0%': { transform: 'scale(0)', opacity: '0.6' },
+                    '100%': { transform: 'scale(4)', opacity: '0' }
                 }
 			},
 			animation: {
@@ -113,6 +117,7 @@ export default {
                 'slide-in': 'slide-in 0.3s ease-out forwards',
                 'scale-in': 'scale-in 0.2s ease-out forwards',
                 'pulse-once': 'pulse-once 0.3s ease-in-out',
+                'ripple': 'ripple 0.6s linear forwards'
 			},
 			fontFamily: {
 				vazirmatn: ['Vazirmatn', 'sans-serif'],
