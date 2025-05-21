@@ -8,6 +8,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { DataProvider } from "./contexts/DataContext";
 import HomePage from "./pages/HomePage";
 import ContentHubPage from "./pages/ContentHubPage";
+import ContentDetailPage from "./pages/ContentDetailPage";
 import MyCoursesPage from "./pages/MyCoursesPage";
 import BookmarksPage from "./pages/BookmarksPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -31,6 +32,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/content" element={<ContentHubPage />} />
+              <Route path="/:type/:id" element={<ContentDetailPage />} />
               <Route path="/my-courses" element={<MyCoursesPage />} />
               <Route path="/bookmarks" element={<BookmarksPage />} />
               <Route path="/profile" element={<ProfilePage />} />

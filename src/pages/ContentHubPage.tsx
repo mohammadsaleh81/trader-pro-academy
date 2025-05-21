@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import Layout from "@/components/layout/Layout";
-import ContentList from "@/components/content/ContentList";
+import ContentListWithLinks from "@/components/content/ContentListWithLinks";
 import { useData } from "@/contexts/DataContext";
 
 type ContentTab = "articles" | "podcasts" | "videos" | "webinars" | "files";
@@ -45,23 +45,23 @@ const ContentHubPage: React.FC = () => {
         {/* Content */}
         <div className="mt-6">
           {activeTab === "articles" && (
-            <ContentList items={articles} type="article" />
+            <ContentListWithLinks items={articles} type="article" />
           )}
           
           {activeTab === "podcasts" && (
-            <ContentList items={podcasts} type="podcast" />
+            <ContentListWithLinks items={podcasts} type="podcast" />
           )}
           
           {activeTab === "videos" && (
-            <ContentList items={videos} type="video" />
+            <ContentListWithLinks items={videos} type="video" />
           )}
           
           {activeTab === "webinars" && (
-            <ContentList items={webinars} type="webinar" />
+            <ContentListWithLinks items={webinars} type="webinar" />
           )}
           
           {activeTab === "files" && (
-            <ContentList items={files} type="file" />
+            <ContentListWithLinks items={files} type="file" />
           )}
         </div>
       </div>
