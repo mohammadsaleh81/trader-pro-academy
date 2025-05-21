@@ -19,14 +19,16 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div className={cn("flex flex-col items-center justify-center py-12 px-4 text-center bg-white rounded-xl shadow-sm", className)}>
-      <div className="text-gray-300 mb-4">
+      <div className="text-gray-300 mb-4 animate-pulse-once">
         {icon}
       </div>
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
+      <h3 className="text-lg font-semibold mb-2 scale-in">{title}</h3>
       {description && (
-        <p className="text-sm text-gray-500 mb-4 max-w-md">{description}</p>
+        <p className="text-sm text-gray-500 mb-4 max-w-md fade-in">{description}</p>
       )}
-      {action}
+      <div className="scale-in" style={{ animationDelay: '200ms' }}>
+        {action}
+      </div>
     </div>
   );
 };

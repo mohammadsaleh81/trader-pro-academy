@@ -26,9 +26,9 @@ const MyCoursesPage: React.FC = () => {
   if (!user) {
     return (
       <Layout>
-        <div className="trader-container py-12 text-center">
+        <div className="trader-container py-12 text-center fade-in">
           <h2 className="text-xl font-bold mb-4">برای مشاهده دوره‌های خود ابتدا وارد شوید</h2>
-          <Link to="/login" className="trader-btn-primary">
+          <Link to="/login" className="trader-btn-primary btn-click">
             ورود به حساب کاربری
           </Link>
         </div>
@@ -39,23 +39,27 @@ const MyCoursesPage: React.FC = () => {
   return (
     <Layout>
       <div className="trader-container py-6">
-        <h1 className="text-2xl font-bold mb-6">دوره‌های من</h1>
+        <h1 className="text-2xl font-bold mb-6 fade-in">دوره‌های من</h1>
         
         {isLoading ? (
           <CourseList courses={[]} isLoading={true} showProgress skeletonCount={8} />
         ) : myCourses.length > 0 ? (
-          <CourseList courses={myCourses} showProgress />
+          <div className="fade-in">
+            <CourseList courses={myCourses} showProgress />
+          </div>
         ) : (
-          <EmptyState
-            icon={<BookOpen className="h-16 w-16" />}
-            title="هنوز در دوره‌ای ثبت‌نام نکرده‌اید"
-            description="از بین دوره‌های متنوع ما، دوره‌های مورد علاقه خود را انتخاب کنید"
-            action={
-              <Button asChild className="mt-4 bg-trader-500 hover:bg-trader-600">
-                <Link to="/">مشاهده دوره‌ها</Link>
-              </Button>
-            }
-          />
+          <div className="scale-in">
+            <EmptyState
+              icon={<BookOpen className="h-16 w-16" />}
+              title="هنوز در دوره‌ای ثبت‌نام نکرده‌اید"
+              description="از بین دوره‌های متنوع ما، دوره‌های مورد علاقه خود را انتخاب کنید"
+              action={
+                <Button asChild className="mt-4 bg-trader-500 hover:bg-trader-600 btn-click">
+                  <Link to="/">مشاهده دوره‌ها</Link>
+                </Button>
+              }
+            />
+          </div>
         )}
       </div>
     </Layout>

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
@@ -7,6 +7,11 @@ import { Wallet, File, User, Bookmark, Calendar } from "lucide-react";
 
 const ProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!user) {
     return (
@@ -57,7 +62,7 @@ const ProfilePage: React.FC = () => {
   return (
     <Layout>
       <div className="trader-container py-6">
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6 scale-in">
           <div className="flex items-center">
             <div className="w-20 h-20 rounded-full overflow-hidden ml-4">
               <img
@@ -78,7 +83,13 @@ const ProfilePage: React.FC = () => {
             <Link
               key={index}
               to={item.path}
-              className="bg-white rounded-xl shadow-md p-4 flex items-center hover:shadow-lg transition-shadow"
+              className={`bg-white rounded-xl shadow-md p-4 flex items-center hover:shadow-lg transition-all duration-300 hover:bg-gray-50 ${
+                mounted ? "opacity-0 animate-slide-in" : ""
+              }`}
+              style={{ 
+                animationDelay: mounted ? `${index * 100}ms` : '0ms',
+                animationFillMode: "forwards" 
+              }}
             >
               <div className="w-10 h-10 rounded-full bg-trader-50 text-trader-500 flex items-center justify-center ml-4">
                 {item.icon}
@@ -92,7 +103,7 @@ const ProfilePage: React.FC = () => {
           
           <button
             onClick={() => logout()}
-            className="mt-4 w-full py-3 border border-red-500 text-red-500 rounded-xl font-medium hover:bg-red-50 transition-colors"
+            className="mt-4 w-full py-3 border border-red-500 text-red-500 rounded-xl font-medium hover:bg-red-50 transition-colors duration-200 btn-click"
           >
             خروج از حساب کاربری
           </button>

@@ -116,4 +116,43 @@
   .progress-value {
     @apply h-full bg-trader-500 transition-all duration-300;
   }
+
+  /* Animation Classes */
+  .fade-in {
+    @apply animate-fade-in;
+  }
+  
+  .slide-in {
+    @apply animate-slide-in;
+  }
+  
+  .scale-in {
+    @apply animate-scale-in;
+  }
+  
+  /* Micro-interactions */
+  .bookmark-btn {
+    @apply transition-transform duration-200;
+  }
+  
+  .bookmark-btn:active {
+    @apply scale-125;
+  }
+  
+  .btn-click {
+    @apply transition-transform duration-100;
+  }
+  
+  .btn-click:active {
+    @apply scale-95;
+  }
+  
+  .tab-transition {
+    @apply transition-all duration-300;
+  }
+  
+  /* Page transitions */
+  .page-transition {
+    @apply animate-fade-in;
+  }
 }

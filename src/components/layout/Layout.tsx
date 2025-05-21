@@ -19,8 +19,11 @@ const Layout: React.FC<LayoutProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(initialLoading);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    
     if (initialLoading) {
       const timer = setTimeout(() => {
         setIsLoading(false);
@@ -40,7 +43,9 @@ const Layout: React.FC<LayoutProps> = ({
             <p className="text-lg font-medium text-gray-600">در حال بارگیری...</p>
           </div>
         ) : (
-          children
+          <div className={mounted ? "page-transition" : ""}>
+            {children}
+          </div>
         )}
       </main>
       <Footer />
