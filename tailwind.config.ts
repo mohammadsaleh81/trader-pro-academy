@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -52,16 +53,19 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
-				}
+				// Custom colors for Mr. Trader Academy
+				trader: {
+					50: '#FFF7ED',
+					100: '#FFEDD5',
+					200: '#FED7AA',
+					300: '#FDBA74',
+					400: '#FB923C',
+					500: '#F97316', // Primary orange
+					600: '#EA580C',
+					700: '#C2410C',
+					800: '#9A3412',
+					900: '#7C2D12',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -89,7 +93,11 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
+			},
+			fontFamily: {
+				vazirmatn: ['Vazirmatn', 'sans-serif'],
+				montserrat: ['Montserrat', 'sans-serif'],
+			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
