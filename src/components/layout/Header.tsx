@@ -15,8 +15,11 @@ const Header: React.FC = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <span className="text-xl font-bold text-trader-500">Mr. Trader</span>
-            <span className="text-sm text-gray-600 mr-1">Academy</span>
+            <img 
+              src="/lovable-uploads/970ac420-2fc4-450d-9177-b465e09c7857.png" 
+              alt="Mr. Trader Academy" 
+              className="h-10 w-auto"
+            />
           </Link>
 
           {/* Search and Actions */}
