@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from "react";
 
 // Course Types
@@ -138,6 +139,7 @@ interface DataContextType {
   removeBookmark: (id: string) => void;
   addComment: (comment: Omit<Comment, "id" | "date">) => void;
   enrollCourse: (courseId: string, userId: string) => void;
+  updateWallet: (newBalance: number, newTransactions: Transaction[]) => void;
 }
 
 // Create Context
@@ -464,7 +466,7 @@ const mockWallet: Wallet = {
 // Data Provider Component
 export const DataProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const [courses] = useState<Course[]>(mockCourses);
-  const [myCourses] = useState<Course[]>(mockCourses.slice(0, 2)); // User's purchased courses
+  const [myCourses, setMyCourses] = useState<Course[]>(mockCourses.slice(0, 2)); // User's purchased courses
   const [articles] = useState<Article[]>(mockArticles);
   const [podcasts] = useState<Podcast[]>(mockPodcasts);
   const [videos] = useState<Video[]>(mockVideos);
@@ -472,7 +474,7 @@ export const DataProvider: React.FC<{children: React.ReactNode}> = ({ children }
   const [files] = useState<File[]>(mockFiles);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(mockBookmarks);
   const [comments, setComments] = useState<Comment[]>(mockComments);
-  const [wallet] = useState<Wallet>(mockWallet);
+  const [wallet, setWallet] = useState<Wallet>(mockWallet);
 
   const addBookmark = (itemId: string, itemType: ItemType, userId: string) => {
     const newBookmark: Bookmark = {
@@ -499,9 +501,20 @@ export const DataProvider: React.FC<{children: React.ReactNode}> = ({ children }
   };
 
   const enrollCourse = (courseId: string, userId: string) => {
-    // In a real app, this would handle course enrollment and payment
-    // For now, we'll just log it
+    // Update the myCourses array with the purchased course
+    const course = courses.find(c => c.id === courseId);
+    if (course && !myCourses.some(c => c.id === courseId)) {
+      setMyCourses([...myCourses, course]);
+    }
     console.log(`User ${userId} enrolled in course ${courseId}`);
+  };
+
+  // New function to update wallet
+  const updateWallet = (newBalance: number, newTransactions: Transaction[]) => {
+    setWallet({
+      balance: newBalance,
+      transactions: newTransactions
+    });
   };
 
   return (
@@ -521,6 +534,7 @@ export const DataProvider: React.FC<{children: React.ReactNode}> = ({ children }
         removeBookmark,
         addComment,
         enrollCourse,
+        updateWallet,
       }}
     >
       {children}

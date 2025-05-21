@@ -1,21 +1,23 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { Star, Bookmark, BookmarkCheck, Clock, BarChart, User, FileText } from "lucide-react";
+import { Star, Bookmark, BookmarkCheck, Clock, BarChart, User, FileText, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { toast } from "@/hooks/use-toast";
 
 const CourseDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { courses, myCourses, bookmarks, addBookmark, removeBookmark, comments, addComment, enrollCourse } = useData();
+  const { courses, myCourses, bookmarks, addBookmark, removeBookmark, comments, addComment, enrollCourse, wallet, updateWallet } = useData();
   const { user } = useAuth();
   const [commentText, setCommentText] = useState("");
   const [rating, setRating] = useState(5);
+  const [isPurchaseDialogOpen, setIsPurchaseDialogOpen] = useState(false);
 
   const course = courses.find(c => c.id === id);
   const isEnrolled = myCourses.some(c => c.id === id);
@@ -102,6 +104,58 @@ const CourseDetailPage: React.FC = () => {
     enrollCourse(course.id, user.id);
   };
 
+  const handlePurchase = () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    if (course?.price === 0 || isEnrolled) {
+      // Free course or already enrolled
+      enrollCourse(course!.id, user.id);
+      navigate("/my-courses");
+      return;
+    }
+
+    // Paid course - open purchase dialog
+    setIsPurchaseDialogOpen(true);
+  };
+
+  const handleConfirmPurchase = () => {
+    if (!user || !course || !wallet) return;
+
+    if (wallet.balance < course.price) {
+      toast({
+        title: "خطا در خرید دوره",
+        description: "موجودی کیف پول شما کافی نیست. لطفاً ابتدا کیف پول خود را شارژ کنید.",
+        variant: "destructive",
+      });
+      setIsPurchaseDialogOpen(false);
+      navigate("/wallet");
+      return;
+    }
+
+    // Process purchase
+    const newTransaction = {
+      id: Date.now().toString(),
+      amount: course.price,
+      type: "purchase" as const,
+      description: `خرید دوره ${course.title}`,
+      date: new Date().toLocaleDateString("fa-IR"),
+    };
+
+    updateWallet(wallet.balance - course.price, [...wallet.transactions, newTransaction]);
+    enrollCourse(course.id, user.id);
+
+    toast({
+      title: "خرید موفق",
+      description: `دوره ${course.title} با موفقیت خریداری شد`,
+    });
+
+    setIsPurchaseDialogOpen(false);
+    navigate("/my-courses");
+  };
+
   const handleSubmitComment = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -130,6 +184,18 @@ const CourseDetailPage: React.FC = () => {
     "beginner": "مقدماتی",
     "intermediate": "متوسط",
     "advanced": "پیشرفته"
+  };
+
+  const getPurchaseButtonText = () => {
+    if (isEnrolled) {
+      return "مشاهده دوره";
+    }
+
+    if (course.price === 0) {
+      return "ثبت‌نام رایگان در دوره";
+    }
+
+    return "خرید دوره";
   };
 
   return (
@@ -368,21 +434,13 @@ const CourseDetailPage: React.FC = () => {
                     </div>
                   </div>
                   
-                  {isEnrolled ? (
-                    <Button
-                      className="w-full bg-trader-500 hover:bg-trader-600 py-3 mb-4"
-                      onClick={() => navigate("/my-courses")}
-                    >
-                      مشاهده دوره
-                    </Button>
-                  ) : (
-                    <Button
-                      className="w-full bg-trader-500 hover:bg-trader-600 py-3 mb-4"
-                      onClick={handleEnroll}
-                    >
-                      ثبت‌نام در دوره
-                    </Button>
-                  )}
+                  <Button
+                    className="w-full bg-trader-500 hover:bg-trader-600 py-3 mb-4 flex items-center justify-center"
+                    onClick={handlePurchase}
+                  >
+                    {!isEnrolled && <ShoppingCart className="ml-2 h-5 w-5" />}
+                    {getPurchaseButtonText()}
+                  </Button>
                   
                   <div className="text-center">
                     <p className="text-sm text-gray-500">
@@ -415,6 +473,47 @@ const CourseDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Purchase Confirmation Dialog */}
+      <Dialog open={isPurchaseDialogOpen} onOpenChange={setIsPurchaseDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>تأیید خرید دوره</DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="mb-4">
+              <h3 className="text-lg font-bold mb-2">{course.title}</h3>
+              <p className="text-gray-600">{course.instructor}</p>
+            </div>
+            
+            <div className="flex justify-between items-center border-t border-b py-3 my-4">
+              <span className="font-medium">قیمت دوره:</span>
+              <span className="font-bold text-trader-500">{course.price.toLocaleString()} تومان</span>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-500">مبلغ از کیف پول شما کسر خواهد شد.</p>
+              <p className="text-sm font-medium mt-2">
+                موجودی کیف پول: <span className="font-bold">{wallet?.balance.toLocaleString()} تومان</span>
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex justify-between sm:justify-between gap-2">
+            <Button type="button" variant="outline" onClick={() => setIsPurchaseDialogOpen(false)}>
+              انصراف
+            </Button>
+            <Button 
+              type="button"
+              onClick={handleConfirmPurchase}
+              disabled={!wallet || wallet.balance < course.price}
+            >
+              تأیید و پرداخت
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
