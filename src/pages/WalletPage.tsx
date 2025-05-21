@@ -1,14 +1,60 @@
 
-import React from "react";
+import React, { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { Plus, Minus, ShoppingCart } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const withdrawalSchema = z.object({
+  amount: z
+    .number()
+    .min(10000, "حداقل مبلغ برداشت ۱۰,۰۰۰ تومان است")
+    .max(100000000, "حداکثر مبلغ برداشت ۱۰۰,۰۰۰,۰۰۰ تومان است"),
+});
+
+type WithdrawalFormValues = z.infer<typeof withdrawalSchema>;
 
 const WalletPage: React.FC = () => {
   const { wallet } = useData();
   const { user } = useAuth();
+  const [isWithdrawalDialogOpen, setIsWithdrawalDialogOpen] = useState(false);
+
+  const form = useForm<WithdrawalFormValues>({
+    resolver: zodResolver(withdrawalSchema),
+    defaultValues: {
+      amount: 0,
+    },
+  });
+
+  const handleWithdrawal = (values: WithdrawalFormValues) => {
+    if (values.amount > wallet?.balance) {
+      toast({
+        title: "خطا در برداشت",
+        description: "مبلغ درخواستی بیشتر از موجودی شما است",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // In a real app, this would be an API call to process the withdrawal
+    console.log("Processing withdrawal:", values);
+    
+    toast({
+      title: "برداشت موفق",
+      description: `مبلغ ${values.amount.toLocaleString()} تومان با موفقیت برداشت شد`,
+    });
+    
+    setIsWithdrawalDialogOpen(false);
+    form.reset();
+  };
 
   if (!user) {
     return (
@@ -74,7 +120,10 @@ const WalletPage: React.FC = () => {
               <Plus className="h-5 w-5 ml-1" />
               افزایش موجودی
             </button>
-            <button className="flex-1 trader-btn-outline flex items-center justify-center">
+            <button 
+              className="flex-1 trader-btn-outline flex items-center justify-center"
+              onClick={() => setIsWithdrawalDialogOpen(true)}
+            >
               <Minus className="h-5 w-5 ml-1" />
               برداشت
             </button>
@@ -108,6 +157,52 @@ const WalletPage: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* Withdrawal Dialog */}
+        <Dialog open={isWithdrawalDialogOpen} onOpenChange={setIsWithdrawalDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>برداشت از کیف پول</DialogTitle>
+            </DialogHeader>
+            
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleWithdrawal)} className="space-y-4 py-4">
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>مبلغ (تومان)</FormLabel>
+                      <FormControl>
+                        <input
+                          type="number"
+                          className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trader-500"
+                          placeholder="مبلغ مورد نظر را وارد کنید"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <p className="text-sm text-gray-500">موجودی فعلی: {wallet.balance.toLocaleString()} تومان</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <DialogFooter className="flex justify-between sm:justify-between gap-2">
+                  <Button type="button" variant="outline" onClick={() => setIsWithdrawalDialogOpen(false)}>
+                    انصراف
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={!form.formState.isValid || form.getValues().amount > wallet.balance}
+                  >
+                    تایید برداشت
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
