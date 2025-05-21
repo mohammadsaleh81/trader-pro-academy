@@ -15,6 +15,7 @@ import WalletPage from "./pages/WalletPage";
 import LoginPage from "./pages/LoginPage";
 import CompleteProfilePage from "./pages/CompleteProfilePage";
 import CourseDetailPage from "./pages/CourseDetailPage";
+import CourseListPage from "./pages/CourseListPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/wallet" element={<WalletPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/complete-profile" element={<CompleteProfilePage />} />
+              <Route path="/courses" element={<CourseListPage />} />
               <Route path="/courses/:id" element={<CourseDetailPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
