@@ -11,7 +11,7 @@ const Header: React.FC = () => {
 
   return (
     <header className="bg-white py-3 px-4 shadow-sm sticky top-0 z-40">
-      <div className="trader-container">
+      <div className="max-w-[500px] mx-auto">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center">

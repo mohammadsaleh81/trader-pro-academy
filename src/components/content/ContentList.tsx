@@ -1,4 +1,3 @@
-
 import React from "react";
 import ContentCard from "./ContentCard";
 import { Link } from "react-router-dom";
@@ -27,7 +26,7 @@ const ContentList = <T extends ContentItem>({
   viewAllLink 
 }: ContentListProps<T>) => {
   return (
-    <div className="my-6">
+    <div className="my-6 px-3">
       {title && (
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center">

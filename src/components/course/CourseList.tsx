@@ -1,4 +1,3 @@
-
 import React from "react";
 import CourseCard from "./CourseCard";
 import { Course } from "@/contexts/DataContext";
@@ -18,7 +17,7 @@ const CourseList: React.FC<CourseListProps> = ({
   className
 }) => {
   return (
-    <div className={cn("my-4", className)}>
+    <div className={cn("my-4 px-3", className)}>
       {title && (
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">{title}</h2>
@@ -30,7 +29,7 @@ const CourseList: React.FC<CourseListProps> = ({
         </div>
       )}
       
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         {courses.map((course, index) => (
           <CourseCard
             key={course.id}
