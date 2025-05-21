@@ -63,6 +63,18 @@ const ContentCard: React.FC<ContentCardProps> = ({
     }
   };
 
+  // Mapping for content type labels in Persian
+  const getTypeLabel = () => {
+    switch (type) {
+      case "article": return "مقاله";
+      case "podcast": return "پادکست";
+      case "video": return "ویدیو";
+      case "webinar": return "وبینار";
+      case "file": return "فایل";
+      default: return type;
+    }
+  };
+
   return (
     <Link to={getContentUrl()}>
       <div className="trader-card flex h-full overflow-hidden">
@@ -76,11 +88,7 @@ const ContentCard: React.FC<ContentCardProps> = ({
         <div className="w-2/3 p-3 flex flex-col relative">
           <div className="flex justify-between">
             <span className="text-xs text-trader-500 font-medium mb-1">
-              {type === "article" && "مقاله"}
-              {type === "podcast" && "پادکست"}
-              {type === "video" && "ویدیو"}
-              {type === "webinar" && "وبینار"}
-              {type === "file" && "فایل"}
+              {getTypeLabel()}
             </span>
             <span className="text-xs text-gray-500">{date}</span>
           </div>

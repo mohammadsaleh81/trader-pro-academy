@@ -11,6 +11,7 @@ type CourseCardProps = {
   price: number;
   rating: number;
   progress?: number;
+  isFree?: boolean;
 };
 
 const CourseCard: React.FC<CourseCardProps> = ({
@@ -20,12 +21,13 @@ const CourseCard: React.FC<CourseCardProps> = ({
   thumbnail,
   price,
   rating,
-  progress
+  progress,
+  isFree = false
 }) => {
   return (
     <Link to={`/courses/${id}`}>
       <div className="trader-card h-full flex flex-col">
-        <div className="relative h-40 w-full">
+        <div className="relative h-44 w-full">
           <img
             src={thumbnail}
             alt={title}
@@ -42,16 +44,16 @@ const CourseCard: React.FC<CourseCardProps> = ({
             </div>
           )}
         </div>
-        <div className="p-4 flex-1 flex flex-col">
-          <h3 className="font-bold text-base line-clamp-2 mb-2">{title}</h3>
-          <p className="text-gray-600 text-sm mb-2">مدرس: {instructor}</p>
-          <div className="flex items-center mt-auto justify-between">
+        <div className="p-3 flex-1 flex flex-col">
+          <h3 className="font-bold text-sm line-clamp-2 mb-1">{title}</h3>
+          <p className="text-gray-600 text-xs mb-2">مدرس: {instructor}</p>
+          <div className="mt-auto flex items-center justify-between">
             <div className="flex items-center">
-              <Star className="h-4 w-4 text-yellow-500 ml-1" />
-              <span className="text-sm font-medium">{rating}</span>
+              <Star className="h-3.5 w-3.5 text-yellow-500 ml-1" />
+              <span className="text-xs font-medium">{rating}</span>
             </div>
-            <p className="font-bold text-trader-500">
-              {price.toLocaleString()} تومان
+            <p className={`font-bold ${isFree ? "text-green-600" : "text-trader-500"} text-sm`}>
+              {isFree ? "رایگان" : `${price.toLocaleString()} تومان`}
             </p>
           </div>
         </div>

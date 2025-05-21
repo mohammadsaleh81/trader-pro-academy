@@ -2,20 +2,23 @@
 import React from "react";
 import CourseCard from "./CourseCard";
 import { Course } from "@/contexts/DataContext";
+import { cn } from "@/lib/utils";
 
 type CourseListProps = {
   courses: Course[];
   title?: string;
   showProgress?: boolean;
+  className?: string;
 };
 
 const CourseList: React.FC<CourseListProps> = ({ 
   courses, 
   title, 
-  showProgress = false 
+  showProgress = false,
+  className
 }) => {
   return (
-    <div className="my-6">
+    <div className={cn("my-4", className)}>
       {title && (
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">{title}</h2>
@@ -27,8 +30,8 @@ const CourseList: React.FC<CourseListProps> = ({
         </div>
       )}
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {courses.map((course) => (
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {courses.map((course, index) => (
           <CourseCard
             key={course.id}
             id={course.id}
@@ -37,6 +40,7 @@ const CourseList: React.FC<CourseListProps> = ({
             thumbnail={course.thumbnail}
             price={course.price}
             rating={course.rating}
+            isFree={index % 3 === 0} // Just for demo purposes to show some free courses
             progress={showProgress && course.completedLessons !== undefined 
               ? Math.round((course.completedLessons / course.totalLessons) * 100) 
               : undefined}

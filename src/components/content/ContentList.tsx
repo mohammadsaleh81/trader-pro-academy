@@ -1,6 +1,8 @@
 
 import React from "react";
 import ContentCard from "./ContentCard";
+import { Link } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
 import { 
   Article, 
   Podcast, 
@@ -13,6 +15,7 @@ type ContentListProps<T> = {
   items: T[];
   type: "article" | "podcast" | "video" | "webinar" | "file";
   title?: string;
+  viewAllLink?: string;
 };
 
 type ContentItem = Article | Podcast | Video | Webinar | FileType;
@@ -20,17 +23,22 @@ type ContentItem = Article | Podcast | Video | Webinar | FileType;
 const ContentList = <T extends ContentItem>({ 
   items, 
   type, 
-  title 
+  title,
+  viewAllLink 
 }: ContentListProps<T>) => {
   return (
     <div className="my-6">
       {title && (
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">{title}</h2>
-          {items.length > 3 && (
-            <a href="#" className="text-trader-500 text-sm">
-              مشاهده همه
-            </a>
+          <div className="flex items-center">
+            <span className="w-1 h-6 bg-trader-500 rounded-sm ml-2"></span>
+            <h2 className="text-xl font-bold">{title}</h2>
+          </div>
+          {items.length > 3 && viewAllLink && (
+            <Link to={viewAllLink} className="text-trader-500 text-sm flex items-center">
+              <span>مشاهده همه</span>
+              <ChevronLeft className="h-4 w-4 mr-1" />
+            </Link>
           )}
         </div>
       )}

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Bookmark, Calendar, FileText, Headphones, Home, User, Video } from "lucide-react";
+import { Bookmark, Home, User, FileText, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MobileNavigation: React.FC = () => {
@@ -43,7 +43,7 @@ const MobileNavigation: React.FC = () => {
             isActive("/my-courses") ? "text-trader-500" : "text-gray-500"
           )}
         >
-          <Calendar className="h-5 w-5 mb-1" />
+          <Video className="h-5 w-5 mb-1" />
           <span>دوره‌های من</span>
         </Link>
         

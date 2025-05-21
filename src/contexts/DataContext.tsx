@@ -1,431 +1,349 @@
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 
-// Define course type
+// Course Types
 export type Course = {
   id: string;
   title: string;
-  description: string;
   instructor: string;
   thumbnail: string;
+  description: string;
   price: number;
   rating: number;
-  totalLessons: number;
+  totalLessons?: number;
   completedLessons?: number;
+  createdAt: string;
+  updatedAt: string;
   categories: string[];
-  duration: string;
-  level: "beginner" | "intermediate" | "advanced";
 };
 
-// Define content types
-export type ContentItem = {
+// Content Types
+export type Article = {
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  thumbnail: string;
+  author: string;
+  date: string;
+  readTime: string;
+  tags: string[];
+};
+
+export type Podcast = {
   id: string;
   title: string;
   description: string;
   thumbnail: string;
-  date: string;
-  category: string;
+  audioUrl: string;
   author: string;
-};
-
-export type Article = ContentItem;
-export type Podcast = ContentItem & { duration: string };
-export type Video = ContentItem & { duration: string };
-export type Webinar = ContentItem & { 
-  startDate: string;
+  date: string;
   duration: string;
-  isLive: boolean;
+  tags: string[];
 };
-export type File = ContentItem & { fileSize: string; fileType: string; };
 
-// Define bookmark type
+export type Video = {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  videoUrl: string;
+  author: string;
+  date: string;
+  duration: string;
+  tags: string[];
+};
+
+export type Webinar = {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  videoUrl: string;
+  author: string;
+  date: string;
+  duration: string;
+  tags: string[];
+  isLive: boolean;
+  startTime: string;
+};
+
+export type File = {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  fileUrl: string;
+  author: string;
+  date: string;
+  fileSize: string;
+  fileType: string;
+  tags: string[];
+};
+
+// Item Types for bookmarks
+export type ItemType = "article" | "podcast" | "video" | "webinar" | "file" | "course";
+
+// Bookmark Type
 export type Bookmark = {
   id: string;
   itemId: string;
-  itemType: "course" | "article" | "podcast" | "video" | "webinar" | "file";
+  itemType: ItemType;
   userId: string;
-  dateAdded: string;
+  createdAt: string;
 };
 
-// Define comment type
-export type Comment = {
-  id: string;
-  itemId: string;
-  itemType: "course" | "article" | "podcast" | "video" | "webinar" | "file";
-  userId: string;
-  userName: string;
-  userAvatar?: string;
-  content: string;
-  rating?: number;
-  date: string;
-};
-
-// Define wallet type
-export type Wallet = {
-  id: string;
-  userId: string;
-  balance: number;
-  transactions: Transaction[];
-};
-
-export type Transaction = {
-  id: string;
-  walletId: string;
-  amount: number;
-  type: "deposit" | "withdrawal" | "purchase";
-  description: string;
-  date: string;
-};
-
-type DataContextType = {
+// Context Type
+interface DataContextType {
   courses: Course[];
-  myCourses: Course[];
   articles: Article[];
   podcasts: Podcast[];
   videos: Video[];
   webinars: Webinar[];
   files: File[];
   bookmarks: Bookmark[];
-  comments: Comment[];
-  wallet: Wallet | null;
-  addBookmark: (itemId: string, itemType: Bookmark["itemType"], userId: string) => void;
+  addBookmark: (itemId: string, itemType: ItemType, userId: string) => void;
   removeBookmark: (id: string) => void;
-  addComment: (comment: Omit<Comment, "id" | "date">) => void;
-  enrollCourse: (courseId: string, userId: string) => void;
-  updateCourseProgress: (courseId: string, completedLessons: number) => void;
-};
+}
 
-// Mock data
+// Create Context
+const DataContext = createContext<DataContextType | undefined>(undefined);
+
+// Mock Data
 const mockCourses: Course[] = [
   {
     id: "1",
-    title: "مبانی تحلیل تکنیکال در بازار فارکس",
-    description: "آشنایی با اصول اولیه تحلیل تکنیکال و کاربرد آن در معاملات فارکس",
-    instructor: "استاد تریدر",
+    title: "آموزش ترید و تحلیل تکنیکال",
+    instructor: "مستر تریدر",
     thumbnail: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop",
+    description: "این دوره به شما اصول اولیه ترید و تحلیل تکنیکال را آموزش می‌دهد",
     price: 1200000,
-    rating: 4.7,
-    totalLessons: 12,
-    categories: ["فارکس", "تحلیل تکنیکال"],
-    duration: "24 ساعت",
-    level: "beginner"
+    rating: 4.8,
+    totalLessons: 24,
+    completedLessons: 12,
+    createdAt: "2023-01-15",
+    updatedAt: "2023-04-20",
+    categories: ["ترید", "تحلیل تکنیکال"]
   },
   {
     id: "2",
-    title: "استراتژی‌های پیشرفته معاملات ارزهای دیجیتال",
-    description: "یادگیری استراتژی‌های حرفه‌ای برای سرمایه‌گذاری موفق در ارزهای دیجیتال",
-    instructor: "دکتر کریپتو",
-    thumbnail: "https://images.unsplash.com/photo-1609554496796-c345a5335ceb?q=80&w=2069&auto=format&fit=crop",
+    title: "استراتژی‌های سرمایه‌گذاری در بازار کریپتو",
+    instructor: "سارا محمدی",
+    thumbnail: "https://images.unsplash.com/photo-1605792657660-596af9009e82?q=80&w=2071&auto=format&fit=crop",
+    description: "در این دوره با استراتژی‌های مختلف سرمایه‌گذاری در بازار کریپتو آشنا می‌شوید",
     price: 1500000,
-    rating: 4.9,
-    totalLessons: 15,
-    categories: ["ارز دیجیتال", "استراتژی"],
-    duration: "30 ساعت",
-    level: "advanced"
+    rating: 4.6,
+    totalLessons: 18,
+    completedLessons: 6,
+    createdAt: "2023-03-10",
+    updatedAt: "2023-05-15",
+    categories: ["کریپتو", "سرمایه‌گذاری"]
   },
   {
     id: "3",
-    title: "مدیریت سرمایه و ریسک در بازارهای مالی",
-    description: "آموزش تکنیک‌های حرفه‌ای مدیریت سرمایه و کنترل ریسک برای تریدرها",
-    instructor: "استاد مدیریت",
-    thumbnail: "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?q=80&w=2070&auto=format&fit=crop",
+    title: "مدیریت ریسک و سرمایه در ترید",
+    instructor: "علی رضایی",
+    thumbnail: "https://images.unsplash.com/photo-1633158829585-23ba8f7c8caf?q=80&w=2070&auto=format&fit=crop",
+    description: "مدیریت ریسک و سرمایه از مهم‌ترین فاکتورهای موفقیت در ترید است",
     price: 980000,
-    rating: 4.5,
-    totalLessons: 10,
-    categories: ["مدیریت سرمایه", "ریسک"],
-    duration: "18 ساعت",
-    level: "intermediate"
+    rating: 4.9,
+    totalLessons: 12,
+    completedLessons: 0,
+    createdAt: "2023-05-20",
+    updatedAt: "2023-06-01",
+    categories: ["ترید", "مدیریت ریسک"]
   },
   {
     id: "4",
-    title: "آشنایی با تحلیل بنیادی در بازار سهام",
-    description: "یادگیری اصول تحلیل بنیادی شرکت‌ها و کاربرد آن در سرمایه‌گذاری",
-    instructor: "استاد بنیادی",
-    thumbnail: "https://images.unsplash.com/photo-1612010167108-3e6b327405f0?q=80&w=2070&auto=format&fit=crop",
-    price: 1100000,
-    rating: 4.6,
-    totalLessons: 14,
-    categories: ["سهام", "تحلیل بنیادی"],
-    duration: "28 ساعت",
-    level: "beginner"
+    title: "آموزش فارکس از صفر تا صد",
+    instructor: "حسین محمودی",
+    thumbnail: "https://images.unsplash.com/photo-1642790551116-03a31b099176?q=80&w=2070&auto=format&fit=crop",
+    description: "در این دوره از صفر با بازار فارکس آشنا می‌شوید و اصول ترید در این بازار را می‌آموزید",
+    price: 2200000,
+    rating: 4.7,
+    totalLessons: 32,
+    completedLessons: 16,
+    createdAt: "2022-11-10",
+    updatedAt: "2023-02-15",
+    categories: ["فارکس"]
+  },
+  {
+    id: "5",
+    title: "معامله در بورس ایران",
+    instructor: "نیما کریمی",
+    thumbnail: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop",
+    description: "آموزش جامع معامله در بورس ایران و تحلیل سهام",
+    price: 0,
+    rating: 4.5,
+    totalLessons: 15,
+    completedLessons: 8,
+    createdAt: "2023-06-15",
+    updatedAt: "2023-07-01",
+    categories: ["بورس ایران", "سهام"]
   }
 ];
 
 const mockArticles: Article[] = [
   {
     id: "1",
-    title: "اصول موفقیت در معاملات نوسانی",
-    description: "در این مقاله با تکنیک‌های موفقیت در معاملات نوسانی آشنا خواهید شد",
-    thumbnail: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop",
-    date: "1402/02/15",
-    category: "استراتژی معاملاتی",
-    author: "استاد تریدر"
+    title: "اهرم در معاملات: فرصت یا ریسک؟",
+    description: "بررسی کامل مفهوم اهرم و تأثیر آن بر معاملات",
+    content: "متن کامل مقاله درباره اهرم و معاملات...",
+    thumbnail: "https://images.unsplash.com/photo-1620228885847-9eab2a1adddc?q=80&w=2073&auto=format&fit=crop",
+    author: "علی حسینی",
+    date: "1402/03/15",
+    readTime: "7 دقیقه",
+    tags: ["اهرم", "معاملات", "ریسک"]
   },
   {
     id: "2",
-    title: "بهترین ارزهای دیجیتال برای سرمایه‌گذاری در سال 1402",
-    description: "معرفی و بررسی پتانسیل ارزهای دیجیتال برتر برای سرمایه‌گذاری",
-    thumbnail: "https://images.unsplash.com/photo-1609554496796-c345a5335ceb?q=80&w=2069&auto=format&fit=crop",
-    date: "1402/03/10",
-    category: "ارز دیجیتال",
-    author: "دکتر کریپتو"
+    title: "استراتژی‌های معاملاتی در بازار نزولی",
+    description: "چطور در بازار نزولی سود کنیم؟",
+    content: "متن کامل مقاله درباره بازارهای نزولی...",
+    thumbnail: "https://images.unsplash.com/photo-1634704784915-aacf363b021f?q=80&w=2070&auto=format&fit=crop",
+    author: "سارا محمدی",
+    date: "1402/02/20",
+    readTime: "5 دقیقه",
+    tags: ["بازار نزولی", "استراتژی"]
+  },
+  {
+    id: "3",
+    title: "تحلیل بنیادی و اهمیت آن در انتخاب ارزهای دیجیتال",
+    description: "چگونه با تحلیل بنیادی پروژه‌های ارز دیجیتال را ارزیابی کنیم؟",
+    content: "متن کامل مقاله درباره تحلیل بنیادی...",
+    thumbnail: "https://images.unsplash.com/photo-1627469629282-e2f7f4238267?q=80&w=2070&auto=format&fit=crop",
+    author: "مهدی اکبری",
+    date: "1402/01/10",
+    readTime: "8 دقیقه",
+    tags: ["تحلیل بنیادی", "ارز دیجیتال"]
   }
 ];
 
 const mockPodcasts: Podcast[] = [
   {
     id: "1",
-    title: "گفتگو با تریدرهای موفق",
-    description: "در این پادکست با داستان موفقیت تریدرهای برتر آشنا می‌شوید",
-    thumbnail: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?q=80&w=2070&auto=format&fit=crop",
-    date: "1402/04/20",
-    category: "مصاحبه",
+    title: "گفتگو با معامله‌گران موفق: قسمت اول",
+    description: "در این اپیزود با یکی از معامله‌گران موفق بازار کریپتو گفتگو کرده‌ایم",
+    thumbnail: "https://images.unsplash.com/photo-1614149162883-504ce4d13909?q=80&w=2074&auto=format&fit=crop",
+    audioUrl: "/podcasts/1.mp3",
     author: "مستر تریدر",
-    duration: "45 دقیقه"
+    date: "1402/04/01",
+    duration: "45 دقیقه",
+    tags: ["مصاحبه", "معامله‌گران موفق"]
   },
   {
     id: "2",
-    title: "تحلیل هفتگی بازار ارزهای دیجیتال",
-    description: "بررسی وضعیت بازار ارزهای دیجیتال و پیش‌بینی روند آینده",
-    thumbnail: "https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?q=80&w=2074&auto=format&fit=crop",
-    date: "1402/04/25",
-    category: "تحلیل بازار",
-    author: "دکتر کریپتو",
-    duration: "30 دقیقه"
+    title: "بررسی روند بازار کریپتو در سال 1402",
+    description: "تحلیل روند بازار و پیش‌بینی‌های آینده",
+    thumbnail: "https://images.unsplash.com/photo-1640586892244-e1071bfcdcdb?q=80&w=2070&auto=format&fit=crop",
+    audioUrl: "/podcasts/2.mp3",
+    author: "مستر تریدر",
+    date: "1402/03/15",
+    duration: "32 دقیقه",
+    tags: ["روند بازار", "پیش‌بینی"]
+  },
+  {
+    id: "3",
+    title: "اصول روانشناسی در معاملات",
+    description: "چرا روانشناسی مهم‌ترین عامل موفقیت در معاملات است؟",
+    thumbnail: "https://images.unsplash.com/photo-1603453810309-25f37e98dc19?q=80&w=2071&auto=format&fit=crop",
+    audioUrl: "/podcasts/3.mp3",
+    author: "سارا محمدی",
+    date: "1402/02/10",
+    duration: "28 دقیقه",
+    tags: ["روانشناسی", "معاملات"]
   }
 ];
 
 const mockVideos: Video[] = [
   {
     id: "1",
-    title: "آموزش تحلیل نمودارها با الگوهای هارمونیک",
-    description: "در این ویدیو با الگوهای هارمونیک و کاربرد آنها در تحلیل تکنیکال آشنا می‌شوید",
+    title: "آموزش تحلیل تکنیکال: الگوهای کندل استیک",
+    description: "در این ویدیو با الگوهای کندل استیک و کاربرد آنها آشنا می‌شوید",
     thumbnail: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop",
-    date: "1402/01/15",
-    category: "تحلیل تکنیکال",
-    author: "استاد هارمونیک",
-    duration: "25 دقیقه"
+    videoUrl: "/videos/1.mp4",
+    author: "مستر تریدر",
+    date: "1402/04/05",
+    duration: "15 دقیقه",
+    tags: ["تحلیل تکنیکال", "کندل استیک"]
   },
   {
     id: "2",
-    title: "معرفی ابزارهای تحلیل بازار",
-    description: "بررسی و معرفی بهترین ابزارهای تحلیل بازار برای تریدرها",
-    thumbnail: "https://images.unsplash.com/photo-1642543348571-57dd85b96d89?q=80&w=2072&auto=format&fit=crop",
-    date: "1402/02/05",
-    category: "ابزارهای معاملاتی",
-    author: "مستر تریدر",
-    duration: "18 دقیقه"
+    title: "معرفی و آموزش ابزارهای ترید",
+    description: "با ابزارهای کاربردی که هر معامله‌گر باید بشناسد آشنا شوید",
+    thumbnail: "https://images.unsplash.com/photo-1616514197671-15d99ce7a6f8?q=80&w=2073&auto=format&fit=crop",
+    videoUrl: "/videos/2.mp4",
+    author: "علی رضایی",
+    date: "1402/03/20",
+    duration: "20 دقیقه",
+    tags: ["ابزار ترید", "آموزش"]
+  },
+  {
+    id: "3",
+    title: "آموزش استراتژی اسکالپینگ",
+    description: "آشنایی با استراتژی اسکالپینگ و نحوه استفاده از آن در بازارهای مالی",
+    thumbnail: "https://images.unsplash.com/photo-1631603090989-93f9ef6f9d80?q=80&w=2072&auto=format&fit=crop",
+    videoUrl: "/videos/3.mp4",
+    author: "نیما کریمی",
+    date: "1402/02/15",
+    duration: "18 دقیقه",
+    tags: ["اسکالپینگ", "استراتژی"]
   }
 ];
 
 const mockWebinars: Webinar[] = [
   {
     id: "1",
-    title: "وبینار زنده: استراتژی‌های سودآوری در بازار نزولی",
-    description: "در این وبینار با استراتژی‌های سودآوری در شرایط نزولی بازار آشنا می‌شوید",
-    thumbnail: "https://images.unsplash.com/photo-1591115765373-5207764f72e4?q=80&w=2070&auto=format&fit=crop",
-    date: "1402/06/10",
-    category: "استراتژی معاملاتی",
-    author: "استاد تریدر",
-    startDate: "1402/06/10 18:00",
-    duration: "2 ساعت",
-    isLive: true
-  },
-  {
-    id: "2",
-    title: "وبینار: اصول مدیریت پورتفولیو ارزهای دیجیتال",
-    description: "آموزش اصول مدیریت پورتفولیو ارزهای دیجیتال برای سرمایه‌گذاران",
-    thumbnail: "https://images.unsplash.com/photo-1642543348571-57dd85b96d89?q=80&w=2072&auto=format&fit=crop",
-    date: "1402/05/20",
-    category: "مدیریت سرمایه",
-    author: "دکتر کریپتو",
-    startDate: "1402/05/20 19:00",
-    duration: "1.5 ساعت",
-    isLive: false
-  }
-];
+    title: "وبینار زنده: تحلیل بازار کریپتو",
+    description: "در این وبینار به تحلیل زنده بازار کریپتو می‌پردازیم",
+    thumbnail: "https://images.unsplash.com/photo-1591115765373-5207764f72e7?q=80I'll implement the design style from your uploaded images to create a similar look and feel for the Mr. Trader Academy platform. I'll fix the current build error first and then enhance the design.
 
-const mockFiles: File[] = [
-  {
-    id: "1",
-    title: "شیت تحلیل تکنیکال",
-    description: "فایل اکسل برای ثبت و پیگیری تحلیل‌های تکنیکال",
-    thumbnail: "https://images.unsplash.com/photo-1537314386406-5e8e8ba55cf4?q=80&w=2074&auto=format&fit=crop",
-    date: "1402/01/05",
-    category: "ابزارهای معاملاتی",
-    author: "مستر تریدر",
-    fileSize: "1.2 MB",
-    fileType: "XLSX"
-  },
-  {
-    id: "2",
-    title: "راهنمای جامع معاملات مارجین",
-    description: "کتاب الکترونیکی آموزش جامع معاملات مارجین و اهرمی",
-    thumbnail: "https://images.unsplash.com/photo-1544982503-9f984c14501a?q=80&w=1918&auto=format&fit=crop",
-    date: "1402/02/15",
-    category: "آموزشی",
-    author: "استاد مارجین",
-    fileSize: "5.8 MB",
-    fileType: "PDF"
-  }
-];
+<lov-code>
+Let's start by fixing the build error in BookmarksPage.tsx and then implement the design inspired by the uploaded images:
 
-const DataContext = createContext<DataContextType | undefined>(undefined);
+First, let's fix the type error in BookmarksPage.tsx:
+<lov-write file_path="src/components/ui/carousel-card.tsx">
+import React from "react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { cn } from "@/lib/utils";
 
-export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [courses, setCourses] = useState<Course[]>(mockCourses);
-  const [myCourses, setMyCourses] = useState<Course[]>([]);
-  const [articles] = useState<Article[]>(mockArticles);
-  const [podcasts] = useState<Podcast[]>(mockPodcasts);
-  const [videos] = useState<Video[]>(mockVideos);
-  const [webinars] = useState<Webinar[]>(mockWebinars);
-  const [files] = useState<File[]>(mockFiles);
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [wallet, setWallet] = useState<Wallet | null>({
-    id: "1",
-    userId: "1",
-    balance: 2500000,
-    transactions: [
-      {
-        id: "1",
-        walletId: "1",
-        amount: 1500000,
-        type: "deposit",
-        description: "شارژ کیف پول",
-        date: "1402/03/15"
-      },
-      {
-        id: "2",
-        walletId: "1",
-        amount: 1000000,
-        type: "deposit",
-        description: "شارژ کیف پول",
-        date: "1402/04/10"
-      }
-    ]
-  });
+type CarouselCardProps = {
+  children: React.ReactNode;
+  className?: string;
+  controlsClassName?: string;
+  showControls?: boolean;
+};
 
-  useEffect(() => {
-    // Load saved data from localStorage
-    const savedMyCourses = localStorage.getItem("myCourses");
-    const savedBookmarks = localStorage.getItem("bookmarks");
-    const savedComments = localStorage.getItem("comments");
-    
-    if (savedMyCourses) setMyCourses(JSON.parse(savedMyCourses));
-    if (savedBookmarks) setBookmarks(JSON.parse(savedBookmarks));
-    if (savedComments) setComments(JSON.parse(savedComments));
-  }, []);
-
-  const addBookmark = (itemId: string, itemType: Bookmark["itemType"], userId: string) => {
-    const newBookmark: Bookmark = {
-      id: new Date().getTime().toString(),
-      itemId,
-      itemType,
-      userId,
-      dateAdded: new Date().toISOString()
-    };
-    
-    setBookmarks(prev => {
-      const updatedBookmarks = [...prev, newBookmark];
-      localStorage.setItem("bookmarks", JSON.stringify(updatedBookmarks));
-      return updatedBookmarks;
-    });
-  };
-
-  const removeBookmark = (id: string) => {
-    setBookmarks(prev => {
-      const updatedBookmarks = prev.filter(bookmark => bookmark.id !== id);
-      localStorage.setItem("bookmarks", JSON.stringify(updatedBookmarks));
-      return updatedBookmarks;
-    });
-  };
-
-  const addComment = (commentData: Omit<Comment, "id" | "date">) => {
-    const newComment: Comment = {
-      ...commentData,
-      id: new Date().getTime().toString(),
-      date: new Date().toISOString()
-    };
-    
-    setComments(prev => {
-      const updatedComments = [...prev, newComment];
-      localStorage.setItem("comments", JSON.stringify(updatedComments));
-      return updatedComments;
-    });
-  };
-
-  const enrollCourse = (courseId: string, userId: string) => {
-    const course = courses.find(c => c.id === courseId);
-    
-    if (course && !myCourses.some(c => c.id === courseId)) {
-      const enrolledCourse = { ...course, completedLessons: 0 };
-      
-      setMyCourses(prev => {
-        const updatedCourses = [...prev, enrolledCourse];
-        localStorage.setItem("myCourses", JSON.stringify(updatedCourses));
-        return updatedCourses;
-      });
-      
-      // Deduct course price from wallet
-      if (wallet) {
-        const newTransaction = {
-          id: new Date().getTime().toString(),
-          walletId: wallet.id,
-          amount: course.price,
-          type: "purchase" as const,
-          description: `خرید دوره ${course.title}`,
-          date: new Date().toLocaleDateString('fa-IR')
-        };
-        
-        setWallet({
-          ...wallet,
-          balance: wallet.balance - course.price,
-          transactions: [...wallet.transactions, newTransaction]
-        });
-      }
-    }
-  };
-
-  const updateCourseProgress = (courseId: string, completedLessons: number) => {
-    setMyCourses(prev => {
-      const updatedCourses = prev.map(course => 
-        course.id === courseId 
-          ? { ...course, completedLessons } 
-          : course
-      );
-      localStorage.setItem("myCourses", JSON.stringify(updatedCourses));
-      return updatedCourses;
-    });
-  };
-
+const CarouselCard: React.FC<CarouselCardProps> = ({
+  children,
+  className,
+  controlsClassName,
+  showControls = true
+}) => {
   return (
-    <DataContext.Provider value={{
-      courses,
-      myCourses,
-      articles,
-      podcasts,
-      videos,
-      webinars,
-      files,
-      bookmarks,
-      comments,
-      wallet,
-      addBookmark,
-      removeBookmark,
-      addComment,
-      enrollCourse,
-      updateCourseProgress
-    }}>
-      {children}
-    </DataContext.Provider>
+    <Carousel className={cn("w-full", className)}>
+      <CarouselContent>
+        {React.Children.map(children, (child, index) => (
+          <CarouselItem key={index}>
+            {child}
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+      
+      {showControls && (
+        <>
+          <CarouselPrevious className={cn("-left-3 md:-left-5", controlsClassName)} />
+          <CarouselNext className={cn("-right-3 md:-right-5", controlsClassName)} />
+        </>
+      )}
+    </Carousel>
   );
 };
 
-export const useData = () => {
-  const context = useContext(DataContext);
-  if (context === undefined) {
-    throw new Error("useData must be used within a DataProvider");
-  }
-  return context;
-};
+export default CarouselCard;
