@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, User, Mail, Phone as PhoneIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
 
 const EditProfilePage: React.FC = () => {
   const { user, updateProfile } = useAuth();
@@ -34,14 +35,15 @@ const EditProfilePage: React.FC = () => {
     setSuccess(false);
     
     try {
-      // In a real application, this would call your API to update the profile
-      // For now, we'll simulate the update
+      // Update profile with the form data
       setTimeout(() => {
-        if (updateProfile) {
-          updateProfile(formData);
-        }
+        updateProfile(formData);
         setSuccess(true);
         setIsLoading(false);
+        toast({
+          title: "موفقیت",
+          description: "اطلاعات شخصی با موفقیت بروزرسانی شد.",
+        });
       }, 1000);
     } catch (err) {
       setError("خطایی در بروزرسانی پروفایل رخ داد. لطفاً دوباره تلاش کنید.");

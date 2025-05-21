@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 // Define user type
@@ -32,6 +31,7 @@ type AuthContextType = {
   requestOTP: (phone: string) => Promise<void>;
   verifyOTP: (otp: string) => Promise<void>;
   completeProfile: (name: string, email: string) => Promise<void>;
+  updateProfile: (profileData: Partial<User>) => void;
   logout: () => void;
 };
 
@@ -142,6 +142,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateProfile = (profileData: Partial<User>) => {
+    if (!user) return;
+    
+    // Update user data
+    const updatedUser = { ...user, ...profileData };
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  };
+
   const logout = () => {
     setUser(null);
     setPhoneNumber("");
@@ -158,7 +167,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setPhoneNumber,
         requestOTP, 
         verifyOTP, 
-        completeProfile, 
+        completeProfile,
+        updateProfile, 
         logout 
       }}
     >
