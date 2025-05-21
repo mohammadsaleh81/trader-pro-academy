@@ -21,7 +21,7 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Content Categories */}
-        <section>
+        <section className="mb-8">
           <ContentCategories />
         </section>
 
@@ -36,33 +36,39 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Latest Articles */}
-        <section className="mb-8">
-          <SectionTitle 
-            title="مقالات" 
-            viewAllLink="/content?type=articles"
-            icon={<FileText className="text-trader-500 h-5 w-5" />}
-          />
-          <ContentList items={articles.slice(0, 3)} type="article" />
+        <section className="mb-12 bg-gray-50 py-8 px-4 sm:px-6 -mx-4 sm:-mx-6 lg:-mx-8">
+          <div className="max-w-7xl mx-auto">
+            <SectionTitle 
+              title="مقالات آموزشی" 
+              viewAllLink="/content?type=articles"
+              icon={<FileText className="text-trader-500 h-5 w-5" />}
+              className="mb-6"
+            />
+            <ContentList items={articles.slice(0, 4)} type="article" showCarousel={true} />
+          </div>
         </section>
 
         {/* Latest Videos */}
-        <section className="mb-8">
+        <section className="mb-12">
           <SectionTitle 
             title="ویدیوهای آموزشی" 
             viewAllLink="/content?type=videos"
             icon={<Video className="text-trader-500 h-5 w-5" />}
           />
-          <ContentList items={videos.slice(0, 3)} type="video" />
+          <ContentList items={videos.slice(0, 4)} type="video" />
         </section>
 
         {/* Latest Podcasts */}
-        <section className="mb-8">
-          <SectionTitle 
-            title="پادکست‌ها" 
-            viewAllLink="/content?type=podcasts"
-            icon={<Headphones className="text-trader-500 h-5 w-5" />}
-          />
-          <ContentList items={podcasts.slice(0, 2)} type="podcast" />
+        <section className="mb-12 bg-gray-50 py-8 px-4 sm:px-6 -mx-4 sm:-mx-6 lg:-mx-8">
+          <div className="max-w-7xl mx-auto">
+            <SectionTitle 
+              title="پادکست‌های آموزشی" 
+              viewAllLink="/content?type=podcasts"
+              icon={<Headphones className="text-trader-500 h-5 w-5" />}
+              className="mb-6"
+            />
+            <ContentList items={podcasts.slice(0, 2)} type="podcast" />
+          </div>
         </section>
       </div>
     </Layout>

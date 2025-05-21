@@ -1,9 +1,10 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { Bookmark, BookmarkCheck } from "lucide-react";
+import { Bookmark, BookmarkCheck, Calendar, Clock, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
+import { cn } from "@/lib/utils";
 
 type ContentType = "article" | "podcast" | "video" | "webinar" | "file";
 
@@ -18,6 +19,7 @@ type ContentCardProps = {
   duration?: string;
   fileSize?: string;
   fileType?: string;
+  className?: string;
 };
 
 const ContentCard: React.FC<ContentCardProps> = ({
@@ -30,7 +32,8 @@ const ContentCard: React.FC<ContentCardProps> = ({
   author,
   duration,
   fileSize,
-  fileType
+  fileType,
+  className
 }) => {
   const { user } = useAuth();
   const { bookmarks, addBookmark, removeBookmark } = useData();
@@ -75,49 +78,57 @@ const ContentCard: React.FC<ContentCardProps> = ({
     }
   };
 
+  // Get a background color based on content type
+  const getTypeBgColor = () => {
+    switch (type) {
+      case "article": return "bg-blue-500"; 
+      case "podcast": return "bg-purple-500";
+      case "video": return "bg-trader-500";
+      case "webinar": return "bg-green-500";
+      case "file": return "bg-gray-500";
+      default: return "bg-gray-500";
+    }
+  };
+
   return (
-    <Link to={getContentUrl()}>
-      <div className="trader-card flex h-full overflow-hidden">
-        <div className="w-1/3 h-full min-h-[120px]">
+    <Link to={getContentUrl()} className={cn("block h-full", className)}>
+      <div className="trader-card flex flex-col md:flex-row h-full overflow-hidden hover:shadow-md transition-all duration-300">
+        <div className="w-full md:w-1/3 h-48 md:h-full min-h-[120px] relative">
           <img
             src={thumbnail}
             alt={title}
             className="w-full h-full object-cover"
           />
-        </div>
-        <div className="w-2/3 p-3 flex flex-col relative">
-          <div className="flex justify-between">
-            <span className="text-xs text-trader-500 font-medium mb-1">
-              {getTypeLabel()}
-            </span>
-            <span className="text-xs text-gray-500">{date}</span>
+          <div className={`absolute top-3 right-3 ${getTypeBgColor()} text-white text-xs px-3 py-1 rounded-full`}>
+            {getTypeLabel()}
           </div>
+          {duration && (
+            <div className="absolute bottom-3 right-3 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+              <Clock className="inline-block w-3 h-3 ml-1" />
+              {duration}
+            </div>
+          )}
+        </div>
+        <div className="w-full md:w-2/3 p-4 flex flex-col relative">
+          <h3 className="font-bold text-base mb-2 line-clamp-2">{title}</h3>
+          <p className="text-gray-600 text-sm line-clamp-2 mb-3">{description}</p>
           
-          <h3 className="font-bold text-sm mb-1 line-clamp-1">{title}</h3>
-          <p className="text-gray-600 text-xs line-clamp-2 mb-2">{description}</p>
-          
-          <div className="flex items-center justify-between mt-auto">
-            <span className="text-xs text-gray-500">
+          <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
+            <div className="flex items-center text-xs text-gray-500">
+              <User className="w-3 h-3 ml-1" />
               {author}
-            </span>
+            </div>
             
-            {duration && (
-              <span className="text-xs text-gray-500">
-                {duration}
-              </span>
-            )}
-            
-            {fileSize && fileType && (
-              <span className="text-xs text-gray-500">
-                {fileSize} {fileType}
-              </span>
-            )}
+            <div className="flex items-center text-xs text-gray-500">
+              <Calendar className="w-3 h-3 ml-1" />
+              {date}
+            </div>
           </div>
           
           {user && (
             <button 
               onClick={handleBookmark}
-              className="absolute top-3 left-3 text-trader-500"
+              className="absolute top-4 left-4 text-trader-500"
             >
               {bookmark ? (
                 <BookmarkCheck className="h-5 w-5" />
