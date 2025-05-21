@@ -14,6 +14,8 @@ export type Course = {
   createdAt: string;
   updatedAt: string;
   categories: string[];
+  duration?: string;
+  level?: "beginner" | "intermediate" | "advanced";
 };
 
 // Content Types
@@ -92,6 +94,19 @@ export type Bookmark = {
   createdAt: string;
 };
 
+// Comment Type
+export type Comment = {
+  id: string;
+  itemId: string;
+  itemType: ItemType;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  content: string;
+  date: string;
+  rating?: number;
+};
+
 // Transaction Type for Wallet
 export type Transaction = {
   id: string;
@@ -117,9 +132,12 @@ interface DataContextType {
   webinars: Webinar[];
   files: File[];
   bookmarks: Bookmark[];
+  comments: Comment[];
   wallet: Wallet;
   addBookmark: (itemId: string, itemType: ItemType, userId: string) => void;
   removeBookmark: (id: string) => void;
+  addComment: (comment: Omit<Comment, "id" | "date">) => void;
+  enrollCourse: (courseId: string, userId: string) => void;
 }
 
 // Create Context
@@ -139,7 +157,9 @@ const mockCourses: Course[] = [
     completedLessons: 12,
     createdAt: "2023-01-15",
     updatedAt: "2023-04-20",
-    categories: ["ترید", "تحلیل تکنیکال"]
+    categories: ["ترید", "تحلیل تکنیکال"],
+    duration: "24 ساعت",
+    level: "beginner"
   },
   {
     id: "2",
@@ -153,7 +173,9 @@ const mockCourses: Course[] = [
     completedLessons: 6,
     createdAt: "2023-03-10",
     updatedAt: "2023-05-15",
-    categories: ["کریپتو", "سرمایه‌گذاری"]
+    categories: ["کریپتو", "سرمایه‌گذاری"],
+    duration: "18 ساعت",
+    level: "intermediate"
   },
   {
     id: "3",
@@ -380,6 +402,31 @@ const mockBookmarks: Bookmark[] = [
   }
 ];
 
+const mockComments: Comment[] = [
+  {
+    id: "1",
+    itemId: "1",
+    itemType: "course",
+    userId: "user1",
+    userName: "علی رضایی",
+    userAvatar: "https://randomuser.me/api/portraits/men/1.jpg",
+    content: "دوره بسیار مفیدی بود. با مفاهیم پایه‌ای تحلیل تکنیکال به خوبی آشنا شدم.",
+    date: "1402/03/15",
+    rating: 5
+  },
+  {
+    id: "2",
+    itemId: "1",
+    itemType: "course",
+    userId: "user2",
+    userName: "سارا محمدی",
+    userAvatar: "https://randomuser.me/api/portraits/women/1.jpg",
+    content: "توضیحات واضح و کاربردی. ممنون از دوره خوبتون.",
+    date: "1402/02/20",
+    rating: 4
+  }
+];
+
 const mockWallet: Wallet = {
   balance: 1850000,
   transactions: [
@@ -424,6 +471,7 @@ export const DataProvider: React.FC<{children: React.ReactNode}> = ({ children }
   const [webinars] = useState<Webinar[]>(mockWebinars);
   const [files] = useState<File[]>(mockFiles);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(mockBookmarks);
+  const [comments, setComments] = useState<Comment[]>(mockComments);
   const [wallet] = useState<Wallet>(mockWallet);
 
   const addBookmark = (itemId: string, itemType: ItemType, userId: string) => {
@@ -441,6 +489,21 @@ export const DataProvider: React.FC<{children: React.ReactNode}> = ({ children }
     setBookmarks(bookmarks.filter(bookmark => bookmark.id !== id));
   };
 
+  const addComment = (comment: Omit<Comment, "id" | "date">) => {
+    const newComment: Comment = {
+      ...comment,
+      id: Date.now().toString(),
+      date: new Date().toLocaleDateString('fa-IR'),
+    };
+    setComments([...comments, newComment]);
+  };
+
+  const enrollCourse = (courseId: string, userId: string) => {
+    // In a real app, this would handle course enrollment and payment
+    // For now, we'll just log it
+    console.log(`User ${userId} enrolled in course ${courseId}`);
+  };
+
   return (
     <DataContext.Provider
       value={{
@@ -452,9 +515,12 @@ export const DataProvider: React.FC<{children: React.ReactNode}> = ({ children }
         webinars,
         files,
         bookmarks,
+        comments,
         wallet,
         addBookmark,
         removeBookmark,
+        addComment,
+        enrollCourse,
       }}
     >
       {children}
