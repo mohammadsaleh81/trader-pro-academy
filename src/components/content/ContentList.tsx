@@ -34,7 +34,7 @@ const ContentList = <T extends ContentItem>({
     return (
       <div className="my-6">
         {title && (
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-4 px-2 sm:px-0">
             <div className="flex items-center">
               <span className="w-1 h-6 bg-trader-500 rounded-sm ml-2"></span>
               <h2 className="text-xl font-bold">{title}</h2>
@@ -58,7 +58,7 @@ const ContentList = <T extends ContentItem>({
   return (
     <div className="my-6">
       {title && (
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-4 px-2 sm:px-0">
           <div className="flex items-center">
             <span className="w-1 h-6 bg-trader-500 rounded-sm ml-2"></span>
             <h2 className="text-xl font-bold">{title}</h2>
@@ -72,7 +72,7 @@ const ContentList = <T extends ContentItem>({
         </div>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
         {items.map((item, index) => renderContentCard(item, type, index.toString()))}
       </div>
     </div>

@@ -92,8 +92,8 @@ const ContentCard: React.FC<ContentCardProps> = ({
 
   return (
     <Link to={getContentUrl()} className={cn("block h-full", className)}>
-      <div className="trader-card flex flex-col md:flex-row h-full overflow-hidden hover:shadow-md transition-all duration-300">
-        <div className="w-full md:w-1/3 h-48 md:h-full min-h-[120px] relative">
+      <div className="trader-card flex flex-col h-full overflow-hidden hover:shadow-md transition-all duration-300">
+        <div className="w-full h-48 min-h-[120px] relative">
           <img
             src={thumbnail}
             alt={title}
@@ -109,7 +109,7 @@ const ContentCard: React.FC<ContentCardProps> = ({
             </div>
           )}
         </div>
-        <div className="w-full md:w-2/3 p-4 flex flex-col relative">
+        <div className="w-full p-4 flex flex-col relative flex-grow">
           <h3 className="font-bold text-base mb-2 line-clamp-2">{title}</h3>
           <p className="text-gray-600 text-sm line-clamp-2 mb-3">{description}</p>
           
@@ -129,6 +129,7 @@ const ContentCard: React.FC<ContentCardProps> = ({
             <button 
               onClick={handleBookmark}
               className="absolute top-4 left-4 text-trader-500"
+              aria-label={bookmark ? "حذف از نشان‌ها" : "افزودن به نشان‌ها"}
             >
               {bookmark ? (
                 <BookmarkCheck className="h-5 w-5" />

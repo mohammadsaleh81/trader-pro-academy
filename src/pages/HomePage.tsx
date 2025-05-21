@@ -14,19 +14,19 @@ const HomePage: React.FC = () => {
 
   return (
     <Layout>
-      <div className="trader-container py-4">
+      <div className="py-4">
         {/* Hero Carousel */}
         <section className="mb-6">
           <HeroCarousel />
         </section>
 
         {/* Content Categories */}
-        <section className="mb-8">
+        <section className="mb-8 px-2 sm:px-0">
           <ContentCategories />
         </section>
 
         {/* Featured Courses */}
-        <section className="mb-8">
+        <section className="mb-8 px-2 sm:px-0">
           <SectionTitle 
             title="دوره‌های آموزشی" 
             viewAllLink="/courses"
@@ -36,8 +36,8 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Latest Articles */}
-        <section className="mb-12 bg-gray-50 py-8 px-4 sm:px-6 -mx-4 sm:-mx-6 lg:-mx-8">
-          <div className="max-w-7xl mx-auto">
+        <section className="mb-12 bg-gray-50 py-8 -mx-4 sm:-mx-6 lg:-mx-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <SectionTitle 
               title="مقالات آموزشی" 
               viewAllLink="/content?type=articles"
@@ -49,7 +49,7 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Latest Videos */}
-        <section className="mb-12">
+        <section className="mb-12 px-2 sm:px-0">
           <SectionTitle 
             title="ویدیوهای آموزشی" 
             viewAllLink="/content?type=videos"
@@ -59,8 +59,8 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Latest Podcasts */}
-        <section className="mb-12 bg-gray-50 py-8 px-4 sm:px-6 -mx-4 sm:-mx-6 lg:-mx-8">
-          <div className="max-w-7xl mx-auto">
+        <section className="mb-12 bg-gray-50 py-8 -mx-4 sm:-mx-6 lg:-mx-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <SectionTitle 
               title="پادکست‌های آموزشی" 
               viewAllLink="/content?type=podcasts"
