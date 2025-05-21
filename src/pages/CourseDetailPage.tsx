@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { useData } from "@/contexts/DataContext";
@@ -18,6 +19,42 @@ const CourseDetailPage: React.FC = () => {
   const [commentText, setCommentText] = useState("");
   const [rating, setRating] = useState(5);
   const [isPurchaseDialogOpen, setIsPurchaseDialogOpen] = useState(false);
+  const [shortfall, setShortfall] = useState(0);
+
+  // Check for pending course purchase after wallet recharge
+  useEffect(() => {
+    const pendingCourseId = localStorage.getItem("pendingCourseId");
+    
+    // If we're on a course page and there's a pending purchase for this course
+    if (pendingCourseId && id === pendingCourseId && user && wallet && courses) {
+      const course = courses.find(c => c.id === id);
+      
+      // If course exists and user has enough balance now, complete the purchase
+      if (course && wallet.balance >= course.price) {
+        const newTransaction = {
+          id: Date.now().toString(),
+          amount: course.price,
+          type: "purchase" as const,
+          description: `خرید دوره ${course.title}`,
+          date: new Date().toLocaleDateString("fa-IR"),
+        };
+
+        updateWallet(wallet.balance - course.price, [...wallet.transactions, newTransaction]);
+        enrollCourse(course.id, user.id);
+
+        toast({
+          title: "خرید موفق",
+          description: `دوره ${course.title} با موفقیت خریداری شد`,
+        });
+        
+        // Clear the pending purchase
+        localStorage.removeItem("pendingCourseId");
+        
+        // Redirect to my courses
+        navigate("/my-courses");
+      }
+    }
+  }, [id, user, wallet, courses, enrollCourse, updateWallet, navigate]);
 
   const course = courses.find(c => c.id === id);
   const isEnrolled = myCourses.some(c => c.id === id);
@@ -117,19 +154,28 @@ const CourseDetailPage: React.FC = () => {
       return;
     }
 
-    // Paid course - open purchase dialog
+    if (!wallet || wallet.balance < course.price) {
+      // Calculate how much more money is needed
+      const calculatedShortfall = course.price - (wallet?.balance || 0);
+      setShortfall(calculatedShortfall);
+      
+      // Store course ID in localStorage to complete purchase after recharge
+      localStorage.setItem("pendingCourseId", course.id);
+      
+      // Open purchase dialog with recharge option
+      setIsPurchaseDialogOpen(true);
+      return;
+    }
+
+    // Sufficient balance, open regular purchase dialog
     setIsPurchaseDialogOpen(true);
   };
 
   const handleConfirmPurchase = () => {
     if (!user || !course || !wallet) return;
 
+    // If balance is insufficient, redirect to wallet page
     if (wallet.balance < course.price) {
-      toast({
-        title: "خطا در خرید دوره",
-        description: "موجودی کیف پول شما کافی نیست. لطفاً ابتدا کیف پول خود را شارژ کنید.",
-        variant: "destructive",
-      });
       setIsPurchaseDialogOpen(false);
       navigate("/wallet");
       return;
@@ -154,6 +200,13 @@ const CourseDetailPage: React.FC = () => {
 
     setIsPurchaseDialogOpen(false);
     navigate("/my-courses");
+  };
+
+  const handleRechargeWallet = () => {
+    // Store course ID in localStorage to complete purchase after recharge
+    localStorage.setItem("pendingCourseId", course.id);
+    setIsPurchaseDialogOpen(false);
+    navigate("/wallet");
   };
 
   const handleSubmitComment = (e: React.FormEvent) => {
@@ -497,6 +550,15 @@ const CourseDetailPage: React.FC = () => {
               <p className="text-sm font-medium mt-2">
                 موجودی کیف پول: <span className="font-bold">{wallet?.balance.toLocaleString()} تومان</span>
               </p>
+              
+              {wallet && wallet.balance < course.price && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-md">
+                  <p className="text-red-600 font-medium">موجودی کیف پول شما کافی نیست.</p>
+                  <p className="text-sm text-red-500 mt-1">
+                    برای خرید این دوره نیاز به افزایش موجودی به مبلغ <span className="font-bold">{shortfall.toLocaleString()} تومان</span> دارید.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           
@@ -504,13 +566,22 @@ const CourseDetailPage: React.FC = () => {
             <Button type="button" variant="outline" onClick={() => setIsPurchaseDialogOpen(false)}>
               انصراف
             </Button>
-            <Button 
-              type="button"
-              onClick={handleConfirmPurchase}
-              disabled={!wallet || wallet.balance < course.price}
-            >
-              تأیید و پرداخت
-            </Button>
+            {wallet && wallet.balance < course.price ? (
+              <Button 
+                type="button"
+                onClick={handleRechargeWallet}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                افزایش موجودی
+              </Button>
+            ) : (
+              <Button 
+                type="button"
+                onClick={handleConfirmPurchase}
+              >
+                تأیید و پرداخت
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

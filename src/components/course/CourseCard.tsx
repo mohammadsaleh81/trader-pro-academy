@@ -48,11 +48,16 @@ const CourseCard: React.FC<CourseCardProps> = ({
     }
 
     if (!wallet || wallet.balance < price) {
+      const shortfall = price - (wallet?.balance || 0);
+      
       toast({
         title: "موجودی ناکافی",
-        description: "موجودی کیف پول شما برای خرید این دوره کافی نیست",
+        description: `برای خرید این دوره نیاز به ${shortfall.toLocaleString()} تومان شارژ اضافی دارید`,
         variant: "destructive",
       });
+      
+      // Store course ID in localStorage to complete purchase after recharge
+      localStorage.setItem("pendingCourseId", id);
       navigate("/wallet");
       return;
     }
