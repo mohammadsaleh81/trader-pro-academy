@@ -14,7 +14,7 @@ const Layout: React.FC<LayoutProps> = ({ children, fullWidth = false }) => {
   const isMobile = useIsMobile();
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50" dir="rtl">
       <Header />
       <main className={`flex-1 pb-20 ${!fullWidth && "max-w-7xl mx-auto w-full"}`}>
         {children}

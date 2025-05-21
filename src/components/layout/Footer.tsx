@@ -15,11 +15,11 @@ const Footer: React.FC = () => {
             </p>
             <div className="flex flex-col space-y-2">
               <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Phone className="h-4 w-4" />
+                <Phone className="h-4 w-4 ml-1" />
                 <span>۰۲۱-۸۸۷۷۶۶۵۵</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Mail className="h-4 w-4" />
+                <Mail className="h-4 w-4 ml-1" />
                 <span>info@mrtrader.com</span>
               </div>
             </div>

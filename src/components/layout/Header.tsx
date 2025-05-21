@@ -29,9 +29,9 @@ const Header: React.FC = () => {
                 <input
                   type="text"
                   placeholder="جستجو..."
-                  className="w-full border border-gray-200 rounded-full py-1.5 px-4 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-trader-500"
+                  className="w-full border border-gray-200 rounded-full py-1.5 px-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-trader-500"
                 />
-                <Search className="absolute left-3 top-2 h-4 w-4 text-gray-400" />
+                <Search className="absolute right-3 top-2 h-4 w-4 text-gray-400" />
               </div>
             ) : (
               <button onClick={() => setIsSearchActive(true)} className="text-gray-600">
