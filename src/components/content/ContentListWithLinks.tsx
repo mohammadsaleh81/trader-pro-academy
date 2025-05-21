@@ -33,38 +33,43 @@ const ContentListWithLinks: React.FC<ContentListProps> = ({ items, type }) => {
   const pluralType = typeToPlural[type];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 gap-6 px-3">
       {items.map((item) => (
         <Link to={`/${pluralType}/${item.id}`} key={item.id}>
           <Card className="h-full hover:shadow-md transition-shadow duration-300">
             <CardContent className="p-0">
-              <div className="relative">
+              <div className="flex flex-col">
                 <img
                   src={item.thumbnail}
                   alt={item.title}
                   className="w-full h-48 object-cover rounded-t-lg"
                 />
-                {type === "podcast" && (
-                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
-                    {(item as Podcast).duration}
+                <div className="p-4">
+                  <h3 className="font-semibold mb-2 line-clamp-2">{item.title}</h3>
+                  <p className="text-gray-500 text-sm line-clamp-3 mb-4">
+                    {item.description}
+                  </p>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>{item.author}</span>
+                    <span>{item.date}</span>
                   </div>
-                )}
-                {(type === "video" || type === "webinar") && (
-                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
-                    {type === "video" 
-                      ? (item as Video).duration
-                      : (item as Webinar).duration}
-                  </div>
-                )}
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold mb-2 line-clamp-2">{item.title}</h3>
-                <p className="text-gray-500 text-sm line-clamp-2 mb-4">
-                  {item.description}
-                </p>
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>{item.author}</span>
-                  <span>{item.date}</span>
+                  {type === "podcast" && (
+                    <div className="mt-2 text-xs text-gray-600">
+                      مدت زمان: {(item as Podcast).duration}
+                    </div>
+                  )}
+                  {(type === "video" || type === "webinar") && (
+                    <div className="mt-2 text-xs text-gray-600">
+                      مدت زمان: {type === "video" 
+                        ? (item as Video).duration
+                        : (item as Webinar).duration}
+                    </div>
+                  )}
+                  {type === "file" && (
+                    <div className="mt-2 text-xs text-gray-600">
+                      حجم: {(item as File).fileSize} {(item as File).fileType}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>

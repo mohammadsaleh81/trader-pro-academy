@@ -1,3 +1,4 @@
+
 import React from "react";
 import CourseCard from "./CourseCard";
 import { Course } from "@/contexts/DataContext";
@@ -29,7 +30,7 @@ const CourseList: React.FC<CourseListProps> = ({
         </div>
       )}
       
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {courses.map((course, index) => (
           <CourseCard
             key={course.id}
