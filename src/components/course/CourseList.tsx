@@ -24,7 +24,7 @@ const CourseList: React.FC<CourseListProps> = ({
   skeletonCount = 8
 }) => {
   return (
-    <div className={cn("my-4", className)}>
+    <div className={cn("my-4 rtl-card-content", className)}>
       {title && (
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">{title}</h2>

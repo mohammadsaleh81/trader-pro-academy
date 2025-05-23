@@ -57,7 +57,7 @@ const ContentListWithLinks: React.FC<ContentListProps> = ({ items, type }) => {
                   </div>
                 )}
               </div>
-              <div className="p-2 text-right">
+              <div className="p-2 text-right rtl-card-content">
                 <h3 className="font-semibold text-xs mb-1 line-clamp-1">{item.title}</h3>
                 <p className="text-gray-500 text-[10px] line-clamp-1 mb-2">
                   {item.description}

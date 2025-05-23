@@ -98,10 +98,10 @@ const ContentHubPage: React.FC = () => {
   return (
     <Layout>
       <div className="trader-container py-6">
-        <h1 className="text-2xl font-bold mb-6">کتابخانه محتوا</h1>
+        <h1 className="text-2xl font-bold mb-6 text-right">کتابخانه محتوا</h1>
         
         {/* Tabs */}
-        <Tabs defaultValue="articles" value={activeTab} onValueChange={handleTabChange}>
+        <Tabs defaultValue="articles" value={activeTab} onValueChange={handleTabChange} dir="rtl" className="rtl-card-content">
           <TabsList className="w-full overflow-x-auto bg-white border-b border-gray-200 p-0 h-auto mb-6">
             {(Object.keys(tabLabelsMap) as ContentTab[]).map((tab) => (
               <TabsTrigger
@@ -115,7 +115,7 @@ const ContentHubPage: React.FC = () => {
           </TabsList>
 
           {/* Content */}
-          <div className="mt-6">
+          <div className="mt-6 rtl-card-content">
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {Array.from({ length: 6 }).map((_, index) => (

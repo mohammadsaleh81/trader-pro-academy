@@ -115,6 +115,28 @@
     text-align: right;
   }
 
+  /* RTL fixes for tabs panel */
+  [dir="rtl"] [role="tablist"],
+  [dir="rtl"] [role="tabpanel"],
+  [dir="rtl"] [role="tab"] {
+    direction: rtl;
+    text-align: right;
+  }
+
+  /* RTL alignment for content panels */
+  html[dir="rtl"] .rtl-content-panel,
+  [dir="rtl"] [role="tabpanel"] {
+    direction: rtl;
+    text-align: right;
+  }
+
+  /* Specific RTL fixes for content panels */
+  html[dir="rtl"] .content-panel .title,
+  html[dir="rtl"] .content-panel .description,
+  html[dir="rtl"] .content-panel .heading {
+    text-align: right;
+  }
+
   /* Fix Safari RTL layout issues */
   @supports (-webkit-touch-callout: none) {
     html[dir="rtl"] .safari-flex-fix {
@@ -139,6 +161,13 @@
   /* Firefox specific fixes */
   @-moz-document url-prefix() {
     html[dir="rtl"] .firefox-rtl-fix {
+      direction: rtl;
+      text-align: right;
+    }
+
+    html[dir="rtl"] [role="tablist"],
+    html[dir="rtl"] [role="tabpanel"],
+    html[dir="rtl"] [role="tab"] {
       direction: rtl;
       text-align: right;
     }
