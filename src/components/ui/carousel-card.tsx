@@ -59,14 +59,12 @@ const CarouselCard: React.FC<CarouselCardProps> = ({
               `${isRtl ? "-right-2 md:-right-3" : "-left-2 md:-left-3"} min-w-[36px] min-h-[36px] flex items-center justify-center`, 
               controlsClassName
             )} 
-            style={{ touchAction: "manipulation" }}
           />
           <CarouselNext 
             className={cn(
               `${isRtl ? "-left-2 md:-left-3" : "-right-2 md:-right-3"} min-w-[36px] min-h-[36px] flex items-center justify-center`, 
               controlsClassName
             )} 
-            style={{ touchAction: "manipulation" }}
           />
         </>
       )}

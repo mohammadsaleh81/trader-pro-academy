@@ -45,6 +45,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : "button"
     
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      // Create ripple effect without using event.preventDefault()
       const button = e.currentTarget;
       const rect = button.getBoundingClientRect();
       const x = e.clientX - rect.left;

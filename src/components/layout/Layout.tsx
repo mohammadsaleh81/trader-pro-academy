@@ -53,15 +53,31 @@ const Layout: React.FC<LayoutProps> = ({
     if (isMobile) {
       document.documentElement.classList.add('touch-device');
       
-      // Prevent double-tap zoom on interactive elements
+      // Add touch-specific classes without using preventDefault
       const interactiveElements = document.querySelectorAll('button, a, input, select, textarea');
       interactiveElements.forEach(el => {
-        el.addEventListener('touchend', (e) => e.preventDefault(), { passive: true });
+        el.classList.add('touch-target');
+        
+        // Use non-passive listener only where absolutely necessary
+        // and don't call preventDefault for general touches
+        el.addEventListener('touchstart', () => {
+          el.classList.add('touch-active');
+        }, { passive: true });
+        
+        el.addEventListener('touchend', () => {
+          el.classList.remove('touch-active');
+        }, { passive: true });
       });
     }
     
     return () => {
       document.documentElement.classList.remove('touch-device');
+      
+      // Clean up if component unmounts
+      const interactiveElements = document.querySelectorAll('.touch-target');
+      interactiveElements.forEach(el => {
+        el.classList.remove('touch-target', 'touch-active');
+      });
     };
   }, [isMobile]);
 

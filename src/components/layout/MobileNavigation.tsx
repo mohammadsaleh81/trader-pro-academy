@@ -17,7 +17,7 @@ const MobileNavigation: React.FC = () => {
         <Link 
           to="/" 
           className={cn(
-            "flex flex-col items-center justify-center text-xs",
+            "flex flex-col items-center justify-center text-xs min-h-[44px]",
             isActive("/") ? "text-trader-500" : "text-gray-500"
           )}
         >
@@ -28,7 +28,7 @@ const MobileNavigation: React.FC = () => {
         <Link 
           to="/content" 
           className={cn(
-            "flex flex-col items-center justify-center text-xs",
+            "flex flex-col items-center justify-center text-xs min-h-[44px]",
             isActive("/content") ? "text-trader-500" : "text-gray-500"
           )}
         >
@@ -39,7 +39,7 @@ const MobileNavigation: React.FC = () => {
         <Link 
           to="/my-courses" 
           className={cn(
-            "flex flex-col items-center justify-center text-xs",
+            "flex flex-col items-center justify-center text-xs min-h-[44px]",
             isActive("/my-courses") ? "text-trader-500" : "text-gray-500"
           )}
         >
@@ -50,7 +50,7 @@ const MobileNavigation: React.FC = () => {
         <Link 
           to="/bookmarks" 
           className={cn(
-            "flex flex-col items-center justify-center text-xs",
+            "flex flex-col items-center justify-center text-xs min-h-[44px]",
             isActive("/bookmarks") ? "text-trader-500" : "text-gray-500"
           )}
         >
@@ -61,7 +61,7 @@ const MobileNavigation: React.FC = () => {
         <Link 
           to="/profile" 
           className={cn(
-            "flex flex-col items-center justify-center text-xs",
+            "flex flex-col items-center justify-center text-xs min-h-[44px]",
             isActive("/profile") ? "text-trader-500" : "text-gray-500"
           )}
         >
