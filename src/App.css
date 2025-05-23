@@ -123,3 +123,70 @@
     justify-content: center;
   }
 }
+
+/* RTL Slider Styles */
+html[dir="rtl"] [role="slider"] {
+  direction: rtl;
+}
+
+html[dir="rtl"] [data-orientation="horizontal"] {
+  transform: scaleX(-1);
+}
+
+html[dir="rtl"] [data-orientation="horizontal"] [role="slider"] {
+  transform: scaleX(-1); /* Reverse again for the thumb to correct the orientation */
+}
+
+/* RTL Carousel Fixes */
+html[dir="rtl"] .embla__viewport {
+  direction: rtl;
+}
+
+html[dir="rtl"] .carousel-rtl-fix [role="region"][aria-roledescription="carousel"] button:first-child {
+  left: auto;
+  right: -12px;
+}
+
+html[dir="rtl"] .carousel-rtl-fix [role="region"][aria-roledescription="carousel"] button:last-child {
+  right: auto;
+  left: -12px;
+}
+
+html[dir="rtl"] .carousel-rtl-fix [role="region"][aria-roledescription="carousel"] button:first-child svg,
+html[dir="rtl"] .carousel-rtl-fix [role="region"][aria-roledescription="carousel"] button:last-child svg {
+  transform: scaleX(-1);
+}
+
+/* RTL Layout fixes for components */
+html[dir="rtl"] .rtl-mirror {
+  transform: scaleX(-1);
+}
+
+/* RTL form controls */
+html[dir="rtl"] input[type="range"] {
+  direction: rtl;
+}
+
+/* Fix Safari RTL flexbox bug */
+@supports (-webkit-touch-callout: none) {
+  html[dir="rtl"] .safari-rtl-fix {
+    display: flex;
+    flex-direction: row-reverse;
+  }
+}
+
+/* Fix Firefox RTL input controls */
+@-moz-document url-prefix() {
+  html[dir="rtl"] input[type="range"]::-moz-range-progress {
+    background-color: var(--primary);
+  }
+}
+
+/* RTL pagination arrows */
+html[dir="rtl"] .pagination-controls .arrow-left {
+  transform: rotate(180deg);
+}
+
+html[dir="rtl"] .pagination-controls .arrow-right {
+  transform: rotate(180deg);
+}

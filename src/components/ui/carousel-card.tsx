@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Carousel,
   CarouselContent,
@@ -22,6 +22,12 @@ const CarouselCard: React.FC<CarouselCardProps> = ({
   controlsClassName,
   showControls = true
 }) => {
+  const [isRtl, setIsRtl] = useState(false);
+  
+  useEffect(() => {
+    setIsRtl(document.documentElement.dir === "rtl");
+  }, []);
+
   return (
     <Carousel 
       className={cn("w-full", className)}
@@ -29,6 +35,7 @@ const CarouselCard: React.FC<CarouselCardProps> = ({
         dragFree: true,
         loop: true,
         align: "center",
+        direction: isRtl ? "rtl" : "ltr",
       }}
     >
       <CarouselContent>
@@ -46,14 +53,14 @@ const CarouselCard: React.FC<CarouselCardProps> = ({
         <>
           <CarouselPrevious 
             className={cn(
-              "-left-3 md:-left-5 min-w-[44px] min-h-[44px] flex items-center justify-center", 
+              `${isRtl ? "-right-3 md:-right-5" : "-left-3 md:-left-5"} min-w-[44px] min-h-[44px] flex items-center justify-center`, 
               controlsClassName
             )} 
             style={{ touchAction: "manipulation" }}
           />
           <CarouselNext 
             className={cn(
-              "-right-3 md:-right-5 min-w-[44px] min-h-[44px] flex items-center justify-center", 
+              `${isRtl ? "-left-3 md:-left-5" : "-right-3 md:-right-5"} min-w-[44px] min-h-[44px] flex items-center justify-center`, 
               controlsClassName
             )} 
             style={{ touchAction: "manipulation" }}

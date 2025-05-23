@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Dot } from "lucide-react";
 import CarouselCard from "@/components/ui/carousel-card";
 import { cn } from "@/lib/utils";
@@ -41,22 +41,33 @@ const slides: HeroSlide[] = [
 ];
 
 const HeroCarousel: React.FC = () => {
+  const [isRtl, setIsRtl] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
+  
+  useEffect(() => {
+    setIsRtl(document.documentElement.dir === "rtl");
+  }, []);
+
   return (
     <div className="relative w-full">
       <CarouselCard 
         className="w-full"
         controlsClassName="bg-white/70 text-trader-500 hover:bg-white"
       >
-        {slides.map((slide) => (
-          <div key={slide.id} className="relative w-full rounded-2xl overflow-hidden">
+        {slides.map((slide, index) => (
+          <div 
+            key={slide.id} 
+            className="relative w-full rounded-2xl overflow-hidden"
+            onFocus={() => setActiveSlide(index)}
+          >
             <div className="relative h-[220px] md:h-[300px] lg:h-[400px] w-full">
               <img
                 src={slide.image}
                 alt={slide.title}
                 className="w-full h-full object-cover brightness-[0.7]"
               />
-              <div className="absolute inset-0 bg-gradient-to-l from-trader-500/50 to-blue-900/60 flex items-center justify-end">
-                <div className="text-white text-right p-6 md:p-12 max-w-md mr-0 md:mr-8">
+              <div className={`absolute inset-0 bg-gradient-to-${isRtl ? 'r' : 'l'} from-trader-500/50 to-blue-900/60 flex items-center ${isRtl ? 'justify-start' : 'justify-end'}`}>
+                <div className={`text-white ${isRtl ? 'text-left' : 'text-right'} p-6 md:p-12 max-w-md ${isRtl ? 'ml-0 md:ml-8' : 'mr-0 md:mr-8'}`}>
                   <h2 className="text-lg md:text-xl mb-2 font-light">{slide.title}</h2>
                   <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4">{slide.subtitle}</h1>
                   <a 
@@ -78,7 +89,7 @@ const HeroCarousel: React.FC = () => {
             key={slide.id} 
             className={cn(
               "h-3 w-3", 
-              index === 0 ? "text-trader-500" : "text-gray-300"
+              index === activeSlide ? "text-trader-500" : "text-gray-300"
             )} 
           />
         ))}
