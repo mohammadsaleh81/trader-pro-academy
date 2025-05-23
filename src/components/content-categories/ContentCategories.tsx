@@ -2,6 +2,7 @@
 import React from "react";
 import { FileText, Headphones, Video, Calendar, File } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 type Category = {
   id: string;
@@ -47,16 +48,16 @@ const ContentCategories: React.FC = () => {
   return (
     <div className="flex justify-between my-6 overflow-x-auto pb-2 gap-3">
       {categories.map((category) => (
-        <a 
+        <Link 
           key={category.id}
-          href={category.link} 
+          to={category.link} 
           className="flex flex-col items-center min-w-[75px]"
         >
           <div className="w-16 h-16 rounded-full bg-white shadow-md flex items-center justify-center mb-2 text-trader-500 hover:scale-105 transition-transform duration-200">
             {category.icon}
           </div>
           <span className="text-xs text-center text-gray-600">{category.title}</span>
-        </a>
+        </Link>
       ))}
     </div>
   );

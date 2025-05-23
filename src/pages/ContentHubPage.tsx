@@ -7,16 +7,43 @@ import ContentCardSkeleton from "@/components/content/ContentCardSkeleton";
 import { FileText, Search } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 type ContentTab = "articles" | "podcasts" | "videos" | "webinars" | "files";
 
 const ContentHubPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<ContentTab>("articles");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryParams = new URLSearchParams(location.search);
+  const typeFromUrl = queryParams.get('type');
+  
+  // Convert URL param to valid tab value or default to "articles"
+  const getInitialTab = (): ContentTab => {
+    if (!typeFromUrl) return "articles";
+    
+    // Handle both singular and plural forms
+    const normalizedType = typeFromUrl.endsWith('s') 
+      ? typeFromUrl 
+      : `${typeFromUrl}s`;
+      
+    return ["articles", "podcasts", "videos", "webinars", "files"].includes(normalizedType) 
+      ? normalizedType as ContentTab 
+      : "articles";
+  };
+
+  const [activeTab, setActiveTab] = useState<ContentTab>(getInitialTab());
   const { articles, podcasts, videos, webinars, files } = useData();
   const [isLoading, setIsLoading] = useState(true);
   const [key, setKey] = useState(0); // Used to force re-render the content for animation
+
+  // Sync tab when URL changes
+  useEffect(() => {
+    const newTab = getInitialTab();
+    if (newTab !== activeTab) {
+      setActiveTab(newTab);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     // Simulate data loading
@@ -59,13 +86,22 @@ const ContentHubPage: React.FC = () => {
     files: "فایل‌ها"
   };
 
+  // Handle tab change and update URL
+  const handleTabChange = (value: string) => {
+    const tab = value as ContentTab;
+    setActiveTab(tab);
+    
+    // Update URL with the new tab value
+    navigate(`/content?type=${tab}`, { replace: true });
+  };
+
   return (
     <Layout>
       <div className="trader-container py-6">
         <h1 className="text-2xl font-bold mb-6">کتابخانه محتوا</h1>
         
         {/* Tabs */}
-        <Tabs defaultValue="articles" value={activeTab} onValueChange={(value) => setActiveTab(value as ContentTab)}>
+        <Tabs defaultValue="articles" value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="w-full overflow-x-auto bg-white border-b border-gray-200 p-0 h-auto mb-6">
             {(Object.keys(tabLabelsMap) as ContentTab[]).map((tab) => (
               <TabsTrigger
@@ -97,7 +133,7 @@ const ContentHubPage: React.FC = () => {
                     description="به‌زودی محتوای جدیدی در این بخش منتشر خواهد شد"
                     action={
                       <Button 
-                        onClick={() => setActiveTab("articles")} 
+                        onClick={() => handleTabChange("articles")} 
                         className="mt-4 bg-trader-500 hover:bg-trader-600 btn-click"
                         variant="default"
                       >
