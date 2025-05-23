@@ -5,7 +5,7 @@ import { useData } from "@/contexts/DataContext";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Bookmark, BookmarkPlus, Share } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkPlus, Share } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
 
@@ -185,14 +185,14 @@ const ContentDetailPage: React.FC = () => {
           className="mb-6 flex items-center gap-2"
           onClick={() => navigate("/content")}
         >
-          <ArrowLeft size={18} />
+          <ArrowRight size={18} />
           <span>بازگشت به کتابخانه محتوا</span>
         </Button>
 
         <Card className="border-none shadow-md">
           <CardContent className="p-6">
             <div className="flex justify-between items-start mb-6">
-              <h1 className="text-2xl font-bold">{content.title}</h1>
+              <h1 className="text-2xl font-bold text-right">{content.title}</h1>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -217,7 +217,7 @@ const ContentDetailPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 text-gray-500 mb-6">
+            <div className="flex items-center gap-4 text-gray-500 mb-6 justify-end">
               <span>{content.author}</span>
               <span>•</span>
               <span>{content.date}</span>
@@ -235,7 +235,7 @@ const ContentDetailPage: React.FC = () => {
               )}
             </div>
 
-            <div className="flex flex-wrap gap-2 mb-8">
+            <div className="flex flex-wrap gap-2 mb-8 justify-end">
               {content.tags && content.tags.map((tag: string) => (
                 <span
                   key={tag}
@@ -248,7 +248,7 @@ const ContentDetailPage: React.FC = () => {
 
             {renderContentMedia()}
 
-            <div className="prose max-w-none">
+            <div className="prose max-w-none text-right">
               {type === "articles" ? (
                 <div>
                   <p className="text-gray-600 mb-4">{content.description}</p>

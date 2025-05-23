@@ -4,6 +4,7 @@ import CourseCard from "./CourseCard";
 import CourseCardSkeleton from "./CourseCardSkeleton";
 import { Course } from "@/contexts/DataContext";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 type CourseListProps = {
   courses: Course[];
@@ -28,9 +29,9 @@ const CourseList: React.FC<CourseListProps> = ({
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">{title}</h2>
           {courses.length > 4 && !isLoading && (
-            <a href="#" className="text-trader-500 text-sm">
+            <Link to="/courses" className="text-trader-500 text-sm">
               مشاهده همه
-            </a>
+            </Link>
           )}
         </div>
       )}

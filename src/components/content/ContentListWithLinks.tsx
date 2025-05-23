@@ -45,26 +45,26 @@ const ContentListWithLinks: React.FC<ContentListProps> = ({ items, type }) => {
                   className="w-full h-32 object-cover rounded-t-lg"
                 />
                 {type === "podcast" && (
-                  <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-[8px] px-1.5 py-0.5 rounded">
+                  <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-[8px] px-1.5 py-0.5 rounded">
                     {(item as Podcast).duration}
                   </div>
                 )}
                 {(type === "video" || type === "webinar") && (
-                  <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-[8px] px-1.5 py-0.5 rounded">
+                  <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-[8px] px-1.5 py-0.5 rounded">
                     {type === "video" 
                       ? (item as Video).duration
                       : (item as Webinar).duration}
                   </div>
                 )}
               </div>
-              <div className="p-2">
+              <div className="p-2 text-right">
                 <h3 className="font-semibold text-xs mb-1 line-clamp-1">{item.title}</h3>
                 <p className="text-gray-500 text-[10px] line-clamp-1 mb-2">
                   {item.description}
                 </p>
                 <div className="flex justify-between text-[8px] text-gray-500">
-                  <span>{item.author}</span>
                   <span>{item.date}</span>
+                  <span>{item.author}</span>
                 </div>
               </div>
             </CardContent>
