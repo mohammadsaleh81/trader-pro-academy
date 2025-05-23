@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -260,7 +259,7 @@ const CourseDetailPage: React.FC = () => {
           alt={course.title}
           className="w-full h-full object-cover opacity-25 absolute inset-0"
         />
-        <div className="trader-container h-full flex flex-col justify-center items-start relative z-10 py-8 px-4 md:px-0">
+        <div className="trader-container h-full flex flex-col justify-center items-start relative z-10 py-8 px-4 md:px-6 lg:px-8">
           <div className="max-w-3xl">
             <h5 className="text-white text-xl mb-2">
               {course.categories && course.categories[0]}
@@ -289,7 +288,7 @@ const CourseDetailPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="trader-container py-8">
+      <div className="trader-container py-8 px-4 md:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
