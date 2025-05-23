@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from "react";
 import Header from "./Header";
-import Footer from "./Footer";
 import MobileNavigation from "./MobileNavigation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Loader } from "lucide-react";
@@ -98,7 +97,6 @@ const Layout: React.FC<LayoutProps> = ({
           </div>
         )}
       </main>
-      <Footer />
       {isMobile && <MobileNavigation />}
     </div>
   );
