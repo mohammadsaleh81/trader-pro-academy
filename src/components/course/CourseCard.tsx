@@ -100,50 +100,50 @@ const CourseCard: React.FC<CourseCardProps> = ({
   return (
     <div className="trader-card h-full flex flex-col">
       <Link to={`/courses/${id}`} className="block">
-        <div className="relative h-44 w-full">
+        <div className="relative h-28 w-full">
           <img
             src={thumbnail}
             alt={title}
             className="w-full h-full object-cover rounded-t-xl"
           />
           {progress !== undefined && (
-            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 py-1 px-2">
+            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 py-0.5 px-1">
               <div className="progress-bar">
                 <div className="progress-value" style={{ width: `${progress}%` }}></div>
               </div>
-              <p className="text-white text-xs mt-1 text-center">
+              <p className="text-white text-[10px] mt-0.5 text-center">
                 {progress}% تکمیل شده
               </p>
             </div>
           )}
         </div>
       </Link>
-      <div className="p-3 flex-1 flex flex-col">
+      <div className="p-2 flex-1 flex flex-col">
         <Link to={`/courses/${id}`} className="block">
-          <h3 className="font-bold text-sm line-clamp-2 mb-1">{title}</h3>
-          <p className="text-gray-600 text-xs mb-2">مدرس: {instructor}</p>
+          <h3 className="font-bold text-xs line-clamp-1 mb-0.5">{title}</h3>
+          <p className="text-gray-600 text-[10px] mb-1">مدرس: {instructor}</p>
         </Link>
         <div className="mt-auto">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center">
-              <Star className="h-3.5 w-3.5 text-yellow-500 ml-1" />
-              <span className="text-xs font-medium">{rating}</span>
+              <Star className="h-3 w-3 text-yellow-500 ml-0.5" />
+              <span className="text-[10px] font-medium">{rating}</span>
             </div>
-            <p className={`font-bold ${isFree ? "text-green-600" : "text-trader-500"} text-sm`}>
+            <p className={`font-bold ${isFree ? "text-green-600" : "text-trader-500"} text-xs`}>
               {isFree ? "رایگان" : `${price.toLocaleString()} تومان`}
             </p>
           </div>
           <Button 
             variant={isEnrolled ? "outline" : "default"}
-            className="w-full text-xs py-1 h-8"
+            className="w-full text-[10px] py-0 h-6"
             onClick={handleQuickBuy}
             disabled={isProcessing}
           >
             {isProcessing ? (
-              <Loader className="h-4 w-4 animate-spin mx-auto" />
+              <Loader className="h-3 w-3 animate-spin mx-auto" />
             ) : (
               <>
-                <ShoppingCart className="h-4 w-4 ml-1" />
+                <ShoppingCart className="h-3 w-3 ml-0.5" />
                 {isEnrolled ? "مشاهده دوره" : isFree ? "ثبت‌نام رایگان" : "خرید سریع"}
               </>
             )}

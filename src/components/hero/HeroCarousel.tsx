@@ -60,19 +60,19 @@ const HeroCarousel: React.FC = () => {
             className="relative w-full rounded-2xl overflow-hidden"
             onFocus={() => setActiveSlide(index)}
           >
-            <div className="relative h-[220px] md:h-[300px] lg:h-[400px] w-full">
+            <div className="relative h-[180px] md:h-[240px] lg:h-[300px] w-full">
               <img
                 src={slide.image}
                 alt={slide.title}
                 className="w-full h-full object-cover brightness-[0.7]"
               />
               <div className={`absolute inset-0 bg-gradient-to-${isRtl ? 'r' : 'l'} from-trader-500/50 to-blue-900/60 flex items-center ${isRtl ? 'justify-start' : 'justify-end'}`}>
-                <div className={`text-white ${isRtl ? 'text-left' : 'text-right'} p-6 md:p-12 max-w-md ${isRtl ? 'ml-0 md:ml-8' : 'mr-0 md:mr-8'}`}>
-                  <h2 className="text-lg md:text-xl mb-2 font-light">{slide.title}</h2>
-                  <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4">{slide.subtitle}</h1>
+                <div className={`text-white ${isRtl ? 'text-left' : 'text-right'} p-4 md:p-8 max-w-md ${isRtl ? 'ml-0 md:ml-6' : 'mr-0 md:mr-6'}`}>
+                  <h2 className="text-sm md:text-lg mb-1 font-light">{slide.title}</h2>
+                  <h1 className="text-xl md:text-3xl lg:text-4xl font-bold mb-3">{slide.subtitle}</h1>
                   <a 
                     href={slide.buttonLink} 
-                    className="inline-block bg-trader-500 hover:bg-trader-600 text-white text-sm md:text-base px-5 py-2 rounded-full transition-colors duration-300"
+                    className="inline-block bg-trader-500 hover:bg-trader-600 text-white text-xs md:text-sm px-4 py-1.5 rounded-full transition-colors duration-300"
                   >
                     {slide.buttonText}
                   </a>
@@ -83,12 +83,12 @@ const HeroCarousel: React.FC = () => {
         ))}
       </CarouselCard>
       
-      <div className="flex justify-center gap-1 mt-2">
+      <div className="flex justify-center gap-1 mt-1">
         {slides.map((slide, index) => (
           <Dot 
             key={slide.id} 
             className={cn(
-              "h-3 w-3", 
+              "h-2.5 w-2.5", 
               index === activeSlide ? "text-trader-500" : "text-gray-300"
             )} 
           />

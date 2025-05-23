@@ -37,7 +37,7 @@ const ContentList = <T extends ContentItem>({
   
   if (showCarousel) {
     return (
-      <div className="my-6">
+      <div className="my-4">
         {title && (
           <div className="flex justify-between items-center mb-4 px-2 sm:px-0">
             <div className="flex items-center">
@@ -56,7 +56,7 @@ const ContentList = <T extends ContentItem>({
         <CarouselCard controlsClassName="bg-white shadow-md">
           {isLoading 
             ? Array.from({ length: skeletonCount }).map((_, index) => (
-                <ContentCardSkeleton key={`carousel-skeleton-${index}`} />
+                <ContentCardSkeleton key={`carousel-skeleton-${index}`} className="px-1" />
               ))
             : items.map((item, index) => renderContentCard(item, type, `carousel-${index}`))
           }
@@ -66,7 +66,7 @@ const ContentList = <T extends ContentItem>({
   }
 
   return (
-    <div className="my-6">
+    <div className="my-4">
       {title && (
         <div className="flex justify-between items-center mb-4 px-2 sm:px-0">
           <div className="flex items-center">
@@ -82,7 +82,7 @@ const ContentList = <T extends ContentItem>({
         </div>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
         {isLoading 
           ? Array.from({ length: skeletonCount }).map((_, index) => (
               <ContentCardSkeleton key={`skeleton-${index}`} />

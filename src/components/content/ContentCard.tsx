@@ -93,34 +93,34 @@ const ContentCard: React.FC<ContentCardProps> = ({
   return (
     <Link to={getContentUrl()} className={cn("block h-full", className)}>
       <div className="trader-card flex flex-col h-full overflow-hidden hover:shadow-md transition-all duration-300">
-        <div className="w-full h-48 min-h-[120px] relative">
+        <div className="w-full h-32 min-h-[80px] relative">
           <img
             src={thumbnail}
             alt={title}
             className="w-full h-full object-cover"
           />
-          <div className={`absolute top-3 right-3 ${getTypeBgColor()} text-white text-xs px-3 py-1 rounded-full`}>
+          <div className={`absolute top-1.5 right-1.5 ${getTypeBgColor()} text-white text-[8px] px-1.5 py-0.5 rounded-full`}>
             {getTypeLabel()}
           </div>
           {duration && (
-            <div className="absolute bottom-3 right-3 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
-              <Clock className="inline-block w-3 h-3 ml-1" />
+            <div className="absolute bottom-1.5 right-1.5 bg-black bg-opacity-60 text-white text-[8px] px-1.5 py-0.5 rounded">
+              <Clock className="inline-block w-2 h-2 ml-0.5" />
               {duration}
             </div>
           )}
         </div>
-        <div className="w-full p-4 flex flex-col relative flex-grow">
-          <h3 className="font-bold text-base mb-2 line-clamp-2">{title}</h3>
-          <p className="text-gray-600 text-sm line-clamp-2 mb-3">{description}</p>
+        <div className="w-full p-2 flex flex-col relative flex-grow">
+          <h3 className="font-bold text-xs mb-1 line-clamp-1">{title}</h3>
+          <p className="text-gray-600 text-[10px] line-clamp-1 mb-2">{description}</p>
           
-          <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
-            <div className="flex items-center text-xs text-gray-500">
-              <User className="w-3 h-3 ml-1" />
+          <div className="flex items-center justify-between mt-auto pt-1 border-t border-gray-100">
+            <div className="flex items-center text-[8px] text-gray-500">
+              <User className="w-2 h-2 ml-0.5" />
               {author}
             </div>
             
-            <div className="flex items-center text-xs text-gray-500">
-              <Calendar className="w-3 h-3 ml-1" />
+            <div className="flex items-center text-[8px] text-gray-500">
+              <Calendar className="w-2 h-2 ml-0.5" />
               {date}
             </div>
           </div>
@@ -128,13 +128,13 @@ const ContentCard: React.FC<ContentCardProps> = ({
           {user && (
             <button 
               onClick={handleBookmark}
-              className="absolute top-4 left-4 text-trader-500"
+              className="absolute top-2 left-2 text-trader-500"
               aria-label={bookmark ? "حذف از نشان‌ها" : "افزودن به نشان‌ها"}
             >
               {bookmark ? (
-                <BookmarkCheck className="h-5 w-5" />
+                <BookmarkCheck className="h-3.5 w-3.5" />
               ) : (
-                <Bookmark className="h-5 w-5" />
+                <Bookmark className="h-3.5 w-3.5" />
               )}
             </button>
           )}

@@ -33,7 +33,7 @@ const ContentListWithLinks: React.FC<ContentListProps> = ({ items, type }) => {
   const pluralType = typeToPlural[type];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
       {items.map((item) => (
         <Link to={`/${pluralType}/${item.id}`} key={item.id}>
           <Card className="h-full hover:shadow-md transition-shadow duration-300">
@@ -42,27 +42,27 @@ const ContentListWithLinks: React.FC<ContentListProps> = ({ items, type }) => {
                 <img
                   src={item.thumbnail}
                   alt={item.title}
-                  className="w-full h-48 object-cover rounded-t-lg"
+                  className="w-full h-32 object-cover rounded-t-lg"
                 />
                 {type === "podcast" && (
-                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+                  <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-[8px] px-1.5 py-0.5 rounded">
                     {(item as Podcast).duration}
                   </div>
                 )}
                 {(type === "video" || type === "webinar") && (
-                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+                  <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-[8px] px-1.5 py-0.5 rounded">
                     {type === "video" 
                       ? (item as Video).duration
                       : (item as Webinar).duration}
                   </div>
                 )}
               </div>
-              <div className="p-4">
-                <h3 className="font-semibold mb-2 line-clamp-2">{item.title}</h3>
-                <p className="text-gray-500 text-sm line-clamp-2 mb-4">
+              <div className="p-2">
+                <h3 className="font-semibold text-xs mb-1 line-clamp-1">{item.title}</h3>
+                <p className="text-gray-500 text-[10px] line-clamp-1 mb-2">
                   {item.description}
                 </p>
-                <div className="flex justify-between text-xs text-gray-500">
+                <div className="flex justify-between text-[8px] text-gray-500">
                   <span>{item.author}</span>
                   <span>{item.date}</span>
                 </div>
