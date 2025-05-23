@@ -14,13 +14,15 @@ type CarouselCardProps = {
   className?: string;
   controlsClassName?: string;
   showControls?: boolean;
+  itemClassName?: string;
 };
 
 const CarouselCard: React.FC<CarouselCardProps> = ({
   children,
   className,
   controlsClassName,
-  showControls = true
+  showControls = true,
+  itemClassName = "basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5"
 }) => {
   const [isRtl, setIsRtl] = useState(false);
   
@@ -43,7 +45,7 @@ const CarouselCard: React.FC<CarouselCardProps> = ({
         {React.Children.map(children, (child, index) => (
           <CarouselItem 
             key={index} 
-            className="pl-2 pr-2 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 transition-opacity hover:opacity-100 focus:opacity-100"
+            className={cn("pl-2 pr-2 transition-opacity hover:opacity-100 focus:opacity-100", itemClassName)}
           >
             {child}
           </CarouselItem>

@@ -59,14 +59,14 @@ const HeroCarousel: React.FC = () => {
           align: "start",
           loop: true,
           direction: isRtl ? "rtl" : "ltr",
-          slidesToScroll: isMobile ? 1 : 2,
+          slidesToScroll: 1,
         }}
       >
         <CarouselContent className="-ml-2 -mr-2">
           {slides.map((slide, index) => (
             <CarouselItem
               key={slide.id}
-              className={`pl-2 pr-2 ${isMobile ? 'basis-full' : 'basis-1/2'}`}
+              className={isMobile ? 'pl-2 pr-2 basis-full' : 'pl-2 pr-2 basis-1/2'}
               onFocus={() => setActiveSlide(index)}
             >
               <div className="relative w-full rounded-2xl overflow-hidden">

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Dot } from "lucide-react";
 import CarouselCard from "@/components/ui/carousel-card";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type HeroSlide = {
   id: string;
@@ -43,6 +44,7 @@ const slides: HeroSlide[] = [
 const HeroCarousel: React.FC = () => {
   const [isRtl, setIsRtl] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
+  const isMobile = useIsMobile();
   
   useEffect(() => {
     setIsRtl(document.documentElement.dir === "rtl");
@@ -53,6 +55,7 @@ const HeroCarousel: React.FC = () => {
       <CarouselCard 
         className="w-full"
         controlsClassName="bg-white/70 text-trader-500 hover:bg-white"
+        itemClassName={isMobile ? 'basis-full' : 'basis-1/2'}
       >
         {slides.map((slide, index) => (
           <div 
