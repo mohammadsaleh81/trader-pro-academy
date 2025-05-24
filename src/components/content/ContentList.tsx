@@ -5,6 +5,7 @@ import ContentCardSkeleton from "./ContentCardSkeleton";
 import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import CarouselCard from "../ui/carousel-card";
+import { idToString } from "@/utils/idConverter";
 import { 
   Article, 
   Podcast, 
@@ -94,18 +95,51 @@ const ContentList = <T extends ContentItem>({
   );
   
   function renderContentCard(item: ContentItem, contentType: string, key: string) {
+    // Get description and format date from item
+    const getDescription = (item: ContentItem): string => {
+      if ('summary' in item && item.summary) return item.summary;
+      if ('description' in item && item.description) return item.description;
+      if ('content' in item) return item.content.substring(0, 150);
+      return '';
+    };
+
+    // Get formatted date
+    const getDate = (item: ContentItem): string => {
+      if ('date' in item && item.date) return item.date;
+      if ('published_at' in item && item.published_at) 
+        return item.published_at;
+      if ('created_at' in item) 
+        return item.created_at;
+      return '';
+    };
+
+    // Get author display
+    const getAuthor = (item: ContentItem) => {
+      if ('author' in item) {
+        if (typeof item.author === 'string') return item.author;
+        if (item.author && typeof item.author === 'object') return item.author;
+      }
+      return 'نویسنده ناشناس';
+    };
+
+    const description = getDescription(item);
+    const date = getDate(item);
+    const author = getAuthor(item);
+    const thumbnail = item.thumbnail || '';
+    const itemId = idToString(item.id);
+
     if (contentType === "podcast") {
-      const podcast = item as unknown as Podcast;
+      const podcast = item as Podcast;
       return (
         <ContentCard
-          key={`${key}-${podcast.id}`}
-          id={podcast.id}
+          key={`${key}-${itemId}`}
+          id={itemId}
           title={podcast.title}
-          description={podcast.description}
-          thumbnail={podcast.thumbnail}
+          description={description}
+          thumbnail={thumbnail}
           type={contentType as "podcast"}
-          date={podcast.date}
-          author={podcast.author}
+          date={date}
+          author={author}
           duration={podcast.duration}
           className="h-full"
         />
@@ -113,17 +147,17 @@ const ContentList = <T extends ContentItem>({
     }
     
     if (contentType === "video") {
-      const video = item as unknown as Video;
+      const video = item as Video;
       return (
         <ContentCard
-          key={`${key}-${video.id}`}
-          id={video.id}
+          key={`${key}-${itemId}`}
+          id={itemId}
           title={video.title}
-          description={video.description}
-          thumbnail={video.thumbnail}
+          description={description}
+          thumbnail={thumbnail}
           type={contentType as "video"}
-          date={video.date}
-          author={video.author}
+          date={date}
+          author={author}
           duration={video.duration}
           className="h-full"
         />
@@ -131,17 +165,17 @@ const ContentList = <T extends ContentItem>({
     }
     
     if (contentType === "webinar") {
-      const webinar = item as unknown as Webinar;
+      const webinar = item as Webinar;
       return (
         <ContentCard
-          key={`${key}-${webinar.id}`}
-          id={webinar.id}
+          key={`${key}-${itemId}`}
+          id={itemId}
           title={webinar.title}
-          description={webinar.description}
-          thumbnail={webinar.thumbnail}
+          description={description}
+          thumbnail={thumbnail}
           type={contentType as "webinar"}
-          date={webinar.date}
-          author={webinar.author}
+          date={date}
+          author={author}
           duration={webinar.duration}
           className="h-full"
         />
@@ -149,17 +183,17 @@ const ContentList = <T extends ContentItem>({
     }
     
     if (contentType === "file") {
-      const file = item as unknown as FileType;
+      const file = item as FileType;
       return (
         <ContentCard
-          key={`${key}-${file.id}`}
-          id={file.id}
+          key={`${key}-${itemId}`}
+          id={itemId}
           title={file.title}
-          description={file.description}
-          thumbnail={file.thumbnail}
+          description={description}
+          thumbnail={thumbnail}
           type={contentType as "file"}
-          date={file.date}
-          author={file.author}
+          date={date}
+          author={author}
           fileSize={file.fileSize}
           fileType={file.fileType}
           className="h-full"
@@ -168,17 +202,17 @@ const ContentList = <T extends ContentItem>({
     }
     
     // Default case: article
-    const article = item as unknown as Article;
+    const article = item as Article;
     return (
       <ContentCard
-        key={`${key}-${article.id}`}
-        id={article.id}
+        key={`${key}-${itemId}`}
+        id={itemId}
         title={article.title}
-        description={article.description}
-        thumbnail={article.thumbnail}
+        description={description}
+        thumbnail={thumbnail}
         type={contentType as "article"}
-        date={article.date}
-        author={article.author}
+        date={date}
+        author={author}
         className="h-full"
       />
     );

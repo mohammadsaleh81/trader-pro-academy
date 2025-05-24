@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { idToString } from "@/utils/idConverter";
 
 // Type definitions
 export interface User {
@@ -9,26 +10,30 @@ export interface User {
 }
 
 export interface Course {
-  id: string;
+  id: string | number;
   title: string;
   description: string;
   instructor: {
-    id: string;
+    id: string | number;
     first_name: string;
     last_name: string;
     email: string;
   };
   thumbnail: string;
-  price: string;
+  price: string | number;
   is_free: boolean;
   chapters: Chapter[];
   created_at: string;
   updated_at: string;
   is_published: boolean;
+  // Additional properties for UI
+  rating?: number;
+  totalLessons?: number;
+  completedLessons?: number;
 }
 
 export interface Chapter {
-  id: string;
+  id: string | number;
   title: string;
   description: string;
   order: number;
@@ -36,7 +41,7 @@ export interface Chapter {
 }
 
 export interface Lesson {
-  id: string;
+  id: string | number;
   title: string;
   content: string;
   video_url: string;
@@ -46,27 +51,27 @@ export interface Lesson {
 }
 
 export interface Article {
-  id: string;
+  id: string | number;
   title: string;
   slug: string;
   content: string;
   summary: string;
   thumbnail: string;
   author: {
-    id: string;
+    id: string | number;
     username: string | null;
     email: string;
     first_name: string;
     last_name: string;
   };
   category: {
-    id: string;
+    id: string | number;
     name: string;
     slug: string;
     description: string;
   };
   tags: {
-    id: string;
+    id: string | number;
     name: string;
     slug: string;
   }[];
@@ -75,10 +80,13 @@ export interface Article {
   updated_at: string;
   published_at: string | null;
   view_count: number;
+  // For compatibility with UI components
+  description?: string;
+  date?: string;
 }
 
 export interface Podcast {
-  id: string;
+  id: string | number;
   title: string;
   description: string;
   thumbnail: string;
@@ -86,10 +94,11 @@ export interface Podcast {
   date: string;
   duration: string;
   audioUrl?: string;
+  tags?: string[];
 }
 
 export interface Video {
-  id: string;
+  id: string | number;
   title: string;
   description: string;
   thumbnail: string;
@@ -97,10 +106,11 @@ export interface Video {
   date: string;
   duration: string;
   videoUrl?: string;
+  tags?: string[];
 }
 
 export interface Webinar {
-  id: string;
+  id: string | number;
   title: string;
   description: string;
   thumbnail: string;
@@ -108,10 +118,13 @@ export interface Webinar {
   date: string;
   duration: string;
   videoUrl?: string;
+  tags?: string[];
+  isLive?: boolean;
+  startTime?: string;
 }
 
 export interface File {
-  id: string;
+  id: string | number;
   title: string;
   description: string;
   thumbnail: string;
@@ -120,6 +133,7 @@ export interface File {
   fileSize?: string;
   fileType?: string;
   fileUrl?: string;
+  tags?: string[];
 }
 
 export type ItemType = "article" | "podcast" | "video" | "webinar" | "file" | "course";
@@ -132,6 +146,17 @@ interface Bookmark {
   createdAt: string;
 }
 
+export interface Wallet {
+  balance: number;
+  transactions: {
+    id: string;
+    amount: number;
+    type: string;
+    description: string;
+    date: string;
+  }[];
+}
+
 interface DataContextType {
   courses: Course[];
   articles: Article[];
@@ -140,10 +165,16 @@ interface DataContextType {
   webinars: Webinar[];
   files: File[];
   bookmarks: Bookmark[];
+  myCourses?: string[]; // IDs of courses user is enrolled in
+  wallet?: Wallet;
   addBookmark: (itemId: string, itemType: ItemType, userId: string) => void;
   removeBookmark: (bookmarkId: string) => void;
   fetchArticles: () => Promise<Article[]>;
   fetchArticleById: (id: string) => Promise<Article | null>;
+  updateWallet?: (amount: number, type: string, description: string) => void;
+  enrollCourse?: (courseId: string) => void;
+  fetchCourses?: () => Promise<Course[]>;
+  fetchCourseById?: (id: string) => Promise<Course | null>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -153,18 +184,23 @@ const mockCourses: Course[] = [
   {
     id: "1",
     title: "آموزش ترید و تحلیل تکنیکال",
-    instructor: "مستر تریدر",
+    instructor: {
+      id: "1",
+      first_name: "مستر",
+      last_name: "تریدر",
+      email: "trader@example.com"
+    },
     thumbnail: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop",
     description: "این دوره به شما اصول اولیه ترید و تحلیل تکنیکال را آموزش می‌دهد. شما با الگوهای نموداری، اندیکاتورها و استراتژی‌های معاملاتی آشنا خواهید شد.",
-    price: 1200000,
+    price: "1200000",
+    is_free: false,
+    chapters: [],
+    created_at: "2023-01-15",
+    updated_at: "2023-04-20",
+    is_published: true,
     rating: 4.8,
     totalLessons: 24,
-    completedLessons: 12,
-    createdAt: "2023-01-15",
-    updatedAt: "2023-04-20",
-    categories: ["ترید", "تحلیل تکنیکال", "بازار مالی"],
-    duration: "24 ساعت",
-    level: "beginner"
+    completedLessons: 12
   },
   {
     id: "2",
@@ -172,7 +208,7 @@ const mockCourses: Course[] = [
     instructor: "سارا محمدی",
     thumbnail: "https://images.unsplash.com/photo-1605792657660-596af9009e82?q=80&w=2071&auto=format&fit=crop",
     description: "در این دوره با استراتژی‌های مختلف سرمایه‌گذاری در بازار کریپتو آشنا می‌شوید و می‌آموزید چگونه ریسک‌ها را کاهش داده و بازدهی خود را افزایش دهید.",
-    price: 1500000,
+    price: "1500000",
     rating: 4.6,
     totalLessons: 18,
     completedLessons: 6,
@@ -188,7 +224,7 @@ const mockCourses: Course[] = [
     instructor: "علی رضایی",
     thumbnail: "https://images.unsplash.com/photo-1633158829585-23ba8f7c8caf?q=80&w=2070&auto=format&fit=crop",
     description: "مدیریت ریسک و سرمایه از مهم‌ترین فاکتورهای موفقیت در ترید است. این دوره به شما آموزش می‌دهد چگونه از سرمایه خود محافظت کنید و در عین حال بازده مطلوبی داشته باشید.",
-    price: 980000,
+    price: "980000",
     rating: 4.9,
     totalLessons: 12,
     completedLessons: 0,
@@ -204,7 +240,7 @@ const mockCourses: Course[] = [
     instructor: "حسین محمودی",
     thumbnail: "https://images.unsplash.com/photo-1642790551116-03a31b099176?q=80&w=2070&auto=format&fit=crop",
     description: "در این دوره از صفر با بازار فارکس آشنا می‌شوید و اصول ترید در این بازار را می‌آموزید. استراتژی‌های مختلف معاملاتی، تحلیل بازار و مدیریت حساب از موضوعات این دوره هستند.",
-    price: 2200000,
+    price: "2200000",
     rating: 4.7,
     totalLessons: 32,
     completedLessons: 16,
@@ -220,7 +256,7 @@ const mockCourses: Course[] = [
     instructor: "نیما کریمی",
     thumbnail: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop",
     description: "آموزش جامع معامله در بورس ایران و تحلیل سهام. از مفاهیم پایه تا استراتژی‌های پیشرفته معاملاتی را در این دوره می‌آموزید.",
-    price: 0,
+    price: "0",
     rating: 4.5,
     totalLessons: 15,
     completedLessons: 8,
@@ -236,7 +272,7 @@ const mockCourses: Course[] = [
     instructor: "فاطمه احمدی",
     thumbnail: "https://images.unsplash.com/photo-1604594849809-dfedbc827105?q=80&w=2070&auto=format&fit=crop",
     description: "در این دوره با اصول تحلیل بنیادی سهام و شرکت‌ها آشنا می‌شوید و می‌آموزید چگونه صورت‌های مالی را تحلیل کنید و ارزش واقعی شرکت‌ها را تعیین نمایید.",
-    price: 1800000,
+    price: "1800000",
     rating: 4.8,
     totalLessons: 20,
     completedLessons: 0,
@@ -252,7 +288,7 @@ const mockCourses: Course[] = [
     instructor: "امیر صادقی",
     thumbnail: "https://images.unsplash.com/photo-1521898284481-a5ec348cb555?q=80&w=2070&auto=format&fit=crop",
     description: "این دوره به جنبه‌های روانشناختی معامله‌گری می‌پردازد و به شما کمک می‌کند تا بر احساسات خود در معاملات مسلط شوید و تصمیمات منطقی‌تری بگیرید.",
-    price: 1300000,
+    price: "1300000",
     rating: 4.9,
     totalLessons: 16,
     completedLessons: 0,
@@ -268,7 +304,7 @@ const mockCourses: Course[] = [
     instructor: "پویا علوی",
     thumbnail: "https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=2016&auto=format&fit=crop",
     description: "در این دوره اصول معاملات الگوریتمی و برنامه‌نویسی استراتژی‌های معاملاتی را می‌آموزید. این دوره برای افرادی مناسب است که می‌خواهند سیستم‌های معاملاتی خودکار طراحی کنند.",
-    price: 2500000,
+    price: "2500000",
     rating: 4.7,
     totalLessons: 28,
     completedLessons: 0,
@@ -708,15 +744,83 @@ const mockWallet: Wallet = {
   ]
 };
 
+// Convert API article to our format
+const articleFromApi = (article: any): Article => {
+  return {
+    ...article,
+    description: article.summary || article.content.substring(0, 150),
+    date: article.published_at ? formatDate(article.published_at.split('T')[0]) : formatDate(article.created_at.split('T')[0])
+  };
+};
+
+// Format date in Persian
+function formatDate(dateString: string): string {
+  if (!dateString) return "";
+  
+  try {
+    // Convert to Persian date format
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('fa-IR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(date);
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return dateString;
+  }
+}
+
+const mockCoursesWithId = mockCourses.map(course => ({
+  ...course,
+  id: idToString(course.id)
+}));
+
+const mockPodcastsWithId = mockPodcasts.map(podcast => ({
+  ...podcast,
+  id: idToString(podcast.id)
+}));
+
+const mockVideosWithId = mockVideos.map(video => ({
+  ...video,
+  id: idToString(video.id)
+}));
+
+const mockWebinarsWithId = mockWebinars.map(webinar => ({
+  ...webinar,
+  id: idToString(webinar.id)
+}));
+
+const mockFilesWithId = mockFiles.map(file => ({
+  ...file,
+  id: idToString(file.id)
+}));
+
+const mockBookmarksWithId = mockBookmarks.map(bookmark => ({
+  ...bookmark,
+  itemId: idToString(bookmark.itemId)
+}));
+
+const mockWalletWithId = {
+  ...mockWallet,
+  balance: mockWallet.balance,
+  transactions: mockWallet.transactions.map(transaction => ({
+    ...transaction,
+    id: idToString(transaction.id)
+  }))
+};
+
 // Data Provider Component
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [courses, setCourses] = useState<Course[]>(mockCourses);
+  const [courses, setCourses] = useState<Course[]>(mockCoursesWithId);
   const [articles, setArticles] = useState<Article[]>([]);
-  const [podcasts, setPodcasts] = useState<Podcast[]>(mockPodcasts);
-  const [videos, setVideos] = useState<Video[]>(mockVideos);
-  const [webinars, setWebinars] = useState<Webinar[]>(mockWebinars);
-  const [files, setFiles] = useState<File[]>(mockFiles);
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>(mockBookmarks);
+  const [podcasts, setPodcasts] = useState<Podcast[]>(mockPodcastsWithId);
+  const [videos, setVideos] = useState<Video[]>(mockVideosWithId);
+  const [webinars, setWebinars] = useState<Webinar[]>(mockWebinarsWithId);
+  const [files, setFiles] = useState<File[]>(mockFilesWithId);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>(mockBookmarksWithId);
+  const [myCourses, setMyCourses] = useState<string[]>([]);
+  const [wallet, setWallet] = useState<Wallet>(mockWalletWithId);
 
   useEffect(() => {
     // Fetch articles on component mount
@@ -745,7 +849,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Failed to fetch articles');
       }
       const data = await response.json();
-      return data;
+      // Transform API response to match our Article type
+      const processedArticles = data.map((article: any) => articleFromApi(article));
+      return processedArticles;
     } catch (error) {
       console.error('Error fetching articles:', error);
       return [];
@@ -759,10 +865,99 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Failed to fetch article');
       }
       const data = await response.json();
-      return data;
+      return articleFromApi(data);
     } catch (error) {
       console.error(`Error fetching article with id ${id}:`, error);
       return null;
+    }
+  };
+
+  const fetchCourses = async (): Promise<Course[]> => {
+    try {
+      const response = await fetch('https://api.gport.sbs/course/api/courses/');
+      if (!response.ok) {
+        throw new Error('Failed to fetch courses');
+      }
+      const data = await response.json();
+      // Transform API response to match our Course type
+      const processedCourses = data.map((course: any) => ({
+        id: course.id,
+        title: course.title,
+        description: course.description,
+        instructor: course.instructor,
+        thumbnail: course.thumbnail,
+        price: course.price,
+        is_free: course.is_free,
+        chapters: course.chapters || [],
+        created_at: course.created_at,
+        updated_at: course.updated_at,
+        is_published: course.is_published,
+        rating: 4.5, // Default rating until we have real data
+        totalLessons: course.chapters?.reduce((acc: number, chapter: any) => acc + chapter.lessons.length, 0) || 0,
+        completedLessons: 0 // Default until we track user progress
+      }));
+      return processedCourses;
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+      return mockCourses; // Fallback to mock data
+    }
+  };
+
+  const fetchCourseById = async (id: string): Promise<Course | null> => {
+    try {
+      const response = await fetch(`https://api.gport.sbs/course/api/courses/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch course');
+      }
+      const course = await response.json();
+      return {
+        id: course.id,
+        title: course.title,
+        description: course.description,
+        instructor: course.instructor,
+        thumbnail: course.thumbnail,
+        price: course.price,
+        is_free: course.is_free,
+        chapters: course.chapters || [],
+        created_at: course.created_at,
+        updated_at: course.updated_at,
+        is_published: course.is_published,
+        rating: 4.5, // Default rating until we have real data
+        totalLessons: course.chapters?.reduce((acc: number, chapter: any) => acc + chapter.lessons.length, 0) || 0,
+        completedLessons: 0 // Default until we track user progress
+      };
+    } catch (error) {
+      console.error(`Error fetching course with id ${id}:`, error);
+      return null;
+    }
+  };
+
+  const updateWallet = (amount: number, type: string, description: string) => {
+    const newTransaction = {
+      id: `transaction-${Date.now()}`,
+      amount,
+      type,
+      description,
+      date: new Intl.DateTimeFormat('fa-IR').format(new Date())
+    };
+    
+    setWallet(prev => ({
+      balance: type === 'deposit' ? prev.balance + amount : 
+               type === 'withdrawal' ? prev.balance - amount : 
+               type === 'purchase' ? prev.balance - amount : prev.balance,
+      transactions: [newTransaction, ...prev.transactions]
+    }));
+  };
+
+  const enrollCourse = (courseId: string) => {
+    if (!myCourses.includes(courseId)) {
+      setMyCourses(prev => [...prev, courseId]);
+      // If it's a paid course, deduct from wallet
+      const course = courses.find(c => idToString(c.id) === courseId);
+      if (course && !course.is_free) {
+        const price = typeof course.price === 'string' ? parseInt(course.price) : course.price;
+        updateWallet(price, 'purchase', `خرید دوره ${course.title}`);
+      }
     }
   };
 
@@ -776,10 +971,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         webinars,
         files,
         bookmarks,
+        myCourses,
+        wallet,
         addBookmark,
         removeBookmark,
         fetchArticles,
-        fetchArticleById
+        fetchArticleById,
+        fetchCourses,
+        fetchCourseById,
+        updateWallet,
+        enrollCourse
       }}
     >
       {children}

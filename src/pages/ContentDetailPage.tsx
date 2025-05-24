@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Bookmark, BookmarkPlus, Share } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
+import { idToString } from "@/utils/idConverter";
 
 const ContentDetailPage: React.FC = () => {
   const { id, type } = useParams();
@@ -21,44 +22,63 @@ const ContentDetailPage: React.FC = () => {
     files,
     bookmarks,
     addBookmark,
-    removeBookmark 
+    removeBookmark,
+    fetchArticleById
   } = useData();
   
   const [content, setContent] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
   useEffect(() => {
-    if (!id || !type) return;
+    const loadContent = async () => {
+      if (!id || !type) return;
+      setIsLoading(true);
 
-    let item;
-    switch (type) {
-      case "articles":
-        item = articles.find(article => article.id === id);
-        break;
-      case "podcasts":
-        item = podcasts.find(podcast => podcast.id === id);
-        break;
-      case "videos":
-        item = videos.find(video => video.id === id);
-        break;
-      case "webinars":
-        item = webinars.find(webinar => webinar.id === id);
-        break;
-      case "files":
-        item = files.find(file => file.id === id);
-        break;
-      default:
-        break;
-    }
+      try {
+        let item;
+        switch (type) {
+          case "articles":
+            // For articles, use the API fetch function
+            item = await fetchArticleById(id);
+            break;
+          case "podcasts":
+            item = podcasts.find(podcast => idToString(podcast.id) === id);
+            break;
+          case "videos":
+            item = videos.find(video => idToString(video.id) === id);
+            break;
+          case "webinars":
+            item = webinars.find(webinar => idToString(webinar.id) === id);
+            break;
+          case "files":
+            item = files.find(file => idToString(file.id) === id);
+            break;
+          default:
+            break;
+        }
 
-    setContent(item);
+        setContent(item);
+        
+        // Check if the item is bookmarked
+        const bookmarked = bookmarks.some(
+          bookmark => bookmark.itemId === id && bookmark.itemType === convertTypeToSingular(type)
+        );
+        setIsBookmarked(bookmarked);
+      } catch (error) {
+        console.error("Error loading content:", error);
+        toast({
+          title: "خطا در بارگذاری محتوا",
+          description: "متأسفانه مشکلی در بارگذاری محتوا به وجود آمد.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    // Check if the item is bookmarked
-    const bookmarked = bookmarks.some(
-      bookmark => bookmark.itemId === id && bookmark.itemType === convertTypeToSingular(type)
-    );
-    setIsBookmarked(bookmarked);
-  }, [id, type, articles, podcasts, videos, webinars, files, bookmarks]);
+    loadContent();
+  }, [id, type, articles, podcasts, videos, webinars, files, bookmarks, fetchArticleById]);
 
   const convertTypeToSingular = (pluralType: string): string => {
     const typeMap: Record<string, string> = {
@@ -102,6 +122,23 @@ const ContentDetailPage: React.FC = () => {
       title: "لینک کپی شد",
       description: "لینک این محتوا در کلیپ‌بورد کپی شد",
     });
+  };
+
+  // Format author display
+  const getAuthorDisplay = () => {
+    if (!content) return '';
+    
+    if (content.author) {
+      if (typeof content.author === 'string') {
+        return content.author;
+      }
+      if (typeof content.author === 'object' && 'first_name' in content.author && 'last_name' in content.author) {
+        return content.author.first_name || content.author.last_name 
+          ? `${content.author.first_name || ''} ${content.author.last_name || ''}`.trim()
+          : 'نویسنده ناشناس';
+      }
+    }
+    return 'نویسنده ناشناس';
   };
 
   const renderContentMedia = () => {
@@ -161,6 +198,22 @@ const ContentDetailPage: React.FC = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="trader-container py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/2 mb-6"></div>
+            <div className="h-64 bg-gray-200 rounded mb-6"></div>
+            <div className="h-4 bg-gray-200 rounded mb-2 w-full"></div>
+            <div className="h-4 bg-gray-200 rounded mb-2 w-full"></div>
+            <div className="h-4 bg-gray-200 rounded mb-2 w-3/4"></div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   if (!content) {
     return (
       <Layout>
@@ -218,9 +271,9 @@ const ContentDetailPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-4 text-gray-500 mb-6 justify-end">
-              <span>{content.author}</span>
+              <span>{getAuthorDisplay()}</span>
               <span>•</span>
-              <span>{content.date}</span>
+              <span>{content.date || (content.published_at ? formatDate(content.published_at.split('T')[0]) : formatDate(content.created_at.split('T')[0]))}</span>
               {content.readTime && (
                 <>
                   <span>•</span>
@@ -236,12 +289,12 @@ const ContentDetailPage: React.FC = () => {
             </div>
 
             <div className="flex flex-wrap gap-2 mb-8 justify-end">
-              {content.tags && content.tags.map((tag: string) => (
+              {content.tags && Array.isArray(content.tags) && content.tags.map((tag: any) => (
                 <span
-                  key={tag}
+                  key={typeof tag === 'object' ? tag.id : tag}
                   className="bg-trader-100 text-trader-800 text-xs px-3 py-1 rounded-full"
                 >
-                  {tag}
+                  {typeof tag === 'object' ? tag.name : tag}
                 </span>
               ))}
             </div>
@@ -251,8 +304,8 @@ const ContentDetailPage: React.FC = () => {
             <div className="prose max-w-none text-right">
               {type === "articles" ? (
                 <div>
-                  <p className="text-gray-600 mb-4">{content.description}</p>
-                  <div dangerouslySetInnerHTML={{ __html: content.content }} />
+                  {content.summary && <p className="text-gray-600 mb-4 font-bold">{content.summary}</p>}
+                  <div dangerouslySetInnerHTML={{ __html: content.content.replace(/\n/g, '<br/>') }} />
                 </div>
               ) : (
                 <p className="text-gray-600">{content.description}</p>

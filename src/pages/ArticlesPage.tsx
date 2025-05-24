@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { CalendarIcon, UserIcon, TagIcon, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/utils";
+import { extractDate, extractAuthor } from "@/lib/utils";
 import { Article } from "@/contexts/DataContext";
 import { idToString } from "@/utils/idConverter";
 
@@ -114,58 +114,58 @@ const ArticlesPage: React.FC = () => {
               </div>
             ) : filteredArticles.length > 0 ? (
               <div className="grid grid-cols-1 gap-6">
-                {filteredArticles.map((article: Article) => (
-                  <Link to={`/articles/${idToString(article.id)}`} key={article.id}>
-                    <Card className="overflow-hidden hover:shadow-md transition-all duration-300 border-none shadow-sm">
-                      <div className="flex flex-col md:flex-row">
-                        <div className="md:w-1/3">
-                          <img src={article.thumbnail} alt={article.title} className="w-full h-48 md:h-full object-cover" />
-                        </div>
-                        <div className="md:w-2/3 p-4 flex flex-col">
-                          <div>
-                            <h2 className="text-xl font-bold mb-2 text-right">{article.title}</h2>
-                            <p className="text-gray-600 mb-3 text-right line-clamp-2">{article.summary || article.content.substring(0, 150)}</p>
+                {filteredArticles.map((article: Article) => {
+                  const articleId = idToString(article.id);
+                  const author = extractAuthor(article);
+                  const date = extractDate(article);
+                  
+                  return (
+                    <Link to={`/articles/${articleId}`} key={articleId}>
+                      <Card className="overflow-hidden hover:shadow-md transition-all duration-300 border-none shadow-sm">
+                        <div className="flex flex-col md:flex-row">
+                          <div className="md:w-1/3">
+                            <img src={article.thumbnail} alt={article.title} className="w-full h-48 md:h-full object-cover" />
                           </div>
-                          
-                          <div className="mt-auto">
-                            <div className="flex flex-wrap justify-end gap-2 mb-3">
-                              {article.tags?.slice(0, 3).map((tag) => (
-                                <Badge key={tag.id} variant="outline" className="text-trader-500 border-trader-300">
-                                  {tag.name}
-                                </Badge>
-                              ))}
+                          <div className="md:w-2/3 p-4 flex flex-col">
+                            <div>
+                              <h2 className="text-xl font-bold mb-2 text-right">{article.title}</h2>
+                              <p className="text-gray-600 mb-3 text-right line-clamp-2">{article.summary || article.content.substring(0, 150)}</p>
                             </div>
                             
-                            <div className="flex items-center justify-between text-gray-500 text-sm">
-                              <div className="flex items-center">
-                                <Clock className="h-4 w-4 mr-1" />
-                                <span>{article.view_count} بازدید</span>
+                            <div className="mt-auto">
+                              <div className="flex flex-wrap justify-end gap-2 mb-3">
+                                {article.tags?.slice(0, 3).map((tag) => (
+                                  <Badge key={tag.id} variant="outline" className="text-trader-500 border-trader-300">
+                                    {tag.name}
+                                  </Badge>
+                                ))}
                               </div>
                               
-                              <div className="flex items-center gap-4 justify-end">
+                              <div className="flex items-center justify-between text-gray-500 text-sm">
                                 <div className="flex items-center">
-                                  <CalendarIcon className="h-4 w-4 ml-1" />
-                                  <span>
-                                    {article.published_at ? formatDate(article.published_at.split('T')[0]) : formatDate(article.created_at.split('T')[0])}
-                                  </span>
+                                  <Clock className="h-4 w-4 mr-1" />
+                                  <span>{article.view_count} بازدید</span>
                                 </div>
                                 
-                                <div className="flex items-center">
-                                  <UserIcon className="h-4 w-4 ml-1" />
-                                  <span>
-                                    {article.author.first_name || article.author.last_name 
-                                      ? `${article.author.first_name} ${article.author.last_name}`
-                                      : 'نویسنده ناشناس'}
-                                  </span>
+                                <div className="flex items-center gap-4 justify-end">
+                                  <div className="flex items-center">
+                                    <CalendarIcon className="h-4 w-4 ml-1" />
+                                    <span>{date}</span>
+                                  </div>
+                                  
+                                  <div className="flex items-center">
+                                    <UserIcon className="h-4 w-4 ml-1" />
+                                    <span>{author}</span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </Card>
-                  </Link>
-                ))}
+                      </Card>
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-10">

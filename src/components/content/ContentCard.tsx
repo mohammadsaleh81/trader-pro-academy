@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Bookmark, BookmarkCheck, Calendar, Clock, User } from "lucide-react";
@@ -9,13 +10,13 @@ import { idToString } from "@/utils/idConverter";
 type ContentType = "article" | "podcast" | "video" | "webinar" | "file";
 
 type ContentCardProps = {
-  id: string;
+  id: string | number;
   title: string;
   description: string;
   thumbnail: string;
   type: ContentType;
   date: string;
-  author: string;
+  author: string | React.ReactNode;
   duration?: string;
   fileSize?: string;
   fileType?: string;
@@ -38,8 +39,10 @@ const ContentCard: React.FC<ContentCardProps> = ({
   const { user } = useAuth();
   const { bookmarks, addBookmark, removeBookmark } = useData();
   
+  const idStr = idToString(id);
+  
   const bookmark = user ? bookmarks.find(
-    b => b.itemId === id && b.itemType === type && b.userId === user.id
+    b => b.itemId === idStr && b.itemType === type && b.userId === user.id
   ) : null;
   
   const handleBookmark = (e: React.MouseEvent) => {
@@ -51,19 +54,34 @@ const ContentCard: React.FC<ContentCardProps> = ({
     if (bookmark) {
       removeBookmark(bookmark.id);
     } else {
-      addBookmark(id, type, user.id);
+      addBookmark(idStr, type, user.id);
     }
   };
   
   const getContentUrl = () => {
     switch (type) {
-      case "article": return `/articles/${idToString(id)}`;
-      case "podcast": return `/podcasts/${idToString(id)}`;
-      case "video": return `/videos/${idToString(id)}`;
-      case "webinar": return `/webinars/${idToString(id)}`;
-      case "file": return `/files/${idToString(id)}`;
+      case "article": return `/articles/${idStr}`;
+      case "podcast": return `/podcasts/${idStr}`;
+      case "video": return `/videos/${idStr}`;
+      case "webinar": return `/webinars/${idStr}`;
+      case "file": return `/files/${idStr}`;
       default: return "#";
     }
+  };
+
+  // Format author display
+  const getAuthorDisplay = () => {
+    if (typeof author === 'string') {
+      return author;
+    }
+    if (author && typeof author === 'object' && 'first_name' in author && 'last_name' in author) {
+      // @ts-ignore - we know this is an author object
+      return author.first_name || author.last_name 
+        // @ts-ignore - we know this is an author object
+        ? `${author.first_name || ''} ${author.last_name || ''}`.trim()
+        : 'نویسنده ناشناس';
+    }
+    return 'نویسنده ناشناس';
   };
 
   // Mapping for content type labels in Persian
@@ -116,7 +134,7 @@ const ContentCard: React.FC<ContentCardProps> = ({
           <div className="flex items-center justify-between mt-auto pt-1 border-t border-gray-100">
             <div className="flex items-center text-[8px] text-gray-500">
               <User className="w-2 h-2 ml-0.5" />
-              {author}
+              {getAuthorDisplay()}
             </div>
             
             <div className="flex items-center text-[8px] text-gray-500">
