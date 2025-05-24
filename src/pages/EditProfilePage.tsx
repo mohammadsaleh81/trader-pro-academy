@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -96,7 +95,7 @@ const EditProfilePage: React.FC = () => {
           )}
           
           {success && (
-            <Alert variant="success" className="mb-6 bg-green-50 text-green-600">
+            <Alert variant="default" className="mb-6 bg-green-50 text-green-600 border-green-200">
               <AlertDescription>اطلاعات شخصی شما با موفقیت بروزرسانی شد.</AlertDescription>
             </Alert>
           )}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
 import { toast } from "@/hooks/use-toast";
+import { idToString } from "@/utils/idConverter";
 
 type CourseCardProps = {
   id: string;
@@ -60,7 +61,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
         });
         
         // Store course ID in localStorage to complete purchase after recharge
-        localStorage.setItem("pendingCourseId", id);
+        localStorage.setItem("pendingCourseId", idToString(id));
         navigate("/wallet");
         return;
       }

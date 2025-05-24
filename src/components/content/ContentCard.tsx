@@ -1,10 +1,10 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Bookmark, BookmarkCheck, Calendar, Clock, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
 import { cn } from "@/lib/utils";
+import { idToString } from "@/utils/idConverter";
 
 type ContentType = "article" | "podcast" | "video" | "webinar" | "file";
 
@@ -57,11 +57,11 @@ const ContentCard: React.FC<ContentCardProps> = ({
   
   const getContentUrl = () => {
     switch (type) {
-      case "article": return `/articles/${id}`;
-      case "podcast": return `/podcasts/${id}`;
-      case "video": return `/videos/${id}`;
-      case "webinar": return `/webinars/${id}`;
-      case "file": return `/files/${id}`;
+      case "article": return `/articles/${idToString(id)}`;
+      case "podcast": return `/podcasts/${idToString(id)}`;
+      case "video": return `/videos/${idToString(id)}`;
+      case "webinar": return `/webinars/${idToString(id)}`;
+      case "file": return `/files/${idToString(id)}`;
       default: return "#";
     }
   };

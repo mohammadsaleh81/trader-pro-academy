@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
+import { idToString } from "@/utils/idConverter";
 
 const CourseDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -159,7 +160,7 @@ const CourseDetailPage: React.FC = () => {
       setShortfall(calculatedShortfall);
       
       // Store course ID in localStorage to complete purchase after recharge
-      localStorage.setItem("pendingCourseId", course.id);
+      localStorage.setItem("pendingCourseId", idToString(course.id));
       
       // Open purchase dialog with recharge option
       setIsPurchaseDialogOpen(true);
@@ -203,7 +204,7 @@ const CourseDetailPage: React.FC = () => {
 
   const handleRechargeWallet = () => {
     // Store course ID in localStorage to complete purchase after recharge
-    localStorage.setItem("pendingCourseId", course.id);
+    localStorage.setItem("pendingCourseId", idToString(course.id));
     setIsPurchaseDialogOpen(false);
     navigate("/wallet");
   };
