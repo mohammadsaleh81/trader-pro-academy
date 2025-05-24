@@ -1,151 +1,154 @@
+import React, { createContext, useContext, useState, useEffect } from "react";
 
-import React, { createContext, useContext, useState } from "react";
+// Type definitions
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+}
 
-// Course Types
-export type Course = {
+export interface Course {
   id: string;
   title: string;
-  instructor: string;
+  description: string;
+  instructor: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
   thumbnail: string;
-  description: string;
-  price: number;
-  rating: number;
-  totalLessons?: number;
-  completedLessons?: number;
-  createdAt: string;
-  updatedAt: string;
-  categories: string[];
-  duration?: string;
-  level?: "beginner" | "intermediate" | "advanced";
-};
+  price: string;
+  is_free: boolean;
+  chapters: Chapter[];
+  created_at: string;
+  updated_at: string;
+  is_published: boolean;
+}
 
-// Content Types
-export type Article = {
+export interface Chapter {
   id: string;
   title: string;
   description: string;
+  order: number;
+  lessons: Lesson[];
+}
+
+export interface Lesson {
+  id: string;
+  title: string;
   content: string;
-  thumbnail: string;
-  author: string;
-  date: string;
-  readTime: string;
-  tags: string[];
-};
+  video_url: string;
+  duration: number;
+  order: number;
+  is_free_preview: boolean;
+}
 
-export type Podcast = {
+export interface Article {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  summary: string;
+  thumbnail: string;
+  author: {
+    id: string;
+    username: string | null;
+    email: string;
+    first_name: string;
+    last_name: string;
+  };
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+  };
+  tags: {
+    id: string;
+    name: string;
+    slug: string;
+  }[];
+  status: string;
+  created_at: string;
+  updated_at: string;
+  published_at: string | null;
+  view_count: number;
+}
+
+export interface Podcast {
   id: string;
   title: string;
   description: string;
   thumbnail: string;
-  audioUrl: string;
   author: string;
   date: string;
   duration: string;
-  tags: string[];
-};
+  audioUrl?: string;
+}
 
-export type Video = {
+export interface Video {
   id: string;
   title: string;
   description: string;
   thumbnail: string;
-  videoUrl: string;
   author: string;
   date: string;
   duration: string;
-  tags: string[];
-};
+  videoUrl?: string;
+}
 
-export type Webinar = {
+export interface Webinar {
   id: string;
   title: string;
   description: string;
   thumbnail: string;
-  videoUrl: string;
   author: string;
   date: string;
   duration: string;
-  tags: string[];
-  isLive: boolean;
-  startTime: string;
-};
+  videoUrl?: string;
+}
 
-export type File = {
+export interface File {
   id: string;
   title: string;
   description: string;
   thumbnail: string;
-  fileUrl: string;
   author: string;
   date: string;
-  fileSize: string;
-  fileType: string;
-  tags: string[];
-};
+  fileSize?: string;
+  fileType?: string;
+  fileUrl?: string;
+}
 
-// Item Types for bookmarks
 export type ItemType = "article" | "podcast" | "video" | "webinar" | "file" | "course";
 
-// Bookmark Type
-export type Bookmark = {
+interface Bookmark {
   id: string;
+  userId: string;
   itemId: string;
   itemType: ItemType;
-  userId: string;
   createdAt: string;
-};
+}
 
-// Comment Type
-export type Comment = {
-  id: string;
-  itemId: string;
-  itemType: ItemType;
-  userId: string;
-  userName: string;
-  userAvatar?: string;
-  content: string;
-  date: string;
-  rating?: number;
-};
-
-// Transaction Type for Wallet
-export type Transaction = {
-  id: string;
-  amount: number;
-  type: "deposit" | "withdrawal" | "purchase";
-  description: string;
-  date: string;
-};
-
-// Wallet Type
-export type Wallet = {
-  balance: number;
-  transactions: Transaction[];
-};
-
-// Context Type
 interface DataContextType {
   courses: Course[];
-  myCourses: Course[];
   articles: Article[];
   podcasts: Podcast[];
   videos: Video[];
   webinars: Webinar[];
   files: File[];
   bookmarks: Bookmark[];
-  comments: Comment[];
-  wallet: Wallet;
   addBookmark: (itemId: string, itemType: ItemType, userId: string) => void;
-  removeBookmark: (id: string) => void;
-  addComment: (comment: Omit<Comment, "id" | "date">) => void;
-  enrollCourse: (courseId: string, userId: string) => void;
-  updateWallet: (newBalance: number, newTransactions: Transaction[]) => void;
+  removeBookmark: (bookmarkId: string) => void;
+  fetchArticles: () => Promise<Article[]>;
+  fetchArticleById: (id: string) => Promise<Article | null>;
 }
 
-// Create Context
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-// Mock Data
+// Sample data for initial state
 const mockCourses: Course[] = [
   {
     id: "1",
@@ -274,75 +277,6 @@ const mockCourses: Course[] = [
     categories: ["معاملات الگوریتمی", "برنامه‌نویسی", "هوش مصنوعی"],
     duration: "32 ساعت",
     level: "advanced"
-  }
-];
-
-const mockArticles: Article[] = [
-  {
-    id: "1",
-    title: "اهرم در معاملات: فرصت یا ریسک؟",
-    description: "بررسی کامل مفهوم اهرم و تأثیر آن بر معاملات و چگونگی استفاده صحیح از اهرم برای افزایش سود و کاهش ریسک",
-    content: "<p>اهرم یکی از ابزارهای مهم در دنیای معاملات مالی است که به معامله‌گران اجازه می‌دهد با سرمایه کمتر، معاملات بزرگتری انجام دهند. در این مقاله به بررسی مفهوم اهرم، مزایا و معایب آن، و استراتژی‌های استفاده صحیح از اهرم می‌پردازیم.</p><h2>اهرم چیست؟</h2><p>اهرم در معاملات به معنای استفاده از پول قرضی برای افزایش قدرت خرید است. برای مثال، با اهرم 1:100 می‌توانید با 1000 دلار، معاملاتی به ارزش 100,000 دلار انجام دهید.</p><h2>مزایای استفاده از اهرم</h2><ul><li>افزایش سود بالقوه</li><li>امکان معامله در بازارهایی با سرمایه کمتر</li><li>تنوع بخشیدن به سبد سرمایه‌گذاری</li></ul><h2>معایب و خطرات اهرم</h2><ul><li>افزایش ریسک و احتمال از دست دادن سرمایه</li><li>فشار روانی بیشتر در معاملات</li><li>امکان مارجین کال و بسته شدن اجباری معاملات</li></ul><h2>استراتژی‌های استفاده صحیح از اهرم</h2><p>برای استفاده صحیح از اهرم، رعایت نکات زیر ضروری است:</p><ol><li>هرگز بیش از 1-2 درصد سرمایه خود را در یک معامله به خطر نیندازید</li><li>از اهرم بالا برای معاملات کوتاه‌مدت و اهرم کمتر برای معاملات بلندمدت استفاده کنید</li><li>همیشه از حد ضرر استفاده کنید</li><li>قبل از استفاده از اهرم، استراتژی معاملاتی خود را به خوبی آزمایش کنید</li></ol><p>در نهایت، اهرم ابزاری دو لبه است که در صورت استفاده صحیح می‌تواند به افزایش سود کمک کند، اما استفاده نادرست از آن می‌تواند به سرعت به از دست رفتن سرمایه منجر شود.</p>",
-    thumbnail: "https://images.unsplash.com/photo-1620228885847-9eab2a1adddc?q=80&w=2073&auto=format&fit=crop",
-    author: "علی حسینی",
-    date: "1402/03/15",
-    readTime: "7 دقیقه",
-    tags: ["اهرم", "معاملات", "ریسک", "مدیریت سرمایه"]
-  },
-  {
-    id: "2",
-    title: "استراتژی‌های معاملاتی در بازار نزولی",
-    description: "چطور در بازار نزولی سود کنیم؟ آشنایی با روش‌های معاملاتی مخصوص بازار نزولی و تکنیک‌های محافظت از سرمایه",
-    content: "<p>بازارهای نزولی برای بسیاری از معامله‌گران چالش برانگیز هستند، اما با استراتژی‌های مناسب می‌توان در این شرایط نیز سود کرد. در این مقاله به بررسی استراتژی‌های معاملاتی در بازار نزولی می‌پردازیم.</p><h2>شناخت بازار نزولی</h2><p>بازار نزولی به شرایطی گفته می‌شود که قیمت‌ها به طور مداوم در حال کاهش هستند. شناخت علائم بازار نزولی اولین قدم برای موفقیت در این شرایط است.</p><h2>استراتژی‌های معاملاتی در بازار نزولی</h2><ol><li><strong>فروش استقراضی:</strong> در این استراتژی، شما دارایی را قرض می‌گیرید و می‌فروشید، سپس در قیمت پایین‌تر آن را خریده و به قرض‌دهنده بازمی‌گردانید و از تفاوت قیمت سود می‌برید.</li><li><strong>استفاده از ابزارهای مشتقه:</strong> استفاده از قراردادهای آتی، اختیار معامله و CFDها برای سود در بازار نزولی</li><li><strong>استراتژی هج کردن:</strong> محافظت از سرمایه‌گذاری‌های بلندمدت با پوشش ریسک</li><li><strong>خرید در نقاط حمایت:</strong> شناسایی نقاط حمایت قوی و خرید در این نقاط برای سود در بازگشت‌های کوتاه‌مدت</li></ol><h2>مدیریت ریسک در بازار نزولی</h2><p>مدیریت ریسک در بازار نزولی از اهمیت بیشتری برخوردار است. استفاده از حد ضرر، کاهش اندازه معاملات و حفظ بخشی از سرمایه به صورت نقد از اصول مهم مدیریت ریسک در این شرایط هستند.</p><p>با درک صحیح از شرایط بازار و استفاده از استراتژی‌های مناسب، بازار نزولی نیز می‌تواند فرصت‌های سودآوری ایجاد کند.</p>",
-    thumbnail: "https://images.unsplash.com/photo-1634704784915-aacf363b021f?q=80&w=2070&auto=format&fit=crop",
-    author: "سارا محمدی",
-    date: "1402/02/20",
-    readTime: "5 دقیقه",
-    tags: ["بازار نزولی", "استراتژی", "فروش استقراضی", "مدیریت ریسک"]
-  },
-  {
-    id: "3",
-    title: "تحلیل بنیادی و اهمیت آن در انتخاب ارزهای دیجیتال",
-    description: "چگونه با تحلیل بنیادی پروژه‌های ارز دیجیتال را ارزیابی کنیم؟ معیارهای مهم در تحلیل بنیادی ارزهای دیجیتال",
-    content: "<p>تحلیل بنیادی در دنیای ارزهای دیجیتال به معنای بررسی عوامل زیربنایی یک پروژه برای ارزیابی ارزش واقعی و پتانسیل رشد آن است. در این مقاله به روش‌های تحلیل بنیادی پروژه‌های ارز دیجیتال می‌پردازیم.</p><h2>اهمیت تحلیل بنیادی در ارزهای دیجیتال</h2><p>برخلاف بازارهای سنتی، در بازار ارزهای دیجیتال، تحلیل بنیادی شامل بررسی تکنولوژی، تیم توسعه‌دهنده، کاربردهای عملی پروژه و اکوسیستم آن می‌شود.</p><h2>معیارهای مهم در تحلیل بنیادی</h2><ol><li><strong>تکنولوژی و نوآوری:</strong> آیا پروژه از تکنولوژی منحصر به فردی استفاده می‌کند؟ آیا مشکل واقعی را حل می‌کند؟</li><li><strong>تیم توسعه‌دهنده:</strong> بررسی تجربه، تخصص و سابقه تیم پروژه</li><li><strong>رقابت و مزیت رقابتی:</strong> مقایسه پروژه با رقبا و ارزیابی مزیت رقابتی آن</li><li><strong>توکنومیکس:</strong> بررسی مدل اقتصادی پروژه، عرضه و تقاضای توکن، و مکانیسم‌های حکمرانی</li><li><strong>پذیرش و کاربرد:</strong> میزان استفاده از پروژه در دنیای واقعی و پتانسیل پذیرش گسترده</li></ol><h2>منابع برای تحلیل بنیادی</h2><p>برای تحلیل بنیادی ارزهای دیجیتال می‌توانید از منابع زیر استفاده کنید:</p><ul><li>وایت‌پیپر پروژه</li><li>وب‌سایت رسمی و شبکه‌های اجتماعی</li><li>گیت‌هاب و فعالیت توسعه‌دهندگان</li><li>گزارش‌های تحقیقاتی مستقل</li><li>داشبوردهای تحلیلی مانند CoinMarketCap، CoinGecko و Messari</li></ul><p>تحلیل بنیادی به سرمایه‌گذاران کمک می‌کند تا با دید روشن‌تری نسبت به پتانسیل بلندمدت پروژه‌ها تصمیم‌گیری کنند و از هیجانات کوتاه‌مدت بازار دور بمانند.</p>",
-    thumbnail: "https://images.unsplash.com/photo-1627469629282-e2f7f4238267?q=80&w=2070&auto=format&fit=crop",
-    author: "مهدی اکبری",
-    date: "1402/01/10",
-    readTime: "8 دقیقه",
-    tags: ["تحلیل بنیادی", "ارز دیجیتال", "سرمایه‌گذاری", "بلاکچین"]
-  },
-  {
-    id: "4",
-    title: "الگوهای هارمونیک در تحلیل تکنیکال",
-    description: "آشنایی با الگوهای هارمونیک و کاربرد آنها در پیش‌بینی روند بازار. این الگوها چگونه به معامله‌گران کمک می‌کنند؟",
-    content: "<p>الگوهای هارمونیک از جمله ابزارهای پیشرفته در تحلیل تکنیکال هستند که بر اساس نسبت‌های فیبوناچی شکل می‌گیرند. در این مقاله به بررسی مهم‌ترین الگوهای هارمونیک و نحوه استفاده از آنها می‌پردازیم.</p><h2>الگوهای هارمونیک چیستند؟</h2><p>الگوهای هارمونیک، الگوهای قیمتی هستند که در نمودارهای قیمت شکل می‌گیرند و از نسبت‌های فیبوناچی برای تعیین نقاط برگشت احتمالی قیمت استفاده می‌کنند. این الگوها معمولاً متقارن هستند و از پنج نقطه (XABCD) تشکیل می‌شوند.</p><h2>انواع مهم الگوهای هارمونیک</h2><ol><li><strong>الگوی گارتلی (Gartley):</strong> اولین و معروف‌ترین الگوی هارمونیک که در سال 1935 توسط H.M. گارتلی معرفی شد.</li><li><strong>الگوی پروانه (Butterfly):</strong> یک الگوی برگشتی که در انتهای روندها شکل می‌گیرد.</li><li><strong>الگوی خفاش (Bat):</strong> یکی از دقیق‌ترین الگوهای هارمونیک که دارای نسبت‌های فیبوناچی خاصی است.</li><li><strong>الگوی کراب (Crab):</strong> یک الگوی برگشتی قوی که دارای حرکت انتهایی شدیدی است.</li><li><strong>الگوی سایفر (Cypher):</strong> یک الگوی پنج نقطه‌ای که با نسبت‌های خاصی شناخته می‌شود.</li></ol><h2>نحوه استفاده از الگوهای هارمونیک در معاملات</h2><p>برای استفاده از الگوهای هارمونیک، باید مراحل زیر را دنبال کنید:</p><ul><li>شناسایی الگو در نمودار قیمت</li><li>تأیید نسبت‌های فیبوناچی</li><li>تعیین نقطه ورود (معمولاً در نقطه D)</li><li>تعیین حد ضرر (زیر یا بالای نقطه X)</li><li>تعیین اهداف قیمتی (با استفاده از نسبت‌های فیبوناچی)</li></ul><p>الگوهای هارمونیک ابزار قدرتمندی هستند، اما نباید به تنهایی مورد استفاده قرار گیرند. ترکیب این الگوها با سایر روش‌های تحلیل تکنیکال و مدیریت ریسک مناسب، می‌تواند به نتایج بهتری منجر شود.</p>",
-    thumbnail: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop",
-    author: "حمید نوری",
-    date: "1402/04/05",
-    readTime: "10 دقیقه",
-    tags: ["تحلیل تکنیکال", "الگوهای هارمونیک", "فیبوناچی", "پیش‌بینی روند"]
-  },
-  {
-    id: "5",
-    title: "روانشناسی معامله‌گری موفق",
-    description: "چگونه بر جنبه‌های روانشناختی معامله‌گری مسلط شویم؟ اهمیت کنترل احساسات در موفقیت مالی",
-    content: "<p>روانشناسی معامله‌گری یکی از مهم‌ترین جنبه‌های موفقیت در بازارهای مالی است که اغلب نادیده گرفته می‌شود. در این مقاله به بررسی جنبه‌های روانشناختی معامله‌گری و روش‌های تقویت ذهنیت معامله‌گری می‌پردازیم.</p><h2>چالش‌های روانشناختی در معامله‌گری</h2><p>معامله‌گران با چالش‌های روانشناختی متعددی مواجه هستند:</p><ul><li><strong>ترس و طمع:</strong> دو احساس اصلی که می‌توانند تصمیمات معامله‌گری را تحت تأثیر قرار دهند.</li><li><strong>سوگیری‌های شناختی:</strong> مانند سوگیری تأیید، سوگیری دسترسی و اثر مالکیت.</li><li><strong>مدیریت استرس:</strong> فشار ناشی از نوسانات بازار و مدیریت ریسک.</li><li><strong>انضباط:</strong> پایبندی به استراتژی و برنامه معاملاتی.</li></ul><h2>تکنیک‌های روانشناختی برای معامله‌گران</h2><ol><li><strong>روزنگاری معاملات:</strong> ثبت و تحلیل معاملات برای یادگیری از اشتباهات و موفقیت‌ها.</li><li><strong>تمرینات ذهنی:</strong> مدیتیشن، تنفس عمیق و تصویرسازی ذهنی برای کنترل استرس.</li><li><strong>تعیین قوانین معاملاتی:</strong> ایجاد و پیروی از مجموعه قوانین معاملاتی برای جلوگیری از تصمیمات احساسی.</li><li><strong>مدیریت انتظارات:</strong> تعیین اهداف واقع‌بینانه و پذیرش ریسک و زیان به عنوان بخشی از فرآیند.</li></ol><h2>ایجاد ذهنیت معامله‌گری موفق</h2><p>یک ذهنیت معامله‌گری موفق شامل موارد زیر است:</p><ul><li><strong>پذیرش عدم قطعیت:</strong> درک این نکته که هیچ معامله‌ای 100% تضمین شده نیست.</li><li><strong>تفکر احتمالاتی:</strong> تمرکز بر نتایج بلندمدت به جای نتایج هر معامله.</li><li><strong>پشتکار و انعطاف‌پذیری:</strong> توانایی سازگاری با شرایط متغیر بازار و یادگیری مداوم.</li><li><strong>مسئولیت‌پذیری:</strong> پذیرش مسئولیت کامل نتایج معاملات.</li></ul><p>با تقویت جنبه‌های روانشناختی معامله‌گری، می‌توانید به طور قابل توجهی عملکرد خود در بازارهای مالی را بهبود بخشید و به یک معامله‌گر منظم و سودآور تبدیل شوید.</p>",
-    thumbnail: "https://images.unsplash.com/photo-1521898284481-a5ec348cb555?q=80&w=2070&auto=format&fit=crop",
-    author: "زهرا کمالی",
-    date: "1402/05/12",
-    readTime: "7 دقیقه",
-    tags: ["روانشناسی", "معامله‌گری", "کنترل احساسات", "استراتژی ذهنی"]
-  },
-  {
-    id: "6",
-    title: "اصول سرمایه‌گذاری ارزشی در بازار سهام",
-    description: "مروری بر اصول و استراتژی‌های سرمایه‌گذاری ارزشی که توسط وارن بافت و سایر سرمایه‌گذاران موفق استفاده می‌شود",
-    content: "<p>سرمایه‌گذاری ارزشی (Value Investing) یکی از راهبردهای اصلی در بازار سهام است که توسط بنیامین گراهام مطرح شد و بعدها توسط شاگردش وارن بافت به شهرت رسید. در این مقاله به بررسی اصول این روش می‌پردازیم.</p><h2>مفهوم سرمایه‌گذاری ارزشی</h2><p>سرمایه‌گذاری ارزشی بر این اصل استوار است که هر سهم دارای یک ارزش ذاتی است که می‌تواند با قیمت بازار آن متفاوت باشد. هدف سرمایه‌گذار ارزشی، یافتن سهام شرکت‌هایی است که قیمت بازار آنها کمتر از ارزش ذاتی‌شان است.</p><h2>اصول سرمایه‌گذاری ارزشی</h2><ol><li><strong>حاشیه امنیت:</strong> خرید سهام با قیمتی کمتر از ارزش ذاتی برای ایجاد حاشیه امنیت.</li><li><strong>تحلیل بنیادی:</strong> بررسی دقیق صورت‌های مالی، مدل کسب‌وکار و مزیت رقابتی شرکت.</li><li><strong>دیدگاه بلندمدت:</strong> تمرکز بر عملکرد بلندمدت شرکت به جای نوسانات کوتاه‌مدت قیمت سهام.</li><li><strong>تفکر مستقل:</strong> تصمیم‌گیری بر اساس تحلیل شخصی و عدم تأثیرپذیری از هیجانات بازار.</li></ol><h2>شاخص‌های ارزشیابی در سرمایه‌گذاری ارزشی</h2><p>سرمایه‌گذاران ارزشی معمولاً از شاخص‌های زیر برای ارزیابی سهام استفاده می‌کنند:</p><ul><li><strong>نسبت قیمت به درآمد (P/E):</strong> مقایسه قیمت سهام با درآمد هر سهم.</li><li><strong>نسبت قیمت به ارزش دفتری (P/B):</strong> مقایسه قیمت سهام با ارزش دفتری هر سهم.</li><li><strong>نسبت قیمت به جریان نقدی (P/CF):</strong> مقایسه قیمت سهام با جریان نقدی هر سهم.</li><li><strong>بازده سود تقسیمی:</strong> نسبت سود تقسیمی به قیمت سهام.</li><li><strong>بدهی به حقوق صاحبان سهام:</strong> نسبت کل بدهی‌ها به حقوق صاحبان سهام.</li></ul><h2>استراتژی‌های سرمایه‌گذاری ارزشی</h2><p>برخی استراتژی‌های رایج در سرمایه‌گذاری ارزشی عبارتند از:</p><ul><li><strong>خرید سهام ارزان:</strong> یافتن سهام با نسبت‌های قیمت به درآمد یا قیمت به ارزش دفتری پایین.</li><li><strong>شرکت‌های با کیفیت در صنایع دفاعی:</strong> سرمایه‌گذاری در شرکت‌های با ثبات در صنایع ضروری.</li><li><strong>سهام برگشتی:</strong> شناسایی شرکت‌هایی که از مشکلات موقت رنج می‌برند اما پتانسیل بهبود دارند.</li><li><strong>سرمایه‌گذاری در شرکت‌های با مزیت رقابتی پایدار:</strong> آنچه وارن بافت «خندق اقتصادی» می‌نامد.</li></ul><p>سرمایه‌گذاری ارزشی نیازمند صبر، انضباط و تحلیل دقیق است. این روش گرچه ممکن است در کوتاه‌مدت جذابیت کمتری داشته باشد، اما در بلندمدت نتایج قابل توجهی به همراه دارد.</p>",
-    thumbnail: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop",
-    author: "امین رضایی",
-    date: "1402/06/23",
-    readTime: "9 دقیقه",
-    tags: ["سرمایه‌گذاری ارزشی", "بورس", "وارن بافت", "تحلیل بنیادی"]
   }
 ];
 
@@ -775,77 +709,77 @@ const mockWallet: Wallet = {
 };
 
 // Data Provider Component
-export const DataProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
-  const [courses] = useState<Course[]>(mockCourses);
-  const [myCourses, setMyCourses] = useState<Course[]>(mockCourses.slice(0, 2)); // User's purchased courses
-  const [articles] = useState<Article[]>(mockArticles);
-  const [podcasts] = useState<Podcast[]>(mockPodcasts);
-  const [videos] = useState<Video[]>(mockVideos);
-  const [webinars] = useState<Webinar[]>(mockWebinars);
-  const [files] = useState<File[]>(mockFiles);
+export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [courses, setCourses] = useState<Course[]>(mockCourses);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [podcasts, setPodcasts] = useState<Podcast[]>(mockPodcasts);
+  const [videos, setVideos] = useState<Video[]>(mockVideos);
+  const [webinars, setWebinars] = useState<Webinar[]>(mockWebinars);
+  const [files, setFiles] = useState<File[]>(mockFiles);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(mockBookmarks);
-  const [comments, setComments] = useState<Comment[]>(mockComments);
-  const [wallet, setWallet] = useState<Wallet>(mockWallet);
+
+  useEffect(() => {
+    // Fetch articles on component mount
+    fetchArticles().then(data => setArticles(data));
+  }, []);
 
   const addBookmark = (itemId: string, itemType: ItemType, userId: string) => {
     const newBookmark: Bookmark = {
-      id: Date.now().toString(),
+      id: `bookmark-${Date.now()}`,
+      userId,
       itemId,
       itemType,
-      userId,
       createdAt: new Date().toISOString(),
     };
-    setBookmarks([...bookmarks, newBookmark]);
+    setBookmarks(prev => [...prev, newBookmark]);
   };
 
-  const removeBookmark = (id: string) => {
-    setBookmarks(bookmarks.filter(bookmark => bookmark.id !== id));
+  const removeBookmark = (bookmarkId: string) => {
+    setBookmarks(prev => prev.filter(bookmark => bookmark.id !== bookmarkId));
   };
 
-  const addComment = (comment: Omit<Comment, "id" | "date">) => {
-    const newComment: Comment = {
-      ...comment,
-      id: Date.now().toString(),
-      date: new Date().toLocaleDateString('fa-IR'),
-    };
-    setComments([...comments, newComment]);
-  };
-
-  const enrollCourse = (courseId: string, userId: string) => {
-    // Update the myCourses array with the purchased course
-    const course = courses.find(c => c.id === courseId);
-    if (course && !myCourses.some(c => c.id === courseId)) {
-      setMyCourses([...myCourses, course]);
+  const fetchArticles = async (): Promise<Article[]> => {
+    try {
+      const response = await fetch('https://api.gport.sbs/blog/api/articles/');
+      if (!response.ok) {
+        throw new Error('Failed to fetch articles');
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching articles:', error);
+      return [];
     }
-    console.log(`User ${userId} enrolled in course ${courseId}`);
   };
 
-  // New function to update wallet
-  const updateWallet = (newBalance: number, newTransactions: Transaction[]) => {
-    setWallet({
-      balance: newBalance,
-      transactions: newTransactions
-    });
+  const fetchArticleById = async (id: string): Promise<Article | null> => {
+    try {
+      const response = await fetch(`https://api.gport.sbs/blog/api/articles/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch article');
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error(`Error fetching article with id ${id}:`, error);
+      return null;
+    }
   };
 
   return (
     <DataContext.Provider
       value={{
         courses,
-        myCourses,
         articles,
         podcasts,
         videos,
         webinars,
         files,
         bookmarks,
-        comments,
-        wallet,
         addBookmark,
         removeBookmark,
-        addComment,
-        enrollCourse,
-        updateWallet,
+        fetchArticles,
+        fetchArticleById
       }}
     >
       {children}

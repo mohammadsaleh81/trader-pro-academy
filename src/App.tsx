@@ -22,6 +22,8 @@ import AboutUsPage from "./pages/AboutUsPage";
 import OrdersPage from "./pages/OrdersPage";
 import EditProfilePage from "./pages/EditProfilePage";
 import NotFound from "./pages/NotFound";
+import ArticlesPage from "./pages/ArticlesPage";
+import ArticleDetailPage from "./pages/ArticleDetailPage";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +47,8 @@ const App = () => (
               <Route path="/complete-profile" element={<CompleteProfilePage />} />
               <Route path="/courses" element={<CourseListPage />} />
               <Route path="/courses/:id" element={<CourseDetailPage />} />
+              <Route path="/articles" element={<ArticlesPage />} />
+              <Route path="/articles/:id" element={<ArticleDetailPage />} />
               <Route path="/contact-us" element={<ContactUsPage />} />
               <Route path="/about-us" element={<AboutUsPage />} />
               <Route path="/orders" element={<OrdersPage />} />
