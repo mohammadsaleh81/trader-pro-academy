@@ -5,7 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { PhoneIcon } from "lucide-react";
+import { PhoneIcon, ArrowRightIcon, AlertCircle } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 enum AuthStep {
   PHONE_ENTRY,
@@ -16,7 +18,7 @@ const LoginPage: React.FC = () => {
   const [step, setStep] = useState<AuthStep>(AuthStep.PHONE_ENTRY);
   const [phone, setPhone] = useState("");
   const [otp, setOTP] = useState("");
-  const { requestOTP, verifyOTP, isLoading, error, user } = useAuth();
+  const { requestOTP, verifyOTP, isLoading, error, user, otpCodeForTesting } = useAuth();
   const navigate = useNavigate();
 
   // If user is already logged in and profile is complete, redirect to profile page
@@ -35,7 +37,12 @@ const LoginPage: React.FC = () => {
     
     // Basic validation
     if (!phone || phone.length < 10) {
-      return; // Could add error state here
+      toast({
+        title: "خطا",
+        description: "لطفا شماره موبایل معتبر وارد کنید",
+        variant: "destructive",
+      });
+      return;
     }
     
     await requestOTP(phone);
@@ -44,13 +51,29 @@ const LoginPage: React.FC = () => {
 
   const handleOTPSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (otp.length !== 5) {
+      toast({
+        title: "خطا",
+        description: "کد تایید باید 5 رقمی باشد",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     await verifyOTP(otp);
   };
 
-  if (isLoading) {
+  const handleResendOTP = async () => {
+    if (!phone) return;
+    await requestOTP(phone);
+  };
+
+  if (isLoading && !otpCodeForTesting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
+          <div className="w-12 h-12 border-4 border-trader-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-lg">در حال پردازش...</p>
         </div>
       </div>
@@ -70,8 +93,18 @@ const LoginPage: React.FC = () => {
         </div>
         
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
-            {error}
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
+        {/* Show OTP for testing */}
+        {otpCodeForTesting && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-md text-sm">
+            <p className="font-semibold mb-1">کد تایید برای تست:</p>
+            <div className="text-center text-3xl font-bold tracking-wider">{otpCodeForTesting}</div>
+            <p className="text-xs text-blue-600 mt-2">این کد فقط برای تست نمایش داده می‌شود و در نسخه نهایی حذف خواهد شد.</p>
           </div>
         )}
         
@@ -105,7 +138,17 @@ const LoginPage: React.FC = () => {
               className="w-full bg-trader-500 hover:bg-trader-600 py-3"
               disabled={isLoading || phone.length < 10}
             >
-              {isLoading ? "در حال ارسال کد..." : "ارسال کد تایید"}
+              {isLoading ? (
+                <span className="inline-flex items-center">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                  در حال ارسال کد...
+                </span>
+              ) : (
+                <span className="inline-flex items-center">
+                  ارسال کد تایید
+                  <ArrowRightIcon className="ms-2 h-4 w-4" />
+                </span>
+              )}
             </Button>
           </form>
         ) : (
@@ -138,18 +181,35 @@ const LoginPage: React.FC = () => {
                 className="w-full bg-trader-500 hover:bg-trader-600 py-3"
                 disabled={isLoading || otp.length !== 5}
               >
-                {isLoading ? "در حال تایید..." : "تایید کد"}
+                {isLoading ? (
+                  <span className="inline-flex items-center">
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                    در حال تایید...
+                  </span>
+                ) : "تایید کد"}
               </Button>
               
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="w-full py-3"
-                onClick={() => setStep(AuthStep.PHONE_ENTRY)}
-                disabled={isLoading}
-              >
-                تغییر شماره موبایل
-              </Button>
+              <div className="flex justify-between items-center mt-4">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  className="text-sm"
+                  onClick={handleResendOTP}
+                  disabled={isLoading}
+                >
+                  ارسال مجدد کد
+                </Button>
+                
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  className="text-sm"
+                  onClick={() => setStep(AuthStep.PHONE_ENTRY)}
+                  disabled={isLoading}
+                >
+                  تغییر شماره موبایل
+                </Button>
+              </div>
             </div>
           </form>
         )}

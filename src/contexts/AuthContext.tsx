@@ -1,26 +1,26 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { toast } from "@/hooks/use-toast";
 
 // Define user type
 export type User = {
-  id: string;
+  id: string | number;
   name?: string;
   phone: string;
   email?: string;
   avatar?: string;
   isProfileComplete: boolean;
+  first_name?: string;
+  last_name?: string;
+  is_phone_verified?: boolean;
+  token?: {
+    access: string;
+    refresh: string;
+  };
 };
 
-// Mock user data for demo
-const mockUsers = [
-  {
-    id: "1",
-    phone: "09121234567",
-    name: "کاربر نمونه",
-    email: "user@example.com",
-    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-    isProfileComplete: true
-  }
-];
+// API base URL
+const API_BASE_URL = "https://api.gport.sbs";
 
 type AuthContextType = {
   user: User | null;
@@ -33,6 +33,7 @@ type AuthContextType = {
   completeProfile: (name: string, email: string) => Promise<void>;
   updateProfile: (profileData: Partial<User>) => void;
   logout: () => void;
+  otpCodeForTesting?: string; // For displaying OTP during testing
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,6 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [otpCodeForTesting, setOtpCodeForTesting] = useState<string>("");
 
   useEffect(() => {
     // Check for saved user in localStorage
@@ -55,19 +57,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const requestOTP = async (phone: string) => {
     setIsLoading(true);
     setError(null);
+    setOtpCodeForTesting("");
     
     try {
-      // Simulate API call to request OTP
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`${API_BASE_URL}/user/auth/request-otp/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phone_number: phone }),
+      });
       
-      // For demo purposes, we just store the phone number
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "خطا در درخواست کد تایید");
+      }
+      
+      // Store phone number for verification step
       setPhoneNumber(phone);
       
-      // In a real app, this would trigger an SMS to be sent
-      console.log(`OTP requested for phone number: ${phone}`);
+      // For testing - store the OTP code to display to user
+      if (data.code) {
+        setOtpCodeForTesting(data.code);
+      }
+      
+      toast({
+        title: "کد تایید ارسال شد",
+        description: "لطفا کد دریافتی را وارد کنید",
+        variant: "success",
+      });
       
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطا در ارسال کد تایید");
+      toast({
+        title: "خطا",
+        description: err instanceof Error ? err.message : "خطا در ارسال کد تایید",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -78,34 +105,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      // Simulate API call to verify OTP
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`${API_BASE_URL}/user/auth/verify-otp/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          phone_number: phoneNumber,
+          code: otp
+        }),
+      });
       
-      // For demo purposes, any 5-digit code works
-      if (otp.length !== 5) {
-        throw new Error("کد تایید باید 5 رقم باشد");
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "کد تایید نامعتبر است");
       }
       
-      // Check if this phone number exists in our mock database
-      const existingUser = mockUsers.find(u => u.phone === phoneNumber);
+      // Process user data from response
+      const userData: User = {
+        id: data.user.id,
+        phone: data.user.phone_number,
+        email: data.user.email || "",
+        first_name: data.user.first_name || "",
+        last_name: data.user.last_name || "",
+        is_phone_verified: data.user.is_phone_verified,
+        // Construct name from first_name and last_name if available
+        name: `${data.user.first_name || ""} ${data.user.last_name || ""}`.trim(),
+        isProfileComplete: Boolean(data.user.first_name && data.user.email),
+        token: {
+          access: data.access,
+          refresh: data.refresh
+        }
+      };
       
-      if (existingUser) {
-        // User exists, log them in
-        setUser(existingUser);
-        localStorage.setItem("user", JSON.stringify(existingUser));
-      } else {
-        // New user, create a basic profile
-        const newUser: User = {
-          id: String(mockUsers.length + 1),
-          phone: phoneNumber,
-          isProfileComplete: false
-        };
-        
-        setUser(newUser);
-        localStorage.setItem("user", JSON.stringify(newUser));
-      }
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
+      
+      toast({
+        title: "ورود موفقیت‌آمیز",
+        description: "به مستر تریدر خوش آمدید",
+        variant: "success",
+      });
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : "کد تایید نامعتبر است");
+      toast({
+        title: "خطا",
+        description: err instanceof Error ? err.message : "کد تایید نامعتبر است",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -116,27 +165,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      // In a real implementation, we would send an API request to update the profile
+      // For now, we'll just update the local user state
       if (!user) {
         throw new Error("کاربر احراز هویت نشده است");
       }
       
-      // Update user profile
+      // Split name into first_name and last_name
+      const nameParts = name.trim().split(' ');
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(' ') || "";
+      
+      // Update user profile locally
       const updatedUser: User = {
         ...user,
         name,
         email,
-        avatar: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 100)}.jpg`,
+        first_name: firstName,
+        last_name: lastName,
         isProfileComplete: true
       };
       
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
       
+      toast({
+        title: "پروفایل تکمیل شد",
+        description: "اطلاعات شما با موفقیت ذخیره شد",
+        variant: "success",
+      });
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطا در تکمیل پروفایل");
+      toast({
+        title: "خطا",
+        description: err instanceof Error ? err.message : "خطا در تکمیل پروفایل",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -145,16 +210,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateProfile = (profileData: Partial<User>) => {
     if (!user) return;
     
-    // Update user data
+    // Update user data locally
     const updatedUser = { ...user, ...profileData };
     setUser(updatedUser);
     localStorage.setItem("user", JSON.stringify(updatedUser));
+    
+    toast({
+      title: "بروزرسانی پروفایل",
+      description: "اطلاعات پروفایل با موفقیت بروزرسانی شد",
+      variant: "success",
+    });
   };
 
   const logout = () => {
     setUser(null);
     setPhoneNumber("");
     localStorage.removeItem("user");
+    
+    toast({
+      title: "خروج",
+      description: "شما با موفقیت از حساب کاربری خود خارج شدید",
+      variant: "info",
+    });
   };
 
   return (
@@ -169,7 +246,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         verifyOTP, 
         completeProfile,
         updateProfile, 
-        logout 
+        logout,
+        otpCodeForTesting
       }}
     >
       {children}
