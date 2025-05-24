@@ -4,8 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UserIcon, MailIcon, Loader } from "lucide-react";
+import { UserIcon, MailIcon, Loader, AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const CompleteProfilePage: React.FC = () => {
   const [name, setName] = useState("");
@@ -13,6 +14,7 @@ const CompleteProfilePage: React.FC = () => {
   const { user, completeProfile, isLoading, error } = useAuth();
   const navigate = useNavigate();
   const [pageLoading, setPageLoading] = useState(true);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
     // Simulate initial page loading
@@ -38,13 +40,20 @@ const CompleteProfilePage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLocalError(null);
     
     if (!name) {
-      return; // Could add error state here
+      setLocalError("نام و نام خانوادگی الزامی است");
+      return;
     }
     
-    await completeProfile(name, email);
-    navigate("/profile");
+    try {
+      await completeProfile(name, email);
+      navigate("/profile");
+    } catch (err) {
+      // Error is already handled in completeProfile
+      // Just prevent navigation
+    }
   };
 
   if (pageLoading) {
@@ -92,10 +101,11 @@ const CompleteProfilePage: React.FC = () => {
           </p>
         </div>
         
-        {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
-            {error}
-          </div>
+        {(error || localError) && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error || localError}</AlertDescription>
+          </Alert>
         )}
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

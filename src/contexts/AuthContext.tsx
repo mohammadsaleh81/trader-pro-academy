@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 
@@ -31,7 +30,8 @@ type AuthContextType = {
   requestOTP: (phone: string) => Promise<void>;
   verifyOTP: (otp: string) => Promise<void>;
   completeProfile: (name: string, email: string) => Promise<void>;
-  updateProfile: (profileData: Partial<User>) => void;
+  updateProfile: (profileData: Partial<User>) => Promise<void>;
+  fetchProfile: () => Promise<void>;
   logout: () => void;
   otpCodeForTesting?: string; // For displaying OTP during testing
 };
@@ -50,6 +50,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       setUser(JSON.parse(savedUser));
+      // Fetch latest profile data from server if user is logged in
+      fetchProfile();
     }
     setIsLoading(false);
   }, []);
@@ -160,30 +162,95 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const completeProfile = async (name: string, email: string) => {
+  const fetchProfile = async () => {
+    if (!user?.token?.access) return;
+    
     setIsLoading(true);
     setError(null);
     
     try {
-      // In a real implementation, we would send an API request to update the profile
-      // For now, we'll just update the local user state
-      if (!user) {
-        throw new Error("کاربر احراز هویت نشده است");
+      const response = await fetch(`${API_BASE_URL}/user/profile/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${user.token.access}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error("خطا در دریافت اطلاعات پروفایل");
       }
       
+      const data = await response.json();
+      
+      // Update user profile with fetched data
+      const updatedUser: User = {
+        ...user,
+        id: data.id,
+        phone: data.phone_number,
+        email: data.email || "",
+        first_name: data.first_name || "",
+        last_name: data.last_name || "",
+        is_phone_verified: data.is_phone_verified,
+        // Construct name from first_name and last_name
+        name: `${data.first_name || ""} ${data.last_name || ""}`.trim(),
+        isProfileComplete: Boolean(data.first_name && data.email),
+      };
+      
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در دریافت اطلاعات پروفایل");
+      console.error("Error fetching profile:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const completeProfile = async (name: string, email: string) => {
+    if (!user?.token?.access) {
+      throw new Error("کاربر احراز هویت نشده است");
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
       // Split name into first_name and last_name
       const nameParts = name.trim().split(' ');
       const firstName = nameParts[0] || "";
       const lastName = nameParts.slice(1).join(' ') || "";
       
-      // Update user profile locally
+      // Create form data
+      const formData = new FormData();
+      formData.append('first_name', firstName);
+      formData.append('last_name', lastName);
+      formData.append('email', email);
+      
+      // Send API request to update profile
+      const response = await fetch(`${API_BASE_URL}/user/profile/`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${user.token.access}`,
+        },
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error("خطا در بروزرسانی پروفایل");
+      }
+      
+      const data = await response.json();
+      
+      // Update user profile with response data
       const updatedUser: User = {
         ...user,
-        name,
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        isProfileComplete: true
+        name: `${data.first_name || ""} ${data.last_name || ""}`.trim(),
+        email: data.email || "",
+        first_name: data.first_name || "",
+        last_name: data.last_name || "",
+        isProfileComplete: true,
       };
       
       setUser(updatedUser);
@@ -202,24 +269,95 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: err instanceof Error ? err.message : "خطا در تکمیل پروفایل",
         variant: "destructive",
       });
+      throw err;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updateProfile = (profileData: Partial<User>) => {
-    if (!user) return;
+  const updateProfile = async (profileData: Partial<User>) => {
+    if (!user?.token?.access) {
+      toast({
+        title: "خطا",
+        description: "کاربر احراز هویت نشده است",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    // Update user data locally
-    const updatedUser = { ...user, ...profileData };
-    setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
+    setIsLoading(true);
+    setError(null);
     
-    toast({
-      title: "بروزرسانی پروفایل",
-      description: "اطلاعات پروفایل با موفقیت بروزرسانی شد",
-      variant: "success",
-    });
+    try {
+      // Create form data for the API request
+      const formData = new FormData();
+      
+      // Add fields to formData if they exist in profileData
+      if (profileData.first_name !== undefined || profileData.name) {
+        // If first_name is directly provided, use it
+        // Otherwise extract from name
+        const firstName = profileData.first_name || 
+          (profileData.name ? profileData.name.split(' ')[0] : user.first_name || "");
+        formData.append('first_name', firstName);
+      }
+      
+      if (profileData.last_name !== undefined || profileData.name) {
+        // If last_name is directly provided, use it
+        // Otherwise extract from name
+        const lastName = profileData.last_name || 
+          (profileData.name ? profileData.name.split(' ').slice(1).join(' ') : user.last_name || "");
+        formData.append('last_name', lastName);
+      }
+      
+      if (profileData.email !== undefined) {
+        formData.append('email', profileData.email);
+      }
+      
+      // Send the API request
+      const response = await fetch(`${API_BASE_URL}/user/profile/`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${user.token.access}`,
+        },
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error("خطا در بروزرسانی پروفایل");
+      }
+      
+      const data = await response.json();
+      
+      // Update user data locally
+      const updatedUser: User = {
+        ...user,
+        name: `${data.first_name || ""} ${data.last_name || ""}`.trim(),
+        email: data.email || "",
+        first_name: data.first_name || "",
+        last_name: data.last_name || "",
+        phone: data.phone_number,
+        is_phone_verified: data.is_phone_verified,
+      };
+      
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+      toast({
+        title: "بروزرسانی پروفایل",
+        description: "اطلاعات پروفایل با موفقیت بروزرسانی شد",
+        variant: "success",
+      });
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در بروزرسانی پروفایل");
+      toast({
+        title: "خطا",
+        description: err instanceof Error ? err.message : "خطا در بروزرسانی پروفایل",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = () => {
@@ -245,7 +383,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         requestOTP, 
         verifyOTP, 
         completeProfile,
-        updateProfile, 
+        updateProfile,
+        fetchProfile,
         logout,
         otpCodeForTesting
       }}

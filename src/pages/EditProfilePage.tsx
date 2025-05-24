@@ -1,27 +1,46 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, User, Mail, Phone as PhoneIcon } from "lucide-react";
+import { ArrowRight, User, Mail, Phone as PhoneIcon, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FormField } from "@/components/ui/form-field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/hooks/use-toast";
 
 const EditProfilePage: React.FC = () => {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, fetchProfile } = useAuth();
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
-    phone: user?.phone || "",
-    avatar: user?.avatar || ""
+    phone: user?.phone || ""
   });
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  // Fetch profile data when component mounts
+  useEffect(() => {
+    if (user?.token) {
+      fetchProfile();
+    }
+  }, []);
+
+  // Update form data when user data changes
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || ""
+      });
+    }
+  }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -36,17 +55,11 @@ const EditProfilePage: React.FC = () => {
     
     try {
       // Update profile with the form data
-      setTimeout(() => {
-        updateProfile(formData);
-        setSuccess(true);
-        setIsLoading(false);
-        toast({
-          title: "موفقیت",
-          description: "اطلاعات شخصی با موفقیت بروزرسانی شد.",
-        });
-      }, 1000);
+      await updateProfile(formData);
+      setSuccess(true);
     } catch (err) {
       setError("خطایی در بروزرسانی پروفایل رخ داد. لطفاً دوباره تلاش کنید.");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -77,15 +90,15 @@ const EditProfilePage: React.FC = () => {
 
         <div className="bg-white rounded-xl shadow-md p-6">
           {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
-              {error}
-            </div>
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
           
           {success && (
-            <div className="bg-green-50 text-green-600 p-4 rounded-lg mb-6">
-              اطلاعات شخصی شما با موفقیت بروزرسانی شد.
-            </div>
+            <Alert variant="success" className="mb-6 bg-green-50 text-green-600">
+              <AlertDescription>اطلاعات شخصی شما با موفقیت بروزرسانی شد.</AlertDescription>
+            </Alert>
           )}
           
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -103,9 +116,7 @@ const EditProfilePage: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-bold mb-1">تصویر پروفایل</h3>
-                <button type="button" className="text-trader-500 text-sm font-medium">
-                  تغییر تصویر
-                </button>
+                <p className="text-gray-500 text-sm">قابلیت آپلود تصویر بزودی اضافه خواهد شد</p>
               </div>
             </div>
             
@@ -163,7 +174,9 @@ const EditProfilePage: React.FC = () => {
                     placeholder="09xxxxxxxxx"
                     value={formData.phone}
                     onChange={handleChange}
+                    disabled
                   />
+                  <p className="text-xs text-gray-500 mt-1">شماره تلفن غیر قابل تغییر است</p>
                 </div>
               </div>
             </div>
@@ -174,6 +187,7 @@ const EditProfilePage: React.FC = () => {
                 variant="outline"
                 className="border-trader-500 text-trader-500"
                 onClick={() => navigate("/profile")}
+                disabled={isLoading}
               >
                 انصراف
               </Button>
@@ -182,7 +196,12 @@ const EditProfilePage: React.FC = () => {
                 className="bg-trader-500 hover:bg-trader-600 py-3"
                 disabled={isLoading}
               >
-                {isLoading ? "در حال ذخیره..." : "ذخیره تغییرات"}
+                {isLoading ? (
+                  <span className="flex items-center">
+                    <Loader className="animate-spin h-4 w-4 mr-2" />
+                    در حال ذخیره...
+                  </span>
+                ) : "ذخیره تغییرات"}
               </Button>
             </div>
           </form>
