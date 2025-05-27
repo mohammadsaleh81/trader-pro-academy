@@ -24,32 +24,48 @@ const ContentDetailPage: React.FC = () => {
   const [content, setContent] = useState<ContentType | null>(null);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchContent = async () => {
+      console.log('ContentDetailPage: Fetching content for ID:', id, 'Type:', type);
+      
       if (!id || !type) {
+        console.error('ContentDetailPage: Missing ID or type parameters');
+        setError('پارامترهای مورد نیاز یافت نشد');
         navigate('/content');
         return;
       }
 
       try {
         setIsLoading(true);
+        setError(null);
         let data;
         const contentType = type.replace(/s$/, ''); // Remove trailing 's' if exists
         
+        console.log('ContentDetailPage: Normalized content type:', contentType);
+        
         switch (contentType) {
           case "article":
+            console.log('ContentDetailPage: Fetching article with ID:', id);
             data = await articlesApi.getById(id);
             break;
           case "video":
+            console.log('ContentDetailPage: Fetching video with ID:', id);
             data = await videosApi.getById(id);
             break;
           default:
+            console.error('ContentDetailPage: Unknown content type:', contentType);
+            setError('نوع محتوای نامشخص');
             navigate('/content');
             return;
         }
 
+        console.log('ContentDetailPage: Fetched data:', data);
+
         if (!data) {
+          console.error('ContentDetailPage: No data received for ID:', id);
+          setError('محتوا یافت نشد');
           navigate('/content');
           return;
         }
@@ -61,14 +77,15 @@ const ContentDetailPage: React.FC = () => {
           bookmark => bookmark.itemId === id && bookmark.itemType === contentType
         );
         setIsBookmarked(bookmarked);
+        console.log('ContentDetailPage: Content loaded successfully, bookmarked:', bookmarked);
       } catch (error) {
-        console.error('Error fetching content:', error);
+        console.error('ContentDetailPage: Error fetching content:', error);
+        setError('خطا در دریافت محتوا');
         toast({
           title: "خطا در دریافت محتوا",
           description: "لطفا دوباره تلاش کنید",
           variant: "destructive",
         });
-        navigate('/content');
       } finally {
         setIsLoading(false);
       }
@@ -119,15 +136,17 @@ const ContentDetailPage: React.FC = () => {
     );
   }
 
-  if (!content) {
+  if (error || !content) {
     return (
       <Layout>
         <div className="trader-container py-8">
           <div className="text-center">
-            <p className="text-lg text-gray-600 mb-4">محتوای مورد نظر یافت نشد</p>
+            <p className="text-lg text-gray-600 mb-4">
+              {error || "محتوای مورد نظر یافت نشد"}
+            </p>
             <Button 
               onClick={() => navigate("/content")}
-              className="mx-auto"
+              className="mx-auto bg-trader-500 hover:bg-trader-600"
             >
               بازگشت به کتابخانه محتوا
             </Button>

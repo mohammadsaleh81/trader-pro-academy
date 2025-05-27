@@ -32,17 +32,29 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 1000 * 60 * 10, // 10 minutes
+      retry: 3,
+      refetchOnWindowFocus: false,
     },
   },
 });
 
-// Component for handling video redirect
+// Component for handling video redirect with better error handling
 const VideoRedirect: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  
+  console.log('VideoRedirect: Redirecting video ID:', id);
+  
+  if (!id) {
+    console.error('VideoRedirect: No ID provided');
+    return <Navigate to="/content?type=videos" replace />;
+  }
+  
   return <Navigate to={`/content/video/${id}`} replace />;
 };
 
 const App: React.FC = () => {
+  console.log('App: Initializing application');
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
