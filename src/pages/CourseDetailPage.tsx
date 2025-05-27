@@ -197,7 +197,7 @@ const CourseDetailPage: React.FC = () => {
           };
 
           updateWallet(wallet.balance - courseData.info.price, [...wallet.transactions, newTransaction]);
-          enrollCourse(courseData.info.id.toString(), user.id);
+          enrollCourse(courseData.info.id.toString());
 
           toast({
             title: "خرید موفق",
@@ -269,7 +269,7 @@ const CourseDetailPage: React.FC = () => {
 
     if (course.price === 0) {
       // Free course
-      enrollCourse(course.id.toString(), user.id);
+      enrollCourse(course.id.toString());
       navigate("/my-courses");
       return;
     }
@@ -311,7 +311,7 @@ const CourseDetailPage: React.FC = () => {
     };
 
     updateWallet(wallet.balance - course.price, [...wallet.transactions, newTransaction]);
-    enrollCourse(course.id.toString(), user.id);
+    enrollCourse(course.id.toString());
 
     toast({
       title: "خرید موفق",

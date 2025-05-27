@@ -76,7 +76,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
       };
 
       updateWallet(wallet.balance - price, [...wallet.transactions, newTransaction]);
-      enrollCourse(id, user.id);
+      enrollCourse(id);
 
       toast({
         title: "خرید موفق",

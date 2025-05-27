@@ -1,4 +1,3 @@
-
 import React from "react";
 import ContentCard from "./ContentCard";
 import ContentCardSkeleton from "./ContentCardSkeleton";
@@ -37,9 +36,10 @@ const ContentList = <T extends ContentItem>({
 }: ContentListProps<T>) => {
   
   // Helper function to format author
-  const formatAuthor = (author: string | CourseUser): string => {
+  const formatAuthor = (author: string | CourseUser | undefined): string => {
+    if (!author) return "نویسنده";
     if (typeof author === 'object' && author !== null) {
-      return `${author.first_name} ${author.last_name}`.trim() || author.username || author.email;
+      return `${author.first_name || ''} ${author.last_name || ''}`.trim() || author.username || author.email || "نویسنده";
     }
     return author || "نویسنده";
   };
