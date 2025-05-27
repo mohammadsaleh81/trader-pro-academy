@@ -5,10 +5,13 @@ import { useData } from "@/contexts/DataContext";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Bookmark, BookmarkPlus, Share, Play, Clock, Eye, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatDate } from "@/lib/utils";
 import { Article, Video, articlesApi, videosApi } from "@/lib/api";
+import ContentDetailHeader from "@/components/content/ContentDetailHeader";
+import ContentStats from "@/components/content/ContentStats";
+import ContentActions from "@/components/content/ContentActions";
+import ContentMedia from "@/components/content/ContentMedia";
+import RelatedContent from "@/components/content/RelatedContent";
 
 type ContentType = Article | Video;
 
@@ -101,80 +104,6 @@ const ContentDetailPage: React.FC = () => {
     }
   };
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast({
-      title: "لینک کپی شد",
-      description: "لینک این محتوا در کلیپ‌بورد کپی شد",
-    });
-  };
-
-  const renderContentMedia = () => {
-    if (!content) return null;
-
-    if ('video_type' in content) { // It's a video
-      return (
-        <div className="w-full aspect-video bg-gray-100 rounded-lg mb-6 relative">
-          {content.video_embed ? (
-            <div 
-              className="w-full h-full rounded-lg overflow-hidden"
-              dangerouslySetInnerHTML={{ __html: content.video_embed }} 
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="text-center">
-                <Play className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">ویدیو در دسترس نیست</p>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    } else { // It's an article
-      return content.thumbnail ? (
-        <img
-          src={content.thumbnail}
-          alt={content.title}
-          className="w-full h-64 object-cover rounded-lg mb-6"
-        />
-      ) : null;
-    }
-  };
-
-  const renderContentStats = () => {
-    if (!content) return null;
-
-    return (
-      <div className="flex items-center gap-6 text-sm text-gray-500 mb-6 justify-end flex-wrap">
-        {content.author && (
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            <span>{content.author}</span>
-          </div>
-        )}
-        
-        <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4" />
-          <span>{formatDate('published' in content ? content.published : content.created_at)}</span>
-        </div>
-        
-        {'duration' in content && content.duration && (
-          <div className="flex items-center gap-2">
-            <Play className="h-4 w-4" />
-            <span>{content.duration}</span>
-          </div>
-        )}
-        
-        {'view_count' in content && (
-          <div className="flex items-center gap-2">
-            <Eye className="h-4 w-4" />
-            <span>{content.view_count.toLocaleString()} بازدید</span>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   if (isLoading) {
     return (
       <Layout>
@@ -211,44 +140,23 @@ const ContentDetailPage: React.FC = () => {
   return (
     <Layout>
       <div className="trader-container py-8">
-        <Button
-          variant="ghost"
-          className="mb-6 flex items-center gap-2"
-          onClick={() => navigate("/content")}
-        >
-          <ArrowRight size={18} />
-          <span>بازگشت به کتابخانه محتوا</span>
-        </Button>
-
         <Card className="border-none shadow-md">
           <CardContent className="p-6">
-            <div className="flex justify-between items-start mb-6">
-              <h1 className="text-2xl font-bold text-right flex-1 ml-4">{content.title}</h1>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleBookmark}
-                  className="rounded-full"
-                >
-                  {isBookmarked ? (
-                    <Bookmark className="h-5 w-5 fill-current" />
-                  ) : (
-                    <BookmarkPlus className="h-5 w-5" />
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleShare}
-                  className="rounded-full"
-                >
-                  <Share className="h-5 w-5" />
-                </Button>
-              </div>
+            <ContentDetailHeader title={content.title} />
+            
+            <div className="flex justify-end mb-6">
+              <ContentActions 
+                isBookmarked={isBookmarked}
+                onBookmark={handleBookmark}
+              />
             </div>
 
-            {renderContentStats()}
+            <ContentStats
+              author={content.author}
+              publishDate={'published' in content ? content.published : content.created_at}
+              duration={'duration' in content ? content.duration : undefined}
+              viewCount={'view_count' in content ? content.view_count : undefined}
+            />
 
             <div className="flex flex-wrap gap-2 mb-8 justify-end">
               {content.tags.map((tag) => (
@@ -261,7 +169,7 @@ const ContentDetailPage: React.FC = () => {
               ))}
             </div>
 
-            {renderContentMedia()}
+            <ContentMedia content={content} />
 
             {'content' in content ? (
               <div 
@@ -277,15 +185,7 @@ const ContentDetailPage: React.FC = () => {
               />
             )}
 
-            {/* Related content section */}
-            <div className="mt-12 pt-8 border-t border-gray-200">
-              <h3 className="text-lg font-semibold mb-4 text-right">محتوای مرتبط</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="text-center text-gray-500 py-8">
-                  محتوای مرتبط به‌زودی اضافه خواهد شد
-                </div>
-              </div>
-            </div>
+            <RelatedContent />
           </CardContent>
         </Card>
       </div>
