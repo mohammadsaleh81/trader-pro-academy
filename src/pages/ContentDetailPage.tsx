@@ -23,30 +23,38 @@ const ContentDetailPage: React.FC = () => {
 
   useEffect(() => {
     const fetchContent = async () => {
-      if (!id || !type) return;
+      if (!id || !type) {
+        navigate('/content');
+        return;
+      }
 
       try {
         setIsLoading(true);
         let data;
+        const contentType = type.replace(/s$/, ''); // Remove trailing 's' if exists
         
-        switch (type) {
+        switch (contentType) {
           case "article":
-          case "articles":
             data = await articlesApi.getById(parseInt(id));
             break;
           case "video":
-          case "videos":
             data = await videosApi.getById(parseInt(id));
             break;
           default:
-            break;
+            navigate('/content');
+            return;
         }
 
-        setContent(data || null);
+        if (!data) {
+          navigate('/content');
+          return;
+        }
+
+        setContent(data);
         
         // Check if the item is bookmarked
         const bookmarked = bookmarks.some(
-          bookmark => bookmark.itemId === id && bookmark.itemType === type.replace(/s$/, '')
+          bookmark => bookmark.itemId === id && bookmark.itemType === contentType
         );
         setIsBookmarked(bookmarked);
       } catch (error) {
@@ -54,14 +62,16 @@ const ContentDetailPage: React.FC = () => {
         toast({
           title: "خطا در دریافت محتوا",
           description: "لطفا دوباره تلاش کنید",
+          variant: "destructive",
         });
+        navigate('/content');
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchContent();
-  }, [id, type]);
+  }, [id, type, navigate, toast, bookmarks]);
 
   const handleBookmark = () => {
     if (!content || !id || !type) return;
@@ -195,11 +205,13 @@ const ContentDetailPage: React.FC = () => {
               </div>
             </div>
 
-            {/* <div className="flex items-center gap-4 text-gray-500 mb-6 justify-end">
-              {'author' in content ? (
+            <div className="flex items-center gap-4 text-gray-500 mb-6 justify-end">
+              {'author' in content && typeof content.author === 'string' ? (
                 <span>{content.author}</span>
               ) : (
-                <span>{`${content.author.first_name} ${content.author.last_name}`}</span>
+                'author' in content && typeof content.author === 'object' && (
+                  <span>{`${content.author.first_name} ${content.author.last_name}`}</span>
+                )
               )}
               <span>•</span>
               <span>{formatDate('published' in content ? content.published : content.created_at)}</span>
@@ -209,7 +221,7 @@ const ContentDetailPage: React.FC = () => {
                   <span>{content.duration}</span>
                 </>
               )}
-            </div> */}
+            </div>
 
             <div className="flex flex-wrap gap-2 mb-8 justify-end">
               {content.tags.map((tag) => (
@@ -225,13 +237,17 @@ const ContentDetailPage: React.FC = () => {
             {renderContentMedia()}
 
             {'content' in content ? (
-              <div className="prose prose-lg max-w-none text-right" dir="rtl">
-                {content.content}
-              </div>
+              <div 
+                className="prose prose-lg max-w-none text-right" 
+                dir="rtl"
+                dangerouslySetInnerHTML={{ __html: content.content }}
+              />
             ) : (
-              <div className="prose prose-lg max-w-none text-right" dir="rtl">
-                {content.description}
-              </div>
+              <div 
+                className="prose prose-lg max-w-none text-right" 
+                dir="rtl"
+                dangerouslySetInnerHTML={{ __html: content.description }}
+              />
             )}
           </CardContent>
         </Card>
