@@ -11,7 +11,7 @@ const ContentMedia: React.FC<ContentMediaProps> = ({ content }) => {
   if ('video_type' in content) { // It's a video
     return (
       <div className="w-full aspect-video bg-gray-100 rounded-lg mb-6 relative">
-        {content.video_embed ? (
+        {content.video_embed && content.video_embed.trim() !== '' ? (
           <div 
             className="w-full h-full rounded-lg overflow-hidden"
             dangerouslySetInnerHTML={{ __html: content.video_embed }} 
