@@ -245,19 +245,16 @@ const convertThumbnailToAbsoluteUrl = (thumbnail: string | null): string | null 
 
 // Articles API
 export const articlesApi = {
-    // Get all articles
     getAll: async (): Promise<Article[]> => {
-        const response = await axios.get('/content/articles/');
-        // Convert thumbnail URLs to absolute URLs
+        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.ARTICLES}`);
         return response.data.map((article: Article) => ({
             ...article,
             thumbnail: convertThumbnailToAbsoluteUrl(article.thumbnail)
         }));
     },
-
-    // Get single article by ID
+    
     getById: async (id: number): Promise<Article> => {
-        const response = await axios.get(`/content/articles/${id}/`);
+        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.ARTICLE_DETAIL(id)}`);
         return {
             ...response.data,
             thumbnail: convertThumbnailToAbsoluteUrl(response.data.thumbnail)
@@ -267,19 +264,16 @@ export const articlesApi = {
 
 // Videos API
 export const videosApi = {
-    // Get all videos
     getAll: async (): Promise<Video[]> => {
-        const response = await axios.get('/content/videos/');
-        // Convert thumbnail URLs to absolute URLs
+        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.VIDEOS}`);
         return response.data.map((video: Video) => ({
             ...video,
             thumbnail: convertThumbnailToAbsoluteUrl(video.thumbnail)
         }));
     },
-
-    // Get single video by ID
+    
     getById: async (id: number): Promise<Video> => {
-        const response = await axios.get(`/content/videos/${id}/`);
+        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.VIDEO_DETAIL(id)}`);
         return {
             ...response.data,
             thumbnail: convertThumbnailToAbsoluteUrl(response.data.thumbnail)
