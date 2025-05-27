@@ -74,14 +74,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const requestOTP = async (phone: string) => {
+    console.log("AuthContext: requestOTP called with phone:", phone);
     setIsLoading(true);
     setError(null);
     
     try {
       const response = await api.requestOTP(phone);
+      console.log("AuthContext: OTP response received:", response);
       setPhoneNumber(phone);
       setDevOTP(response.code);
+      console.log("AuthContext: Phone and devOTP set successfully");
+      return response;
     } catch (err) {
+      console.error("AuthContext: Error in requestOTP:", err);
       setError(err instanceof Error ? err.message : "خطا در ارسال کد تایید");
       throw err;
     } finally {
@@ -90,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const verifyOTP = async (otp: string) => {
+    console.log("AuthContext: verifyOTP called with otp:", otp, "and phone:", phoneNumber);
     setIsLoading(true);
     setError(null);
     

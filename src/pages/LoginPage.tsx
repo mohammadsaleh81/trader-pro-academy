@@ -16,7 +16,7 @@ const LoginPage: React.FC = () => {
   const [step, setStep] = useState<AuthStep>(AuthStep.PHONE_ENTRY);
   const [phone, setPhone] = useState("");
   const [otp, setOTP] = useState("");
-  const { requestOTP, verifyOTP, isLoading, error, user, devOTP } = useAuth();
+  const { requestOTP, verifyOTP, isLoading, error, user, devOTP, phoneNumber } = useAuth();
   const navigate = useNavigate();
 
   // If user is already logged in, redirect appropriately
@@ -30,6 +30,14 @@ const LoginPage: React.FC = () => {
       }
     }
   }, [user, navigate]);
+
+  // Auto advance to OTP step when devOTP is available
+  useEffect(() => {
+    if (devOTP && phoneNumber && step === AuthStep.PHONE_ENTRY) {
+      console.log("DevOTP available, advancing to OTP step");
+      setStep(AuthStep.OTP_VERIFICATION);
+    }
+  }, [devOTP, phoneNumber, step]);
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,11 +58,8 @@ const LoginPage: React.FC = () => {
     
     try {
       console.log("Requesting OTP for phone:", cleanPhone);
-      const result = await requestOTP(cleanPhone);
-      console.log("OTP request result:", result);
-      console.log("Setting step to OTP_VERIFICATION");
-      setStep(AuthStep.OTP_VERIFICATION);
-      console.log("Step set successfully");
+      await requestOTP(cleanPhone);
+      console.log("OTP requested successfully");
     } catch (error) {
       console.error("Error requesting OTP:", error);
     }
@@ -95,17 +100,7 @@ const LoginPage: React.FC = () => {
     setPhone(value);
   };
 
-  // Add useEffect to track step changes
-  useEffect(() => {
-    console.log("Step changed to:", step);
-  }, [step]);
-
-  console.log("Current step:", step);
-  console.log("Current phone:", phone);
-  console.log("Current OTP:", otp);
-  console.log("Is loading:", isLoading);
-  console.log("Error:", error);
-  console.log("Dev OTP:", devOTP);
+  console.log("LoginPage render - Step:", step, "Phone:", phone, "PhoneNumber from context:", phoneNumber, "DevOTP:", devOTP);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -163,7 +158,7 @@ const LoginPage: React.FC = () => {
           <form className="mt-8 space-y-6" onSubmit={handleOTPSubmit}>
             <div className="space-y-2">
               <label htmlFor="otp" className="block text-sm font-medium text-gray-700">
-                کد تایید ارسال شده به {phone}
+                کد تایید ارسال شده به {phoneNumber}
               </label>
               
               {devOTP && (
