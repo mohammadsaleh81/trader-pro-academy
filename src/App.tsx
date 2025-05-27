@@ -68,6 +68,9 @@ const App = () => (
                   <Route index element={<ProfilePage />} />
                   <Route path="edit" element={<EditProfilePage />} />
                 </Route>
+                
+                {/* Alternative edit profile route */}
+                <Route path="/edit-profile" element={<EditProfilePage />} />
               </Route>
 
               {/* Fallback Routes */}
