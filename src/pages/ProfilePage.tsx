@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { Wallet, File, User, Bookmark, Calendar } from "lucide-react";
+import { Wallet, User, Bookmark, Calendar } from "lucide-react";
 
 const ProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -43,12 +43,6 @@ const ProfilePage: React.FC = () => {
       title: "نشان‌های من",
       description: "محتوای ذخیره شده شما",
       path: "/bookmarks"
-    },
-    {
-      icon: <File className="h-5 w-5" />,
-      title: "سفارش‌های من",
-      description: "تاریخچه خریدها و سفارش‌ها",
-      path: "/orders"
     },
     {
       icon: <User className="h-5 w-5" />,
