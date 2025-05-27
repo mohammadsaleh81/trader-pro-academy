@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { TOKEN_STORAGE_KEY } from './config';
+import { TOKEN_STORAGE_KEY, API_BASE_URL } from './config';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -43,7 +43,7 @@ api.interceptors.response.use(
         
         try {
           // Try to refresh the token
-          const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/token/refresh/`, {
+          const response = await axios.post(`${API_BASE_URL}/auth/token/refresh/`, {
             refresh: tokens.refresh
           });
           

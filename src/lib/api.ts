@@ -1,4 +1,5 @@
 import { API_BASE_URL, API_ENDPOINTS, TOKEN_STORAGE_KEY } from './config';
+import axios from './axios';
 
 interface AuthTokens {
     access: string;
@@ -28,6 +29,67 @@ interface VerifyOTPResponse {
 
 interface AvatarResponse {
     avatar: string;
+}
+
+// Article types
+export interface Article {
+    id: number;
+    title: string;
+    slug: string;
+    content: string;
+    summary: string;
+    thumbnail: string | null;
+    author: string;
+    category: {
+        id: number;
+        name: string;
+        slug: string;
+        description: string;
+    };
+    tags: Array<{
+        id: number;
+        name: string;
+        slug: string;
+    }>;
+    published: string;
+    view_count: number;
+}
+
+// Video types
+export interface Video {
+    id: number;
+    title: string;
+    slug: string;
+    description: string;
+    thumbnail: string | null;
+    video_type: string;
+    video_embed: string | null;
+    duration: string;
+    is_premium: boolean;
+    author: {
+        id: number;
+        username: string | null;
+        email: string;
+        first_name: string;
+        last_name: string;
+    };
+    category: {
+        id: number;
+        name: string;
+        slug: string;
+        description: string;
+    };
+    tags: Array<{
+        id: number;
+        name: string;
+        slug: string;
+    }>;
+    status: string;
+    featured: boolean;
+    created_at: string;
+    updated_at: string;
+    published_at: string | null;
+    view_count: number;
 }
 
 class ApiService {
@@ -172,4 +234,55 @@ class ApiService {
 }
 
 export const api = new ApiService();
-export type { User, AuthTokens, RequestOTPResponse, VerifyOTPResponse, AvatarResponse }; 
+export type { User, AuthTokens, RequestOTPResponse, VerifyOTPResponse, AvatarResponse };
+
+// Helper function to convert relative thumbnail paths to absolute URLs
+const convertThumbnailToAbsoluteUrl = (thumbnail: string | null): string | null => {
+    if (!thumbnail) return null;
+    if (thumbnail.startsWith('http')) return thumbnail;
+    return `${API_BASE_URL}${thumbnail}`;
+};
+
+// Articles API
+export const articlesApi = {
+    // Get all articles
+    getAll: async (): Promise<Article[]> => {
+        const response = await axios.get('/content/articles/');
+        // Convert thumbnail URLs to absolute URLs
+        return response.data.map((article: Article) => ({
+            ...article,
+            thumbnail: convertThumbnailToAbsoluteUrl(article.thumbnail)
+        }));
+    },
+
+    // Get single article by ID
+    getById: async (id: number): Promise<Article> => {
+        const response = await axios.get(`/content/articles/${id}/`);
+        return {
+            ...response.data,
+            thumbnail: convertThumbnailToAbsoluteUrl(response.data.thumbnail)
+        };
+    }
+};
+
+// Videos API
+export const videosApi = {
+    // Get all videos
+    getAll: async (): Promise<Video[]> => {
+        const response = await axios.get('/content/videos/');
+        // Convert thumbnail URLs to absolute URLs
+        return response.data.map((video: Video) => ({
+            ...video,
+            thumbnail: convertThumbnailToAbsoluteUrl(video.thumbnail)
+        }));
+    },
+
+    // Get single video by ID
+    getById: async (id: number): Promise<Video> => {
+        const response = await axios.get(`/content/videos/${id}/`);
+        return {
+            ...response.data,
+            thumbnail: convertThumbnailToAbsoluteUrl(response.data.thumbnail)
+        };
+    }
+}; 

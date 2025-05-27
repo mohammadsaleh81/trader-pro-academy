@@ -1,0 +1,52 @@
+{
+    "id": 1,
+    "title": "آموزش تحلیل تکنیکال - قسمت 1",
+    "slug": "1",
+    "description": "شروع کوتاه ویژه تازه. هیچ ارسال و فولاد بپرسید باید مناسب. انجام صد جهان برادر خوب بزرگ بزودی بزرگ.",
+    "thumbnail": "/media/media/thumbnails/images_1_uHehHFv.jpeg",
+    "video_type": "youtube",
+    "video_embed": null,
+    "duration": "00:42:00",
+    "is_premium": false,
+    "author": {
+        "id": 5,
+        "username": null,
+        "email": "رضا@mastertrader.academy",
+        "first_name": "رضا",
+        "last_name": "کریپتوکار"
+    },
+    "category": {
+        "id": 1,
+        "name": "تحلیل‌های روزانه",
+        "slug": "",
+        "description": "Child concern should issue rise huge. Seem officer future back answer despite rather."
+    },
+    "tags": [
+        {
+            "id": 3,
+            "name": "DeFi",
+            "slug": "defi"
+        },
+        {
+            "id": 2,
+            "name": "NFT",
+            "slug": "nft"
+        },
+        {
+            "id": 1,
+            "name": "بیت‌کوین",
+            "slug": ""
+        },
+        {
+            "id": 4,
+            "name": "وب3",
+            "slug": "3"
+        }
+    ],
+    "status": "published",
+    "featured": false,
+    "created_at": "2025-05-26T03:25:19.136567+03:30",
+    "updated_at": "2025-05-26T03:27:06.038602+03:30",
+    "published_at": null,
+    "view_count": 0
+}

@@ -15,7 +15,7 @@ const LoginPage: React.FC = () => {
   const [step, setStep] = useState<AuthStep>(AuthStep.PHONE_ENTRY);
   const [phone, setPhone] = useState("");
   const [otp, setOTP] = useState("");
-  const { requestOTP, verifyOTP, isLoading, error, user } = useAuth();
+  const { requestOTP, verifyOTP, isLoading, error, user, devOTP } = useAuth();
   const navigate = useNavigate();
 
   // If user is already logged in and profile is complete, redirect to profile page
@@ -113,6 +113,13 @@ const LoginPage: React.FC = () => {
               <label htmlFor="otp" className="block text-sm font-medium text-gray-700">
                 کد تایید ارسال شده به {phone}
               </label>
+              
+              {devOTP && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4">
+                  <p className="text-yellow-800 text-sm font-medium">کد تایید (فقط در محیط توسعه):</p>
+                  <p className="text-yellow-900 text-lg font-bold text-center mt-1 font-mono">{devOTP}</p>
+                </div>
+              )}
               
               <div className="flex justify-center py-4">
                 <InputOTP maxLength={5} value={otp} onChange={setOTP}>

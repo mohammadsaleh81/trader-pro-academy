@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Minus, ShoppingCart } from "lucide-react";
+import { Plus, Minus, ShoppingCart, ArrowUpCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,24 +12,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-// Define a mock payment function (in a real app, this would be an API call)
-const mockPayment = (amount: number): Promise<{success: boolean}> => {
-  return new Promise((resolve) => {
-    // Simulate API delay
-    setTimeout(() => {
-      // Always succeed in this mock version
-      resolve({success: true});
-    }, 1500);
-  });
-};
-
-const withdrawalSchema = z.object({
-  amount: z
-    .number()
-    .min(10000, "حداقل مبلغ برداشت ۱۰,۰۰۰ تومان است")
-    .max(100000000, "حداکثر مبلغ برداشت ۱۰۰,۰۰۰,۰۰۰ تومان است"),
-});
-
 const depositSchema = z.object({
   amount: z
     .number()
@@ -38,24 +19,15 @@ const depositSchema = z.object({
     .max(100000000, "حداکثر مبلغ شارژ ۱۰۰,۰۰۰,۰۰۰ تومان است"),
 });
 
-type WithdrawalFormValues = z.infer<typeof withdrawalSchema>;
 type DepositFormValues = z.infer<typeof depositSchema>;
 
 const WalletPage: React.FC = () => {
   const navigate = useNavigate();
   const { wallet, updateWallet, courses, enrollCourse } = useData();
   const { user } = useAuth();
-  const [isWithdrawalDialogOpen, setIsWithdrawalDialogOpen] = useState(false);
   const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingCourse, setPendingCourse] = useState<{id: string, price: number, title: string} | null>(null);
-
-  const withdrawalForm = useForm<WithdrawalFormValues>({
-    resolver: zodResolver(withdrawalSchema),
-    defaultValues: {
-      amount: 0,
-    },
-  });
 
   const depositForm = useForm<DepositFormValues>({
     resolver: zodResolver(depositSchema),
@@ -86,105 +58,29 @@ const WalletPage: React.FC = () => {
     }
   }, [courses, wallet]);
 
-  const handleWithdrawal = (values: WithdrawalFormValues) => {
-    if (!wallet) return;
-    
-    if (values.amount > wallet.balance) {
-      toast({
-        title: "خطا در برداشت",
-        description: "مبلغ درخواستی بیشتر از موجودی شما است",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // In a real app, this would be an API call to process the withdrawal
-    console.log("Processing withdrawal:", values);
-    
-    const newTransaction = {
-      id: Date.now().toString(),
-      amount: values.amount,
-      type: "withdrawal" as const,
-      description: "برداشت از کیف پول",
-      date: new Date().toLocaleDateString("fa-IR"),
-    };
-    
-    updateWallet(wallet.balance - values.amount, [...wallet.transactions, newTransaction]);
-    
-    toast({
-      title: "برداشت موفق",
-      description: `مبلغ ${values.amount.toLocaleString()} تومان با موفقیت برداشت شد`,
-    });
-    
-    setIsWithdrawalDialogOpen(false);
-    withdrawalForm.reset();
-  };
-
   const handleDeposit = async (values: DepositFormValues) => {
     if (!wallet || !user) return;
     
     setIsProcessing(true);
     
     try {
-      // In a real app, this would redirect to a payment gateway
-      const result = await mockPayment(values.amount);
+      const result = await updateWallet(values.amount);
       
-      if (result.success) {
-        const newTransaction = {
-          id: Date.now().toString(),
-          amount: values.amount,
-          type: "deposit" as const,
-          description: "شارژ کیف پول",
-          date: new Date().toLocaleDateString("fa-IR"),
-        };
-        
-        updateWallet(wallet.balance + values.amount, [...wallet.transactions, newTransaction]);
-        
+      if (result.success && result.new_balance !== undefined) {
         toast({
           title: "شارژ موفق",
           description: `مبلغ ${values.amount.toLocaleString()} تومان با موفقیت به کیف پول شما اضافه شد`,
         });
         
         // Check if there's a pending course purchase
-        if (pendingCourse && (wallet.balance + values.amount) >= pendingCourse.price) {
-          // Process the course purchase
-          const purchaseTransaction = {
-            id: (Date.now() + 1).toString(), // Ensure unique ID
-            amount: pendingCourse.price,
-            type: "purchase" as const,
-            description: `خرید دوره ${pendingCourse.title}`,
-            date: new Date().toLocaleDateString("fa-IR"),
-          };
-          
-          // Update wallet again with the purchase
-          const newBalance = wallet.balance + values.amount - pendingCourse.price;
-          updateWallet(newBalance, [...wallet.transactions, newTransaction, purchaseTransaction]);
-          
-          // Enroll in the course
-          enrollCourse(pendingCourse.id, user.id);
-          
-          // Clear the pending course
-          localStorage.removeItem("pendingCourseId");
-          
+        if (pendingCourse && result.new_balance >= pendingCourse.price) {
           toast({
-            title: "خرید موفق",
-            description: `دوره ${pendingCourse.title} با موفقیت خریداری شد`,
+            title: "خرید دوره",
+            description: "در حال پردازش خرید دوره...",
           });
           
-          // Redirect to my courses
-          setTimeout(() => {
-            navigate("/my-courses");
-          }, 1000);
-        } else if (pendingCourse) {
-          // If balance is still insufficient, return to course page
-          toast({
-            title: "بازگشت به صفحه دوره",
-            description: "موجودی کیف پول شما هنوز برای خرید دوره کافی نیست",
-          });
-          
-          setTimeout(() => {
-            navigate(`/courses/${pendingCourse.id}`);
-          }, 1000);
+          // Redirect to course page to complete the purchase
+          navigate(`/courses/${pendingCourse.id}`);
         }
         
         setIsDepositDialogOpen(false);
@@ -192,7 +88,7 @@ const WalletPage: React.FC = () => {
       } else {
         toast({
           title: "خطا در پرداخت",
-          description: "متأسفانه پرداخت با مشکل مواجه شد. لطفاً دوباره تلاش کنید",
+          description: result.error || "متأسفانه پرداخت با مشکل مواجه شد. لطفاً دوباره تلاش کنید",
           variant: "destructive",
         });
       }
@@ -204,6 +100,39 @@ const WalletPage: React.FC = () => {
       });
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('fa-IR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  };
+
+  const getTransactionIcon = (type: string) => {
+    switch (type) {
+      case "deposit":
+        return <ArrowUpCircle className="h-5 w-5 text-green-500" />;
+      case "purchase":
+        return <ShoppingCart className="h-5 w-5 text-trader-500" />;
+      default:
+        return <ArrowUpCircle className="h-5 w-5 text-gray-500" />;
+    }
+  };
+
+  const getTransactionColor = (type: string) => {
+    switch (type) {
+      case "deposit":
+        return "text-green-500";
+      case "purchase":
+        return "text-trader-500";
+      default:
+        return "text-gray-500";
     }
   };
 
@@ -229,32 +158,6 @@ const WalletPage: React.FC = () => {
       </Layout>
     );
   }
-
-  const getTransactionIcon = (type: string) => {
-    switch (type) {
-      case "deposit":
-        return <Plus className="h-5 w-5 text-green-500" />;
-      case "withdrawal":
-        return <Minus className="h-5 w-5 text-red-500" />;
-      case "purchase":
-        return <ShoppingCart className="h-5 w-5 text-trader-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const getTransactionColor = (type: string) => {
-    switch (type) {
-      case "deposit":
-        return "text-green-500";
-      case "withdrawal":
-        return "text-red-500";
-      case "purchase":
-        return "text-trader-500";
-      default:
-        return "";
-    }
-  };
 
   return (
     <Layout>
@@ -310,89 +213,47 @@ const WalletPage: React.FC = () => {
               <Plus className="h-5 w-5 ml-1" />
               افزایش موجودی
             </button>
-            <button 
-              className="flex-1 trader-btn-outline flex items-center justify-center"
-              onClick={() => setIsWithdrawalDialogOpen(true)}
-            >
-              <Minus className="h-5 w-5 ml-1" />
-              برداشت
-            </button>
           </div>
         </div>
-        
+
         {/* Transactions */}
         <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-xl font-bold mb-4">تاریخچه تراکنش‌ها</h3>
+          <h3 className="text-xl font-bold mb-6">تاریخچه تراکنش‌ها</h3>
           
           <div className="space-y-4">
-            {wallet.transactions.map((transaction) => (
+            {wallet.transactions.map((transaction, index) => (
               <div 
-                key={transaction.id}
+                key={index}
                 className="flex items-center justify-between border-b border-gray-100 pb-4"
               >
                 <div className="flex items-center">
                   <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center ml-3">
-                    {getTransactionIcon(transaction.type)}
+                    {getTransactionIcon(transaction.transaction_type)}
                   </div>
                   <div>
                     <p className="font-medium">{transaction.description}</p>
-                    <p className="text-gray-500 text-sm">{transaction.date}</p>
+                    <p className="text-gray-500 text-sm">{formatDate(transaction.created_at)}</p>
                   </div>
                 </div>
-                <p className={`font-bold ${getTransactionColor(transaction.type)}`}>
-                  {transaction.type === "withdrawal" || transaction.type === "purchase" ? "-" : "+"}
-                  {transaction.amount.toLocaleString()} تومان
-                </p>
+                <div className="text-left">
+                  <p className={`font-bold ${getTransactionColor(transaction.transaction_type)}`}>
+                    {transaction.transaction_type === "purchase" ? "-" : "+"}
+                    {parseFloat(transaction.amount).toLocaleString()} تومان
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    مانده: {parseFloat(transaction.balance_after).toLocaleString()} تومان
+                  </p>
+                </div>
               </div>
             ))}
+
+            {wallet.transactions.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                هنوز هیچ تراکنشی انجام نشده است
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Withdrawal Dialog */}
-        <Dialog open={isWithdrawalDialogOpen} onOpenChange={setIsWithdrawalDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>برداشت از کیف پول</DialogTitle>
-            </DialogHeader>
-            
-            <Form {...withdrawalForm}>
-              <form onSubmit={withdrawalForm.handleSubmit(handleWithdrawal)} className="space-y-4 py-4">
-                <FormField
-                  control={withdrawalForm.control}
-                  name="amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>مبلغ (تومان)</FormLabel>
-                      <FormControl>
-                        <input
-                          type="number"
-                          className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trader-500"
-                          placeholder="مبلغ مورد نظر را وارد کنید"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <p className="text-sm text-gray-500">موجودی فعلی: {wallet.balance.toLocaleString()} تومان</p>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <DialogFooter className="flex justify-between sm:justify-between gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsWithdrawalDialogOpen(false)}>
-                    انصراف
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={!withdrawalForm.formState.isValid || withdrawalForm.getValues().amount > wallet.balance}
-                  >
-                    تایید برداشت
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
         
         {/* Deposit Dialog */}
         <Dialog open={isDepositDialogOpen} onOpenChange={setIsDepositDialogOpen}>

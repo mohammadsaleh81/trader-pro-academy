@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { DataProvider } from "./contexts/DataContext";
 import HomePage from "./pages/HomePage";
@@ -21,6 +21,8 @@ import AboutUsPage from "./pages/AboutUsPage";
 import OrdersPage from "./pages/OrdersPage";
 import EditProfilePage from "./pages/EditProfilePage";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
+import PublicRoute from "./components/PublicRoute";
 
 const queryClient = new QueryClient();
 
@@ -33,21 +35,39 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Public Routes */}
+              <Route element={<PublicRoute />}>
+                <Route path="/login" element={<LoginPage />} />
+              </Route>
+
+              {/* Semi-Public Routes (accessible to both authenticated and non-authenticated users) */}
               <Route path="/" element={<HomePage />} />
+              <Route path="/about-us" element={<AboutUsPage />} />
+              <Route path="/contact-us" element={<ContactUsPage />} />
               <Route path="/content" element={<ContentHubPage />} />
-              <Route path="/:type/:id" element={<ContentDetailPage />} />
-              <Route path="/my-courses" element={<MyCoursesPage />} />
-              <Route path="/bookmarks" element={<BookmarksPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/wallet" element={<WalletPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/complete-profile" element={<CompleteProfilePage />} />
               <Route path="/courses" element={<CourseListPage />} />
               <Route path="/courses/:slug" element={<CourseDetailPage />} />
-              <Route path="/contact-us" element={<ContactUsPage />} />
-              <Route path="/about-us" element={<AboutUsPage />} />
-              <Route path="/orders" element={<OrdersPage />} />
-              <Route path="/edit-profile" element={<EditProfilePage />} />
+              <Route path="/content/:type/:id" element={<ContentDetailPage />} />
+
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
+                {/* Profile Completion Route */}
+                <Route path="/complete-profile" element={<CompleteProfilePage />} />
+                
+                {/* User Dashboard Routes */}
+                <Route path="/my-courses" element={<MyCoursesPage />} />
+                <Route path="/bookmarks" element={<BookmarksPage />} />
+                <Route path="/wallet" element={<WalletPage />} />
+                <Route path="/orders" element={<OrdersPage />} />
+                
+                {/* Profile Routes */}
+                <Route path="/profile">
+                  <Route index element={<ProfilePage />} />
+                  <Route path="edit" element={<EditProfilePage />} />
+                </Route>
+              </Route>
+
+              {/* Fallback Routes */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

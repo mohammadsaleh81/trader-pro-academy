@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -8,75 +7,70 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Bookmark, BookmarkPlus, Share } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
+import { Article, Video, articlesApi, videosApi } from "@/lib/api";
+
+type ContentType = Article | Video;
 
 const ContentDetailPage: React.FC = () => {
-  const { id, type } = useParams();
+  const { id, type } = useParams<{ id: string; type: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { 
-    articles, 
-    podcasts, 
-    videos, 
-    webinars, 
-    files,
-    bookmarks,
-    addBookmark,
-    removeBookmark 
-  } = useData();
+  const { bookmarks, addBookmark, removeBookmark } = useData();
   
-  const [content, setContent] = useState<any>(null);
+  const [content, setContent] = useState<ContentType | null>(null);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!id || !type) return;
+    const fetchContent = async () => {
+      if (!id || !type) return;
 
-    let item;
-    switch (type) {
-      case "articles":
-        item = articles.find(article => article.id === id);
-        break;
-      case "podcasts":
-        item = podcasts.find(podcast => podcast.id === id);
-        break;
-      case "videos":
-        item = videos.find(video => video.id === id);
-        break;
-      case "webinars":
-        item = webinars.find(webinar => webinar.id === id);
-        break;
-      case "files":
-        item = files.find(file => file.id === id);
-        break;
-      default:
-        break;
-    }
+      try {
+        setIsLoading(true);
+        let data;
+        
+        switch (type) {
+          case "article":
+          case "articles":
+            data = await articlesApi.getById(parseInt(id));
+            break;
+          case "video":
+          case "videos":
+            data = await videosApi.getById(parseInt(id));
+            break;
+          default:
+            break;
+        }
 
-    setContent(item);
-    
-    // Check if the item is bookmarked
-    const bookmarked = bookmarks.some(
-      bookmark => bookmark.itemId === id && bookmark.itemType === convertTypeToSingular(type)
-    );
-    setIsBookmarked(bookmarked);
-  }, [id, type, articles, podcasts, videos, webinars, files, bookmarks]);
-
-  const convertTypeToSingular = (pluralType: string): string => {
-    const typeMap: Record<string, string> = {
-      "articles": "article",
-      "podcasts": "podcast",
-      "videos": "video",
-      "webinars": "webinar",
-      "files": "file"
+        setContent(data || null);
+        
+        // Check if the item is bookmarked
+        const bookmarked = bookmarks.some(
+          bookmark => bookmark.itemId === id && bookmark.itemType === type.replace(/s$/, '')
+        );
+        setIsBookmarked(bookmarked);
+      } catch (error) {
+        console.error('Error fetching content:', error);
+        toast({
+          title: "خطا در دریافت محتوا",
+          description: "لطفا دوباره تلاش کنید",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
-    return typeMap[pluralType] || pluralType;
-  };
+
+    fetchContent();
+  }, [id, type]);
 
   const handleBookmark = () => {
     if (!content || !id || !type) return;
     
+    const contentType = type.replace(/s$/, '') as "article" | "video";
+    
     if (isBookmarked) {
       const bookmarkToRemove = bookmarks.find(
-        bookmark => bookmark.itemId === id && bookmark.itemType === convertTypeToSingular(type)
+        bookmark => bookmark.itemId === id && bookmark.itemType === contentType
       );
       if (bookmarkToRemove) {
         removeBookmark(bookmarkToRemove.id);
@@ -87,7 +81,7 @@ const ContentDetailPage: React.FC = () => {
         });
       }
     } else {
-      addBookmark(id, convertTypeToSingular(type) as any, "user1");
+      addBookmark(id, contentType, "user1");
       setIsBookmarked(true);
       toast({
         title: "به نشان‌ها اضافه شد",
@@ -105,61 +99,45 @@ const ContentDetailPage: React.FC = () => {
   };
 
   const renderContentMedia = () => {
-    if (!content || !type) return null;
+    if (!content) return null;
 
-    switch (type) {
-      case "videos":
-      case "webinars":
-        return (
-          <div className="w-full aspect-video bg-gray-100 rounded-lg mb-6">
-            <video
-              className="w-full h-full rounded-lg"
-              controls
-              poster={content.thumbnail}
-              src={content.videoUrl}
-            />
-          </div>
-        );
-      case "podcasts":
-        return (
-          <div className="w-full mb-6">
-            <img
-              src={content.thumbnail}
-              alt={content.title}
-              className="w-full h-48 object-cover rounded-lg mb-4"
-            />
-            <audio
-              className="w-full"
-              controls
-              src={content.audioUrl}
-            />
-          </div>
-        );
-      case "files":
-        return (
-          <div className="w-full flex flex-col items-center mb-6">
-            <img
-              src={content.thumbnail}
-              alt={content.title}
-              className="w-full h-48 object-cover rounded-lg mb-4"
-            />
-            <Button className="mt-4">
-              <a href={content.fileUrl} download>
-                دانلود فایل ({content.fileSize})
-              </a>
-            </Button>
-          </div>
-        );
-      default:
-        return (
-          <img
-            src={content.thumbnail}
-            alt={content.title}
-            className="w-full h-64 object-cover rounded-lg mb-6"
-          />
-        );
+    if ('video_type' in content) { // It's a video
+      return (
+        <div className="w-full aspect-video bg-gray-100 rounded-lg mb-6">
+          {content.video_embed ? (
+            <div dangerouslySetInnerHTML={{ __html: content.video_embed }} />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <p>ویدیو در دسترس نیست</p>
+            </div>
+          )}
+        </div>
+      );
+    } else { // It's an article
+      return content.thumbnail ? (
+        <img
+          src={content.thumbnail}
+          alt={content.title}
+          className="w-full h-64 object-cover rounded-lg mb-6"
+        />
+      ) : null;
     }
   };
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="trader-container py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="h-64 bg-gray-200 rounded mb-6"></div>
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!content) {
     return (
@@ -217,47 +195,44 @@ const ContentDetailPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 text-gray-500 mb-6 justify-end">
-              <span>{content.author}</span>
-              <span>•</span>
-              <span>{content.date}</span>
-              {content.readTime && (
-                <>
-                  <span>•</span>
-                  <span>{content.readTime}</span>
-                </>
+            {/* <div className="flex items-center gap-4 text-gray-500 mb-6 justify-end">
+              {'author' in content ? (
+                <span>{content.author}</span>
+              ) : (
+                <span>{`${content.author.first_name} ${content.author.last_name}`}</span>
               )}
-              {content.duration && (
+              <span>•</span>
+              <span>{formatDate('published' in content ? content.published : content.created_at)}</span>
+              {'duration' in content && (
                 <>
                   <span>•</span>
                   <span>{content.duration}</span>
                 </>
               )}
-            </div>
+            </div> */}
 
             <div className="flex flex-wrap gap-2 mb-8 justify-end">
-              {content.tags && content.tags.map((tag: string) => (
+              {content.tags.map((tag) => (
                 <span
-                  key={tag}
+                  key={tag.id}
                   className="bg-trader-100 text-trader-800 text-xs px-3 py-1 rounded-full"
                 >
-                  {tag}
+                  {tag.name}
                 </span>
               ))}
             </div>
 
             {renderContentMedia()}
 
-            <div className="prose max-w-none text-right">
-              {type === "articles" ? (
-                <div>
-                  <p className="text-gray-600 mb-4">{content.description}</p>
-                  <div dangerouslySetInnerHTML={{ __html: content.content }} />
-                </div>
-              ) : (
-                <p className="text-gray-600">{content.description}</p>
-              )}
-            </div>
+            {'content' in content ? (
+              <div className="prose prose-lg max-w-none text-right" dir="rtl">
+                {content.content}
+              </div>
+            ) : (
+              <div className="prose prose-lg max-w-none text-right" dir="rtl">
+                {content.description}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -24,6 +24,7 @@ type AuthContextType = {
   updateProfile: (profileData: Partial<User>) => void;
   updateAvatar: (avatarUrl: string) => void;
   logout: () => void;
+  devOTP: string | null;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,6 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [devOTP, setDevOTP] = useState<string | null>(null);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -68,8 +70,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      await api.requestOTP(phone);
+      const response = await api.requestOTP(phone);
       setPhoneNumber(phone);
+      setDevOTP(response.code);
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطا در ارسال کد تایید");
       throw err;
@@ -187,7 +190,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         completeProfile,
         updateProfile,
         updateAvatar,
-        logout 
+        logout,
+        devOTP
       }}
     >
       {children}

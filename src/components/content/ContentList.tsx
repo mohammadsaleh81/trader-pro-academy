@@ -1,4 +1,3 @@
-
 import React from "react";
 import ContentCard from "./ContentCard";
 import ContentCardSkeleton from "./ContentCardSkeleton";
@@ -10,7 +9,8 @@ import {
   Podcast, 
   Video, 
   Webinar, 
-  File as FileType 
+  File as FileType,
+  CourseUser 
 } from "@/contexts/DataContext";
 
 type ContentListProps<T> = {
@@ -94,6 +94,14 @@ const ContentList = <T extends ContentItem>({
   );
   
   function renderContentCard(item: ContentItem, contentType: string, key: string) {
+    // Helper function to format author
+    const formatAuthor = (author: string | CourseUser) => {
+      if (typeof author === 'object' && author !== null) {
+        return `${author.first_name} ${author.last_name}`.trim() || author.username || author.email;
+      }
+      return author;
+    };
+
     if (contentType === "podcast") {
       const podcast = item as unknown as Podcast;
       return (
@@ -105,7 +113,7 @@ const ContentList = <T extends ContentItem>({
           thumbnail={podcast.thumbnail}
           type={contentType as "podcast"}
           date={podcast.date}
-          author={podcast.author}
+          author={formatAuthor(podcast.author)}
           duration={podcast.duration}
           className="h-full"
         />
@@ -123,7 +131,7 @@ const ContentList = <T extends ContentItem>({
           thumbnail={video.thumbnail}
           type={contentType as "video"}
           date={video.date}
-          author={video.author}
+          author={formatAuthor(video.author)}
           duration={video.duration}
           className="h-full"
         />
@@ -141,7 +149,7 @@ const ContentList = <T extends ContentItem>({
           thumbnail={webinar.thumbnail}
           type={contentType as "webinar"}
           date={webinar.date}
-          author={webinar.author}
+          author={formatAuthor(webinar.author)}
           duration={webinar.duration}
           className="h-full"
         />
@@ -159,7 +167,7 @@ const ContentList = <T extends ContentItem>({
           thumbnail={file.thumbnail}
           type={contentType as "file"}
           date={file.date}
-          author={file.author}
+          author={formatAuthor(file.author)}
           fileSize={file.fileSize}
           fileType={file.fileType}
           className="h-full"
@@ -178,7 +186,7 @@ const ContentList = <T extends ContentItem>({
         thumbnail={article.thumbnail}
         type={contentType as "article"}
         date={article.date}
-        author={article.author}
+        author={formatAuthor(article.author)}
         className="h-full"
       />
     );

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api from "@/lib/axios";
+import { Article, Video, articlesApi, videosApi } from "@/lib/api";
 
 // Course Types
 export type CourseLesson = {
@@ -132,39 +133,16 @@ export type Course = {
   duration?: string;
   level?: "beginner" | "intermediate" | "advanced";
   is_enrolled?: boolean;
+  progress_percentage?: number;
 };
 
 // Content Types
-export type Article = {
-  id: string;
-  title: string;
-  description: string;
-  content: string;
-  thumbnail: string;
-  author: string;
-  date: string;
-  readTime: string;
-  tags: string[];
-};
-
 export type Podcast = {
   id: string;
   title: string;
   description: string;
   thumbnail: string;
   audioUrl: string;
-  author: string;
-  date: string;
-  duration: string;
-  tags: string[];
-};
-
-export type Video = {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-  videoUrl: string;
   author: string;
   date: string;
   duration: string;
@@ -225,16 +203,19 @@ export type Comment = {
 
 // Transaction Type for Wallet
 export type Transaction = {
-  id: string;
-  amount: number;
-  type: "deposit" | "withdrawal" | "purchase";
+  amount: string;
+  transaction_type: "deposit" | "withdrawal" | "purchase";
   description: string;
-  date: string;
+  created_at: string;
+  balance_after: string;
 };
 
 // Wallet Type
 export type Wallet = {
   balance: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
   transactions: Transaction[];
 };
 
@@ -249,13 +230,17 @@ interface DataContextType {
   files: File[];
   bookmarks: Bookmark[];
   comments: Comment[];
-  wallet: Wallet;
+  wallet: Wallet | null;
   addBookmark: (itemId: string, itemType: ItemType, userId: string) => void;
   removeBookmark: (id: string) => void;
   addComment: (comment: Omit<Comment, "id" | "date">) => void;
   enrollCourse: (courseId: string, userId: string) => void;
-  updateWallet: (newBalance: number, newTransactions: Transaction[]) => void;
+  updateWallet: (amount: number) => Promise<{ success: boolean; new_balance?: number; error?: string }>;
   fetchCourseDetails: (slug: string) => Promise<CourseDetails | null>;
+  isLoading: {
+    articles: boolean;
+    videos: boolean;
+  };
 }
 
 // Create Context
@@ -272,7 +257,45 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [files, setFiles] = useState<File[]>([]);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [wallet, setWallet] = useState<Wallet>({ balance: 0, transactions: [] });
+  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [isLoading, setIsLoading] = useState({
+    articles: true,
+    videos: true
+  });
+
+  // Fetch articles
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        setIsLoading(prev => ({ ...prev, articles: true }));
+        const data = await articlesApi.getAll();
+        setArticles(data);
+      } catch (error) {
+        console.error('Error fetching articles:', error);
+      } finally {
+        setIsLoading(prev => ({ ...prev, articles: false }));
+      }
+    };
+
+    fetchArticles();
+  }, []);
+
+  // Fetch videos
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        setIsLoading(prev => ({ ...prev, videos: true }));
+        const data = await videosApi.getAll();
+        setVideos(data);
+      } catch (error) {
+        console.error('Error fetching videos:', error);
+      } finally {
+        setIsLoading(prev => ({ ...prev, videos: false }));
+      }
+    };
+
+    fetchVideos();
+  }, []);
 
   // Fetch course details
   const fetchCourseDetails = async (slug: string): Promise<CourseDetails | null> => {
@@ -329,6 +352,84 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchCourses();
   }, []);
 
+  // Fetch my courses from API
+  useEffect(() => {
+    const fetchMyCourses = async () => {
+      try {
+        const auth = localStorage.getItem('auth_tokens');
+        if (!auth) return;
+        
+        const access_token = JSON.parse(auth).access;
+        const response = await api.get('/crs/my-courses/', {
+          headers: {
+            'Authorization': `Bearer ${access_token}`
+          }
+        });
+        
+        // Transform API data to match our Course type
+        const transformedCourses = response.data.map((course: any) => ({
+          id: course.id.toString(),
+          title: course.title,
+          instructor: course.instructor_name || "Unknown Instructor",
+          thumbnail: course.thumbnail,
+          description: "",
+          price: parseFloat(course.price),
+          rating: course.rating_avg,
+          totalLessons: undefined,
+          completedLessons: undefined,
+          createdAt: course.created,
+          updatedAt: course.created,
+          categories: course.tags || [],
+          duration: course.total_duration ? `${course.total_duration} دقیقه` : undefined,
+          level: course.level as "beginner" | "intermediate" | "advanced",
+          is_enrolled: true,
+          progress_percentage: course.progress_percentage
+        }));
+
+        setMyCourses(transformedCourses);
+      } catch (error) {
+        console.error('Error fetching my courses:', error);
+        setMyCourses([]);
+      }
+    };
+
+    fetchMyCourses();
+  }, []);
+
+  // Fetch wallet balance and transactions
+  useEffect(() => {
+    const fetchWalletData = async () => {
+      try {
+        const auth = localStorage.getItem('auth_tokens');
+        if (!auth) return;
+        
+        const access_token = JSON.parse(auth).access;
+        const headers = {
+          'Authorization': `Bearer ${access_token}`
+        };
+
+        // Fetch balance
+        const balanceResponse = await api.get('/wallet/balance/', { headers });
+        
+        // Fetch transactions
+        const transactionsResponse = await api.get('/wallet/transactions/', { headers });
+        
+        setWallet({
+          balance: parseFloat(balanceResponse.data.balance),
+          is_active: balanceResponse.data.is_active,
+          created_at: balanceResponse.data.created_at,
+          updated_at: balanceResponse.data.updated_at,
+          transactions: transactionsResponse.data
+        });
+      } catch (error) {
+        console.error('Error fetching wallet data:', error);
+        setWallet(null);
+      }
+    };
+
+    fetchWalletData();
+  }, []);
+
   const addBookmark = (itemId: string, itemType: ItemType, userId: string) => {
     const newBookmark: Bookmark = {
       id: Math.random().toString(),
@@ -360,11 +461,38 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateWallet = (newBalance: number, newTransactions: Transaction[]) => {
-    setWallet({
-      balance: newBalance,
-      transactions: [...wallet.transactions, ...newTransactions],
-    });
+  const updateWallet = async (amount: number) => {
+    try {
+      const auth = localStorage.getItem('auth_tokens');
+      if (!auth || !wallet) {
+        return { success: false, error: "Not authenticated or wallet not initialized" };
+      }
+      
+      const access_token = JSON.parse(auth).access;
+      const response = await api.post('/wallet/deposit/', 
+        { amount },
+        {
+          headers: {
+            'Authorization': `Bearer ${access_token}`
+          }
+        }
+      );
+      
+      if (response.data.message === "Deposit successful") {
+        setWallet(prev => prev ? {
+          ...prev,
+          balance: response.data.new_balance,
+          updated_at: new Date().toISOString()
+        } : null);
+        
+        return { success: true, new_balance: response.data.new_balance };
+      }
+      
+      return { success: false, error: "Deposit failed" };
+    } catch (error) {
+      console.error('Error updating wallet:', error);
+      return { success: false, error: "An error occurred" };
+    }
   };
 
   return (
@@ -386,6 +514,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         enrollCourse,
         updateWallet,
         fetchCourseDetails,
+        isLoading
       }}
     >
       {children}

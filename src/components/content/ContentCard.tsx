@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Bookmark, BookmarkCheck, Calendar, Clock, User } from "lucide-react";
@@ -8,19 +7,21 @@ import { cn } from "@/lib/utils";
 
 type ContentType = "article" | "podcast" | "video" | "webinar" | "file";
 
-type ContentCardProps = {
-  id: string;
+const defaultThumbnail = "https://placehold.co/600x400/e2e8f0/64748b?text=No+Image";
+
+interface ContentCardProps {
+  id: string | number;
   title: string;
-  description: string;
-  thumbnail: string;
+  description?: string;
+  thumbnail: string | null;
   type: ContentType;
-  date: string;
-  author: string;
+  date?: string;
+  author?: string;
   duration?: string;
   fileSize?: string;
   fileType?: string;
   className?: string;
-};
+}
 
 const ContentCard: React.FC<ContentCardProps> = ({
   id,
@@ -91,53 +92,61 @@ const ContentCard: React.FC<ContentCardProps> = ({
   };
 
   return (
-    <Link to={getContentUrl()} className={cn("block h-full", className)}>
-      <div className="trader-card flex flex-col h-full overflow-hidden hover:shadow-md transition-all duration-300">
-        <div className="w-full h-32 min-h-[80px] relative">
+    <Link to={getContentUrl()} className={cn("block", className)}>
+      <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div className="relative">
           <img
-            src={thumbnail}
+            src={thumbnail || defaultThumbnail}
             alt={title}
-            className="w-full h-full object-cover"
+            className="w-full h-48 object-cover rounded-t-lg"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = defaultThumbnail;
+            }}
           />
-          <div className={`absolute top-1.5 right-1.5 ${getTypeBgColor()} text-white text-[8px] px-1.5 py-0.5 rounded-full`}>
+          <div className="absolute top-2 right-2">
+            {user && (
+              <button
+                onClick={handleBookmark}
+                className="p-1.5 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200"
+              >
+                {bookmark ? (
+                  <BookmarkCheck className="w-5 h-5 text-trader-500" />
+                ) : (
+                  <Bookmark className="w-5 h-5 text-gray-500" />
+                )}
+              </button>
+            )}
+          </div>
+          <div className={cn("absolute top-2 left-2 px-2 py-1 text-xs text-white rounded-full", getTypeBgColor())}>
             {getTypeLabel()}
           </div>
-          {duration && (
-            <div className="absolute bottom-1.5 right-1.5 bg-black bg-opacity-60 text-white text-[8px] px-1.5 py-0.5 rounded">
-              <Clock className="inline-block w-2 h-2 ml-0.5" />
-              {duration}
-            </div>
-          )}
         </div>
-        <div className="w-full p-2 flex flex-col relative flex-grow">
-          <h3 className="font-bold text-xs mb-1 line-clamp-1">{title}</h3>
-          <p className="text-gray-600 text-[10px] line-clamp-1 mb-2">{description}</p>
-          
-          <div className="flex items-center justify-between mt-auto pt-1 border-t border-gray-100">
-            <div className="flex items-center text-[8px] text-gray-500">
-              <User className="w-2 h-2 ml-0.5" />
-              {author}
-            </div>
-            
-            <div className="flex items-center text-[8px] text-gray-500">
-              <Calendar className="w-2 h-2 ml-0.5" />
-              {date}
-            </div>
-          </div>
-          
-          {user && (
-            <button 
-              onClick={handleBookmark}
-              className="absolute top-2 left-2 text-trader-500"
-              aria-label={bookmark ? "حذف از نشان‌ها" : "افزودن به نشان‌ها"}
-            >
-              {bookmark ? (
-                <BookmarkCheck className="h-3.5 w-3.5" />
-              ) : (
-                <Bookmark className="h-3.5 w-3.5" />
-              )}
-            </button>
+        <div className="p-4">
+          <h3 className="text-lg font-semibold mb-2 line-clamp-2 min-h-[3.5rem]">{title}</h3>
+          {description && (
+            <p className="text-gray-600 text-sm mb-4 line-clamp-2">{description}</p>
           )}
+          <div className="flex items-center text-sm text-gray-500 gap-4">
+            {author && (
+              <div className="flex items-center gap-1">
+                <User className="w-4 h-4" />
+                <span>{author}</span>
+              </div>
+            )}
+            {date && (
+              <div className="flex items-center gap-1">
+                <Calendar className="w-4 h-4" />
+                <span>{date}</span>
+              </div>
+            )}
+            {duration && (
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                <span>{duration}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Link>

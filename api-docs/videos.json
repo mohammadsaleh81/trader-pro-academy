@@ -1,0 +1,522 @@
+[
+    {
+        "id": 1,
+        "title": "آموزش تحلیل تکنیکال - قسمت 1",
+        "slug": "1",
+        "description": "شروع کوتاه ویژه تازه. هیچ ارسال و فولاد بپرسید باید مناسب. انجام صد جهان برادر خوب بزرگ بزودی بزرگ.",
+        "thumbnail": "/media/media/thumbnails/images_1_uHehHFv.jpeg",
+        "video_type": "youtube",
+        "video_embed": null,
+        "duration": "00:42:00",
+        "is_premium": false,
+        "author": {
+            "id": 5,
+            "username": null,
+            "email": "رضا@mastertrader.academy",
+            "first_name": "رضا",
+            "last_name": "کریپتوکار"
+        },
+        "category": {
+            "id": 1,
+            "name": "تحلیل‌های روزانه",
+            "slug": "",
+            "description": "Child concern should issue rise huge. Seem officer future back answer despite rather."
+        },
+        "tags": [
+            {
+                "id": 3,
+                "name": "DeFi",
+                "slug": "defi"
+            },
+            {
+                "id": 2,
+                "name": "NFT",
+                "slug": "nft"
+            },
+            {
+                "id": 1,
+                "name": "بیت‌کوین",
+                "slug": ""
+            },
+            {
+                "id": 4,
+                "name": "وب3",
+                "slug": "3"
+            }
+        ],
+        "status": "published",
+        "featured": false,
+        "created_at": "2025-05-26T03:25:19.136567+03:30",
+        "updated_at": "2025-05-26T03:27:06.038602+03:30",
+        "published_at": null,
+        "view_count": 0
+    },
+    {
+        "id": 2,
+        "title": "آموزش تحلیل تکنیکال - قسمت 2",
+        "slug": "2",
+        "description": "طلا کمی آخرین بهار. چه تعجب ادعا ساخته.",
+        "thumbnail": "/media/media/thumbnails/images_10_zowI1BM.jpeg",
+        "video_type": "youtube",
+        "video_embed": null,
+        "duration": "00:38:00",
+        "is_premium": true,
+        "author": {
+            "id": 3,
+            "username": null,
+            "email": "علی@mastertrader.academy",
+            "first_name": "علی",
+            "last_name": "تحلیلگر"
+        },
+        "category": {
+            "id": 1,
+            "name": "تحلیل‌های روزانه",
+            "slug": "",
+            "description": "Child concern should issue rise huge. Seem officer future back answer despite rather."
+        },
+        "tags": [
+            {
+                "id": 3,
+                "name": "DeFi",
+                "slug": "defi"
+            },
+            {
+                "id": 2,
+                "name": "NFT",
+                "slug": "nft"
+            },
+            {
+                "id": 1,
+                "name": "بیت‌کوین",
+                "slug": ""
+            },
+            {
+                "id": 4,
+                "name": "وب3",
+                "slug": "3"
+            }
+        ],
+        "status": "published",
+        "featured": false,
+        "created_at": "2025-05-26T03:25:19.138070+03:30",
+        "updated_at": "2025-05-26T03:27:06.039301+03:30",
+        "published_at": null,
+        "view_count": 0
+    },
+    {
+        "id": 3,
+        "title": "معرفی اندیکاتورهای پرکاربرد",
+        "slug": "",
+        "description": "Include draw suggest image certainly. International realize fill scene prove take.",
+        "thumbnail": "/media/media/thumbnails/images_1_9OF6ngq.jpeg",
+        "video_type": "youtube",
+        "video_embed": null,
+        "duration": "00:20:00",
+        "is_premium": false,
+        "author": {
+            "id": 1,
+            "username": null,
+            "email": "",
+            "first_name": "",
+            "last_name": ""
+        },
+        "category": {
+            "id": 1,
+            "name": "تحلیل‌های روزانه",
+            "slug": "",
+            "description": "Child concern should issue rise huge. Seem officer future back answer despite rather."
+        },
+        "tags": [
+            {
+                "id": 3,
+                "name": "DeFi",
+                "slug": "defi"
+            },
+            {
+                "id": 2,
+                "name": "NFT",
+                "slug": "nft"
+            },
+            {
+                "id": 1,
+                "name": "بیت‌کوین",
+                "slug": ""
+            },
+            {
+                "id": 4,
+                "name": "وب3",
+                "slug": "3"
+            }
+        ],
+        "status": "published",
+        "featured": false,
+        "created_at": "2025-05-26T03:25:19.139355+03:30",
+        "updated_at": "2025-05-26T03:27:06.039910+03:30",
+        "published_at": null,
+        "view_count": 0
+    },
+    {
+        "id": 4,
+        "title": "آموزش الگوهای هارمونیک",
+        "slug": "-1",
+        "description": "شعر عبارت ذخیره چاپ. بزرگ درب کامل حل اقامت مناسب می‌دانم نقطه. نگاه گام خواب بله بسیار ساعت اسلحه او.",
+        "thumbnail": "/media/media/thumbnails/images_11.jpeg",
+        "video_type": "youtube",
+        "video_embed": null,
+        "duration": "00:38:00",
+        "is_premium": true,
+        "author": {
+            "id": 1,
+            "username": null,
+            "email": "",
+            "first_name": "",
+            "last_name": ""
+        },
+        "category": {
+            "id": 1,
+            "name": "تحلیل‌های روزانه",
+            "slug": "",
+            "description": "Child concern should issue rise huge. Seem officer future back answer despite rather."
+        },
+        "tags": [
+            {
+                "id": 3,
+                "name": "DeFi",
+                "slug": "defi"
+            },
+            {
+                "id": 2,
+                "name": "NFT",
+                "slug": "nft"
+            },
+            {
+                "id": 1,
+                "name": "بیت‌کوین",
+                "slug": ""
+            },
+            {
+                "id": 4,
+                "name": "وب3",
+                "slug": "3"
+            }
+        ],
+        "status": "published",
+        "featured": false,
+        "created_at": "2025-05-26T03:25:19.140772+03:30",
+        "updated_at": "2025-05-26T03:27:06.040476+03:30",
+        "published_at": null,
+        "view_count": 0
+    },
+    {
+        "id": 5,
+        "title": "روانشناسی معاملات",
+        "slug": "-2",
+        "description": "Alone reveal over film. Toward operation build morning but guess example fill. Serve service unit sea catch heavy visit.",
+        "thumbnail": "/media/media/thumbnails/images_3.jpeg",
+        "video_type": "youtube",
+        "video_embed": null,
+        "duration": "00:22:00",
+        "is_premium": false,
+        "author": {
+            "id": 5,
+            "username": null,
+            "email": "رضا@mastertrader.academy",
+            "first_name": "رضا",
+            "last_name": "کریپتوکار"
+        },
+        "category": {
+            "id": 1,
+            "name": "تحلیل‌های روزانه",
+            "slug": "",
+            "description": "Child concern should issue rise huge. Seem officer future back answer despite rather."
+        },
+        "tags": [
+            {
+                "id": 3,
+                "name": "DeFi",
+                "slug": "defi"
+            },
+            {
+                "id": 2,
+                "name": "NFT",
+                "slug": "nft"
+            },
+            {
+                "id": 1,
+                "name": "بیت‌کوین",
+                "slug": ""
+            },
+            {
+                "id": 4,
+                "name": "وب3",
+                "slug": "3"
+            }
+        ],
+        "status": "published",
+        "featured": false,
+        "created_at": "2025-05-26T03:25:19.142353+03:30",
+        "updated_at": "2025-05-26T03:27:06.041194+03:30",
+        "published_at": null,
+        "view_count": 0
+    },
+    {
+        "id": 6,
+        "title": "آموزش تحلیل تکنیکال - قسمت 1",
+        "slug": "1-1",
+        "description": "Involve them discover. Resource world operation remember front.",
+        "thumbnail": null,
+        "video_type": "youtube",
+        "video_embed": null,
+        "duration": "00:38:00",
+        "is_premium": false,
+        "author": {
+            "id": 3,
+            "username": null,
+            "email": "علی@mastertrader.academy",
+            "first_name": "علی",
+            "last_name": "تحلیلگر"
+        },
+        "category": {
+            "id": 1,
+            "name": "تحلیل‌های روزانه",
+            "slug": "",
+            "description": "Child concern should issue rise huge. Seem officer future back answer despite rather."
+        },
+        "tags": [
+            {
+                "id": 3,
+                "name": "DeFi",
+                "slug": "defi"
+            },
+            {
+                "id": 2,
+                "name": "NFT",
+                "slug": "nft"
+            },
+            {
+                "id": 1,
+                "name": "بیت‌کوین",
+                "slug": ""
+            },
+            {
+                "id": 4,
+                "name": "وب3",
+                "slug": "3"
+            }
+        ],
+        "status": "published",
+        "featured": false,
+        "created_at": "2025-05-26T04:53:01.552573+03:30",
+        "updated_at": "2025-05-26T04:53:01.552579+03:30",
+        "published_at": null,
+        "view_count": 0
+    },
+    {
+        "id": 7,
+        "title": "آموزش تحلیل تکنیکال - قسمت 2",
+        "slug": "2-1",
+        "description": "فرد ماه هشت جفت باور سفر. قادر معدن هفت ویژه دیگر. پنجره لطفا نمد بیست ما شاخه. منطقه نقطه دلار گرفتن اختراع بزودی فضا شاد.",
+        "thumbnail": null,
+        "video_type": "youtube",
+        "video_embed": null,
+        "duration": "00:36:00",
+        "is_premium": true,
+        "author": {
+            "id": 1,
+            "username": null,
+            "email": "",
+            "first_name": "",
+            "last_name": ""
+        },
+        "category": {
+            "id": 1,
+            "name": "تحلیل‌های روزانه",
+            "slug": "",
+            "description": "Child concern should issue rise huge. Seem officer future back answer despite rather."
+        },
+        "tags": [
+            {
+                "id": 3,
+                "name": "DeFi",
+                "slug": "defi"
+            },
+            {
+                "id": 2,
+                "name": "NFT",
+                "slug": "nft"
+            },
+            {
+                "id": 1,
+                "name": "بیت‌کوین",
+                "slug": ""
+            },
+            {
+                "id": 4,
+                "name": "وب3",
+                "slug": "3"
+            }
+        ],
+        "status": "published",
+        "featured": false,
+        "created_at": "2025-05-26T04:53:01.553960+03:30",
+        "updated_at": "2025-05-26T04:53:01.553966+03:30",
+        "published_at": null,
+        "view_count": 0
+    },
+    {
+        "id": 8,
+        "title": "معرفی اندیکاتورهای پرکاربرد",
+        "slug": "-3",
+        "description": "روشن ظهر فروشگاه مستقیم. بله توافق مدرسه سفر چینی دریاچه کامل. تازه پا سرگرم کم.",
+        "thumbnail": null,
+        "video_type": "youtube",
+        "video_embed": null,
+        "duration": "00:26:00",
+        "is_premium": false,
+        "author": {
+            "id": 5,
+            "username": null,
+            "email": "رضا@mastertrader.academy",
+            "first_name": "رضا",
+            "last_name": "کریپتوکار"
+        },
+        "category": {
+            "id": 1,
+            "name": "تحلیل‌های روزانه",
+            "slug": "",
+            "description": "Child concern should issue rise huge. Seem officer future back answer despite rather."
+        },
+        "tags": [
+            {
+                "id": 3,
+                "name": "DeFi",
+                "slug": "defi"
+            },
+            {
+                "id": 2,
+                "name": "NFT",
+                "slug": "nft"
+            },
+            {
+                "id": 1,
+                "name": "بیت‌کوین",
+                "slug": ""
+            },
+            {
+                "id": 4,
+                "name": "وب3",
+                "slug": "3"
+            }
+        ],
+        "status": "published",
+        "featured": false,
+        "created_at": "2025-05-26T04:53:01.555641+03:30",
+        "updated_at": "2025-05-26T04:53:01.555648+03:30",
+        "published_at": null,
+        "view_count": 0
+    },
+    {
+        "id": 9,
+        "title": "آموزش الگوهای هارمونیک",
+        "slug": "-4",
+        "description": "برای فقط چه بازی رکورد وحشی. پسوند تجربه ترس دفتر. میوه در‌نظر ضربه مسابقه سفر بقیه.",
+        "thumbnail": null,
+        "video_type": "youtube",
+        "video_embed": null,
+        "duration": "00:24:00",
+        "is_premium": true,
+        "author": {
+            "id": 4,
+            "username": null,
+            "email": "محمد@mastertrader.academy",
+            "first_name": "محمد",
+            "last_name": "ترید‌گر"
+        },
+        "category": {
+            "id": 1,
+            "name": "تحلیل‌های روزانه",
+            "slug": "",
+            "description": "Child concern should issue rise huge. Seem officer future back answer despite rather."
+        },
+        "tags": [
+            {
+                "id": 3,
+                "name": "DeFi",
+                "slug": "defi"
+            },
+            {
+                "id": 2,
+                "name": "NFT",
+                "slug": "nft"
+            },
+            {
+                "id": 1,
+                "name": "بیت‌کوین",
+                "slug": ""
+            },
+            {
+                "id": 4,
+                "name": "وب3",
+                "slug": "3"
+            }
+        ],
+        "status": "published",
+        "featured": false,
+        "created_at": "2025-05-26T04:53:01.557288+03:30",
+        "updated_at": "2025-05-26T04:53:01.557294+03:30",
+        "published_at": null,
+        "view_count": 0
+    },
+    {
+        "id": 10,
+        "title": "روانشناسی معاملات",
+        "slug": "-5",
+        "description": "Black hold black always second. Run song team capital.",
+        "thumbnail": null,
+        "video_type": "youtube",
+        "video_embed": null,
+        "duration": "00:33:00",
+        "is_premium": false,
+        "author": {
+            "id": 28,
+            "username": null,
+            "email": "instructor3@example.com",
+            "first_name": "محمد",
+            "last_name": "صالحی"
+        },
+        "category": {
+            "id": 1,
+            "name": "تحلیل‌های روزانه",
+            "slug": "",
+            "description": "Child concern should issue rise huge. Seem officer future back answer despite rather."
+        },
+        "tags": [
+            {
+                "id": 3,
+                "name": "DeFi",
+                "slug": "defi"
+            },
+            {
+                "id": 2,
+                "name": "NFT",
+                "slug": "nft"
+            },
+            {
+                "id": 1,
+                "name": "بیت‌کوین",
+                "slug": ""
+            },
+            {
+                "id": 4,
+                "name": "وب3",
+                "slug": "3"
+            }
+        ],
+        "status": "published",
+        "featured": true,
+        "created_at": "2025-05-26T04:53:01.559003+03:30",
+        "updated_at": "2025-05-26T07:14:14.257400+03:30",
+        "published_at": null,
+        "view_count": 0
+    }
+]
