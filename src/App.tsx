@@ -40,21 +40,18 @@ const App = () => (
                 <Route path="/login" element={<LoginPage />} />
               </Route>
 
-              {/* Semi-Public Routes (accessible to both authenticated and non-authenticated users) */}
+              {/* Semi-Public Routes */}
               <Route path="/" element={<HomePage />} />
               <Route path="/about-us" element={<AboutUsPage />} />
               <Route path="/contact-us" element={<ContactUsPage />} />
               <Route path="/content" element={<ContentHubPage />} />
+              <Route path="/content/:type/:id" element={<ContentDetailPage />} />
               <Route path="/courses" element={<CourseListPage />} />
               <Route path="/courses/:slug" element={<CourseDetailPage />} />
-              <Route path="/content/:type/:id" element={<ContentDetailPage />} />
 
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
-                {/* Profile Completion Route */}
                 <Route path="/complete-profile" element={<CompleteProfilePage />} />
-                
-                {/* User Dashboard Routes */}
                 <Route path="/my-courses" element={<MyCoursesPage />} />
                 <Route path="/bookmarks" element={<BookmarksPage />} />
                 <Route path="/wallet" element={<WalletPage />} />
