@@ -22,7 +22,7 @@ type AuthContextType = {
   error: string | null;
   phoneNumber: string;
   setPhoneNumber: (phone: string) => void;
-  requestOTP: (phone: string) => Promise<void>;
+  requestOTP: (phone: string) => Promise<any>;
   verifyOTP: (otp: string) => Promise<void>;
   login: (phone: string, otp: string) => Promise<void>;
   completeProfile: (name: string, email: string) => Promise<void>;
