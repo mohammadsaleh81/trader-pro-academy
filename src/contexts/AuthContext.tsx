@@ -1,8 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { api } from '../lib/api';
+import { api, User as ApiUser } from '../lib/api';
 import { TOKEN_STORAGE_KEY } from '../lib/config';
 
-// Define user type
+// Define user type - using the same structure as API but with our naming
 export type User = {
   id: string;
   name?: string;
@@ -10,6 +11,9 @@ export type User = {
   email?: string;
   avatar?: string;
   isProfileComplete: boolean;
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string;
 };
 
 type AuthContextType = {
@@ -20,6 +24,7 @@ type AuthContextType = {
   setPhoneNumber: (phone: string) => void;
   requestOTP: (phone: string) => Promise<void>;
   verifyOTP: (otp: string) => Promise<void>;
+  login: (phone: string, otp: string) => Promise<void>;
   completeProfile: (name: string, email: string) => Promise<void>;
   updateProfile: (profileData: Partial<User>) => void;
   updateAvatar: (avatarUrl: string) => void;
@@ -52,6 +57,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email: userData.email,
             isProfileComplete: true,
             avatar: avatarData.avatar,
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            phone_number: userData.phone_number,
           });
         }
       } catch (error) {
@@ -97,6 +105,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: response.user.email,
         isProfileComplete: true,
         avatar: avatarData.avatar,
+        first_name: response.user.first_name,
+        last_name: response.user.last_name,
+        phone_number: response.user.phone_number,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "کد تایید نامعتبر است");
@@ -104,6 +115,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Add login method that's just an alias for verifyOTP
+  const login = async (phone: string, otp: string) => {
+    setPhoneNumber(phone);
+    await verifyOTP(otp);
   };
 
   const completeProfile = async (name: string, email: string) => {
@@ -130,6 +147,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: updatedUser.email,
         isProfileComplete: true,
         avatar: avatarData.avatar,
+        first_name: updatedUser.first_name,
+        last_name: updatedUser.last_name,
+        phone_number: updatedUser.phone_number,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطا در تکمیل پروفایل");
@@ -144,8 +164,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Convert our app's user format to API format
     const apiProfileData = {
-      first_name: profileData.name ? profileData.name.split(' ')[0] : undefined,
-      last_name: profileData.name ? profileData.name.split(' ').slice(1).join(' ') : undefined,
+      first_name: profileData.first_name || profileData.name ? profileData.name?.split(' ')[0] : undefined,
+      last_name: profileData.last_name || profileData.name ? profileData.name?.split(' ').slice(1).join(' ') : undefined,
       email: profileData.email,
     };
     
@@ -155,6 +175,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ...user,
           name: `${updatedUser.first_name} ${updatedUser.last_name}`.trim(),
           email: updatedUser.email,
+          first_name: updatedUser.first_name,
+          last_name: updatedUser.last_name,
         });
       })
       .catch(err => {
@@ -187,6 +209,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setPhoneNumber,
         requestOTP, 
         verifyOTP, 
+        login,
         completeProfile,
         updateProfile,
         updateAvatar,

@@ -1,3 +1,4 @@
+
 import React from "react";
 import ContentCard from "./ContentCard";
 import ContentCardSkeleton from "./ContentCardSkeleton";
@@ -35,73 +36,15 @@ const ContentList = <T extends ContentItem>({
   skeletonCount = 4
 }: ContentListProps<T>) => {
   
-  if (showCarousel) {
-    return (
-      <div className="my-4">
-        {title && (
-          <div className="flex justify-between items-center mb-4 px-2 sm:px-0">
-            <div className="flex items-center">
-              <span className="w-1 h-6 bg-trader-500 rounded-sm ml-2"></span>
-              <h2 className="text-xl font-bold">{title}</h2>
-            </div>
-            {items.length > 3 && viewAllLink && !isLoading && (
-              <Link to={viewAllLink} className="text-trader-500 text-sm flex items-center">
-                <span>مشاهده همه</span>
-                <ChevronLeft className="h-4 w-4 mr-1" />
-              </Link>
-            )}
-          </div>
-        )}
-        
-        <CarouselCard controlsClassName="bg-white shadow-md">
-          {isLoading 
-            ? Array.from({ length: skeletonCount }).map((_, index) => (
-                <ContentCardSkeleton key={`carousel-skeleton-${index}`} className="px-1" />
-              ))
-            : items.map((item, index) => renderContentCard(item, type, `carousel-${index}`))
-          }
-        </CarouselCard>
-      </div>
-    );
-  }
+  // Helper function to format author
+  const formatAuthor = (author: string | CourseUser): string => {
+    if (typeof author === 'object' && author !== null) {
+      return `${author.first_name} ${author.last_name}`.trim() || author.username || author.email;
+    }
+    return author || "نویسنده";
+  };
 
-  return (
-    <div className="my-4">
-      {title && (
-        <div className="flex justify-between items-center mb-4 px-2 sm:px-0">
-          <div className="flex items-center">
-            <span className="w-1 h-6 bg-trader-500 rounded-sm ml-2"></span>
-            <h2 className="text-xl font-bold">{title}</h2>
-          </div>
-          {items.length > 3 && viewAllLink && !isLoading && (
-            <Link to={viewAllLink} className="text-trader-500 text-sm flex items-center">
-              <span>مشاهده همه</span>
-              <ChevronLeft className="h-4 w-4 mr-1" />
-            </Link>
-          )}
-        </div>
-      )}
-      
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-        {isLoading 
-          ? Array.from({ length: skeletonCount }).map((_, index) => (
-              <ContentCardSkeleton key={`skeleton-${index}`} />
-            ))
-          : items.map((item, index) => renderContentCard(item, type, index.toString()))
-        }
-      </div>
-    </div>
-  );
-  
-  function renderContentCard(item: ContentItem, contentType: string, key: string) {
-    // Helper function to format author
-    const formatAuthor = (author: string | CourseUser) => {
-      if (typeof author === 'object' && author !== null) {
-        return `${author.first_name} ${author.last_name}`.trim() || author.username || author.email;
-      }
-      return author;
-    };
-
+  const renderContentCard = (item: ContentItem, contentType: string, key: string) => {
     if (contentType === "podcast") {
       const podcast = item as unknown as Podcast;
       return (
@@ -190,7 +133,65 @@ const ContentList = <T extends ContentItem>({
         className="h-full"
       />
     );
+  };
+  
+  if (showCarousel) {
+    return (
+      <div className="my-4">
+        {title && (
+          <div className="flex justify-between items-center mb-4 px-2 sm:px-0">
+            <div className="flex items-center">
+              <span className="w-1 h-6 bg-trader-500 rounded-sm ml-2"></span>
+              <h2 className="text-xl font-bold">{title}</h2>
+            </div>
+            {items.length > 3 && viewAllLink && !isLoading && (
+              <Link to={viewAllLink} className="text-trader-500 text-sm flex items-center">
+                <span>مشاهده همه</span>
+                <ChevronLeft className="h-4 w-4 mr-1" />
+              </Link>
+            )}
+          </div>
+        )}
+        
+        <CarouselCard controlsClassName="bg-white shadow-md">
+          {isLoading 
+            ? Array.from({ length: skeletonCount }).map((_, index) => (
+                <ContentCardSkeleton key={`carousel-skeleton-${index}`} className="px-1" />
+              ))
+            : items.map((item, index) => renderContentCard(item, type, `carousel-${index}`))
+          }
+        </CarouselCard>
+      </div>
+    );
   }
+
+  return (
+    <div className="my-4">
+      {title && (
+        <div className="flex justify-between items-center mb-4 px-2 sm:px-0">
+          <div className="flex items-center">
+            <span className="w-1 h-6 bg-trader-500 rounded-sm ml-2"></span>
+            <h2 className="text-xl font-bold">{title}</h2>
+          </div>
+          {items.length > 3 && viewAllLink && !isLoading && (
+            <Link to={viewAllLink} className="text-trader-500 text-sm flex items-center">
+              <span>مشاهده همه</span>
+              <ChevronLeft className="h-4 w-4 mr-1" />
+            </Link>
+          )}
+        </div>
+      )}
+      
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+        {isLoading 
+          ? Array.from({ length: skeletonCount }).map((_, index) => (
+              <ContentCardSkeleton key={`skeleton-${index}`} />
+            ))
+          : items.map((item, index) => renderContentCard(item, type, index.toString()))
+        }
+      </div>
+    </div>
+  );
 };
 
 export default ContentList;

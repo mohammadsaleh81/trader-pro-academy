@@ -243,8 +243,8 @@ interface DataContextType {
   };
 }
 
-// Export types
-export { Article, Video };
+// Export types using proper export type syntax
+export type { Article, Video };
 
 // Create Context
 const DataContext = createContext<DataContextType | undefined>(undefined);

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -35,10 +36,10 @@ const ContentDetailPage: React.FC = () => {
         
         switch (contentType) {
           case "article":
-            data = await articlesApi.getById(parseInt(id));
+            data = await articlesApi.getById(id);
             break;
           case "video":
-            data = await videosApi.getById(parseInt(id));
+            data = await videosApi.getById(id);
             break;
           default:
             navigate('/content');
@@ -206,12 +207,8 @@ const ContentDetailPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-4 text-gray-500 mb-6 justify-end">
-              {'author' in content && typeof content.author === 'string' ? (
+              {content.author && (
                 <span>{content.author}</span>
-              ) : (
-                'author' in content && typeof content.author === 'object' && (
-                  <span>{`${content.author.first_name} ${content.author.last_name}`}</span>
-                )
               )}
               <span>•</span>
               <span>{formatDate('published' in content ? content.published : content.created_at)}</span>

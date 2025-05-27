@@ -39,8 +39,11 @@ const ContentCard: React.FC<ContentCardProps> = ({
   const { user } = useAuth();
   const { bookmarks, addBookmark, removeBookmark } = useData();
   
+  // Convert id to string for consistency
+  const stringId = String(id);
+  
   const bookmark = user ? bookmarks.find(
-    b => b.itemId === id && b.itemType === type && b.userId === user.id
+    b => b.itemId === stringId && b.itemType === type && b.userId === user.id
   ) : null;
   
   const handleBookmark = (e: React.MouseEvent) => {
@@ -52,17 +55,17 @@ const ContentCard: React.FC<ContentCardProps> = ({
     if (bookmark) {
       removeBookmark(bookmark.id);
     } else {
-      addBookmark(id, type, user.id);
+      addBookmark(stringId, type, user.id);
     }
   };
   
   const getContentUrl = () => {
     switch (type) {
-      case "article": return `/articles/${id}`;
-      case "podcast": return `/podcasts/${id}`;
-      case "video": return `/videos/${id}`;
-      case "webinar": return `/webinars/${id}`;
-      case "file": return `/files/${id}`;
+      case "article": return `/articles/${stringId}`;
+      case "podcast": return `/podcasts/${stringId}`;
+      case "video": return `/videos/${stringId}`;
+      case "webinar": return `/webinars/${stringId}`;
+      case "file": return `/files/${stringId}`;
       default: return "#";
     }
   };
