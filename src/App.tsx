@@ -58,6 +58,9 @@ const App: React.FC = () => {
                 <Route path="/content" element={<ContentHubPage />} />
                 <Route path="/content/:type/:id" element={<ContentDetailPage />} />
                 
+                {/* Redirect old video routes to new format */}
+                <Route path="/videos/:id" element={<Navigate to="/content/video/:id" replace />} />
+                
                 {/* Article routes */}
                 <Route path="/articles/:id" element={<ArticleDetailPage />} />
                 
