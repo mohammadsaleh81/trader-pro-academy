@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Loader } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { CourseDetails } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -85,15 +85,6 @@ const CourseDetailPage: React.FC = () => {
         return;
       }
 
-      // Create transaction record
-      const newTransaction = {
-        id: Date.now().toString(),
-        amount: coursePrice,
-        type: "purchase" as const,
-        description: `خرید دوره ${courseData.info.title}`,
-        date: new Date().toLocaleDateString("fa-IR"),
-      };
-
       const updateResult = await updateWallet(wallet.balance - coursePrice);
       if (updateResult.success) {
         enrollCourse(courseData.info.id.toString());
@@ -130,19 +121,16 @@ const CourseDetailPage: React.FC = () => {
 
     if (!courseData) return;
 
-    const course = {
-      id: courseData.info.id.toString(),
-      price: parseFloat(courseData.info.price)
-    };
+    const coursePrice = parseFloat(courseData.info.price);
 
-    if (course.price === 0) {
-      enrollCourse(course.id.toString());
+    if (coursePrice === 0) {
+      enrollCourse(courseData.info.id.toString());
       navigate("/my-courses");
       return;
     }
 
-    if (!wallet || wallet.balance < course.price) {
-      const shortfall = course.price - (wallet?.balance || 0);
+    if (!wallet || wallet.balance < coursePrice) {
+      const shortfall = coursePrice - (wallet?.balance || 0);
       
       toast({
         title: "موجودی ناکافی",
@@ -150,14 +138,14 @@ const CourseDetailPage: React.FC = () => {
         variant: "destructive",
       });
       
-      localStorage.setItem("pendingCourseId", course.id);
+      localStorage.setItem("pendingCourseId", courseData.info.id);
       navigate("/wallet");
       return;
     }
 
-    const updateResult = await updateWallet(wallet.balance - course.price);
+    const updateResult = await updateWallet(wallet.balance - coursePrice);
     if (updateResult.success) {
-      enrollCourse(course.id.toString());
+      enrollCourse(courseData.info.id.toString());
 
       toast({
         title: "خرید موفق",
@@ -182,10 +170,10 @@ const CourseDetailPage: React.FC = () => {
             <div className="h-80 bg-gray-200 mb-8"></div>
             <div className="trader-container">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-2">
                   <div className="h-96 bg-gray-200 rounded-lg"></div>
                 </div>
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-1">
                   <div className="h-96 bg-gray-200 rounded-lg"></div>
                 </div>
               </div>
@@ -218,10 +206,133 @@ const CourseDetailPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50">
         <CourseHero courseData={courseData} />
 
-        {/* Main Content */}
         <div className="trader-container py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Course Info Card - Left Side */}
+            {/* Main Content - Left Side */}
+            <div className="lg:col-span-2">
+              <Tabs defaultValue="content" className="w-full">
+                <TabsList className="grid w-full grid-cols-3" dir="rtl">
+                  <TabsTrigger value="content">محتوای دوره</TabsTrigger>
+                  <TabsTrigger value="info">اطلاعات دوره</TabsTrigger>
+                  <TabsTrigger value="comments">نظرات</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="content" className="mt-6">
+                  <CourseContent courseData={courseData} />
+                </TabsContent>
+                
+                <TabsContent value="info" className="mt-6">
+                  <div className="bg-white rounded-lg p-6 shadow-sm">
+                    <h2 className="text-2xl font-bold mb-6 text-right">درباره دوره</h2>
+                    <div className="prose prose-lg max-w-none text-right" dir="rtl">
+                      <p className="text-gray-700 leading-relaxed mb-6">
+                        {courseData.info.description}
+                      </p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center py-3 border-b">
+                            <span className="text-gray-600">مدرس:</span>
+                            <span className="font-medium">{courseData.info.instructor}</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center py-3 border-b">
+                            <span className="text-gray-600">سطح دوره:</span>
+                            <span className="font-medium">
+                              {courseData.info.level === 'beginner' ? 'مقدماتی' : 
+                               courseData.info.level === 'intermediate' ? 'متوسط' : 'پیشرفته'}
+                            </span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center py-3 border-b">
+                            <span className="text-gray-600">زبان دوره:</span>
+                            <span className="font-medium">{courseData.info.language === 'fa' ? 'فارسی' : 'انگلیسی'}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center py-3 border-b">
+                            <span className="text-gray-600">تعداد فصل:</span>
+                            <span className="font-medium">{courseData.info.total_chapters}</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center py-3 border-b">
+                            <span className="text-gray-600">تعداد درس:</span>
+                            <span className="font-medium">{courseData.info.total_lessons}</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center py-3 border-b">
+                            <span className="text-gray-600">مدت زمان:</span>
+                            <span className="font-medium">{Math.floor(courseData.info.total_duration / 60)} ساعت</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {courseData.info.tags && courseData.info.tags.length > 0 && (
+                        <div className="mt-8">
+                          <h3 className="text-lg font-semibold mb-4">برچسب‌ها</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {courseData.info.tags.map((tag, index) => (
+                              <span key={index} className="bg-orange-100 text-orange-800 text-sm px-3 py-1 rounded-full">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="comments" className="mt-6">
+                  <div className="bg-white rounded-lg p-6 shadow-sm">
+                    <h2 className="text-2xl font-bold mb-6 text-right">نظرات دانشجویان</h2>
+                    
+                    {courseData.comments && courseData.comments.length > 0 ? (
+                      <div className="space-y-6">
+                        {courseData.comments.map((comment) => (
+                          <div key={comment.id} className="border border-gray-200 rounded-lg p-4">
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="text-right">
+                                <span className="font-medium">
+                                  {comment.user.first_name} {comment.user.last_name}
+                                </span>
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {comment.created_at}
+                              </div>
+                            </div>
+                            <p className="text-gray-700 text-right leading-relaxed">{comment.content}</p>
+                            
+                            {comment.replies && comment.replies.length > 0 && (
+                              <div className="mt-4 mr-6 space-y-3">
+                                {comment.replies.map((reply) => (
+                                  <div key={reply.id} className="bg-gray-50 p-3 rounded-lg">
+                                    <div className="flex justify-between items-start mb-2">
+                                      <span className="text-sm font-medium">
+                                        {reply.user.first_name} {reply.user.last_name}
+                                      </span>
+                                      <span className="text-xs text-gray-500">{reply.created_at}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 text-right">{reply.content}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        هنوز نظری برای این دوره ثبت نشده است
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            {/* Course Info Card - Right Side */}
             <div className="lg:col-span-1">
               <CourseInfoCard
                 courseData={courseData}
@@ -233,9 +344,6 @@ const CourseDetailPage: React.FC = () => {
                 onEnroll={handleEnroll}
               />
             </div>
-
-            {/* Course Content - Right Side */}
-            <CourseContent courseData={courseData} />
           </div>
         </div>
       </div>

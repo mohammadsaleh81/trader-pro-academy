@@ -1,7 +1,6 @@
 
 import React from "react";
 import CourseChaptersList from "./CourseChaptersList";
-import CourseComments from "./CourseComments";
 import { CourseDetails } from "@/contexts/DataContext";
 
 interface CourseContentProps {
@@ -10,9 +9,8 @@ interface CourseContentProps {
 
 const CourseContent: React.FC<CourseContentProps> = ({ courseData }) => {
   return (
-    <div className="lg:col-span-2">
+    <div className="bg-white rounded-lg p-6 shadow-sm">
       <CourseChaptersList chapters={courseData.chapters} />
-      <CourseComments comments={courseData.comments} />
     </div>
   );
 };
