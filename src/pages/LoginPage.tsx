@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +22,7 @@ const LoginPage: React.FC = () => {
   // If user is already logged in and profile is complete, redirect to profile page
   useEffect(() => {
     if (user) {
+      console.log("User is logged in, redirecting...", user);
       if (user.isProfileComplete) {
         navigate("/profile");
       } else {
@@ -31,22 +33,49 @@ const LoginPage: React.FC = () => {
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Submitting phone:", phone);
     
     // Basic validation
     if (!phone || phone.length < 10) {
-      return; // Could add error state here
+      console.log("Phone validation failed");
+      return;
     }
     
-    await requestOTP(phone);
-    setStep(AuthStep.OTP_VERIFICATION);
+    try {
+      await requestOTP(phone);
+      console.log("OTP requested successfully, changing step to OTP_VERIFICATION");
+      setStep(AuthStep.OTP_VERIFICATION);
+    } catch (error) {
+      console.error("Error requesting OTP:", error);
+    }
   };
 
   const handleOTPSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await verifyOTP(otp);
+    console.log("Submitting OTP:", otp);
+    
+    try {
+      await verifyOTP(otp);
+      console.log("OTP verified successfully");
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+    }
   };
 
-  if (isLoading) {
+  const handleBackToPhone = () => {
+    console.log("Going back to phone entry");
+    setStep(AuthStep.PHONE_ENTRY);
+    setOTP("");
+  };
+
+  console.log("Current step:", step);
+  console.log("Current phone:", phone);
+  console.log("Current OTP:", otp);
+  console.log("Is loading:", isLoading);
+  console.log("Error:", error);
+  console.log("Dev OTP:", devOTP);
+
+  if (isLoading && step === AuthStep.PHONE_ENTRY) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -151,7 +180,7 @@ const LoginPage: React.FC = () => {
                 type="button" 
                 variant="outline" 
                 className="w-full py-3"
-                onClick={() => setStep(AuthStep.PHONE_ENTRY)}
+                onClick={handleBackToPhone}
                 disabled={isLoading}
               >
                 تغییر شماره موبایل
