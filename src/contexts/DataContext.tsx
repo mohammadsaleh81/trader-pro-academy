@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api from "@/lib/axios";
 import { Article, Video, articlesApi, videosApi } from "@/lib/api";
@@ -243,6 +242,9 @@ interface DataContextType {
     videos: boolean;
   };
 }
+
+// Export types
+export { Article, Video };
 
 // Create Context
 const DataContext = createContext<DataContextType | undefined>(undefined);

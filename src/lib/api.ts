@@ -55,6 +55,8 @@ export interface Article {
     }>;
     published: string;
     view_count: number;
+    description: string;
+    date: string;
 }
 
 // Video types
@@ -68,13 +70,7 @@ export interface Video {
     video_embed: string | null;
     duration: string;
     is_premium: boolean;
-    author: {
-        id: string;
-        username: string | null;
-        email: string;
-        first_name: string;
-        last_name: string;
-    };
+    author: string;
     category: {
         id: string;
         name: string;
@@ -92,6 +88,7 @@ export interface Video {
     updated_at: string;
     published_at: string | null;
     view_count: number;
+    date: string;
 }
 
 class ApiService {
@@ -230,6 +227,8 @@ class ApiService {
         return response.json();
     }
 
+    login = this.verifyOTP;
+
     logout(): void {
         this.clearStoredTokens();
     }
@@ -260,7 +259,10 @@ export const articlesApi = {
                 ...tag,
                 id: tag.id.toString()
             })),
-            thumbnail: convertThumbnailToAbsoluteUrl(article.thumbnail)
+            thumbnail: convertThumbnailToAbsoluteUrl(article.thumbnail),
+            description: article.summary || "",
+            date: article.published,
+            author: article.author || "نویسنده"
         }));
     },
     
@@ -277,7 +279,10 @@ export const articlesApi = {
                 ...tag,
                 id: tag.id.toString()
             })),
-            thumbnail: convertThumbnailToAbsoluteUrl(response.data.thumbnail)
+            thumbnail: convertThumbnailToAbsoluteUrl(response.data.thumbnail),
+            description: response.data.summary || "",
+            date: response.data.published,
+            author: response.data.author || "نویسنده"
         };
     }
 };
@@ -289,10 +294,9 @@ export const videosApi = {
         return response.data.map((video: any) => ({
             ...video,
             id: video.id.toString(),
-            author: {
-                ...video.author,
-                id: video.author.id.toString()
-            },
+            author: typeof video.author === 'object' 
+                ? `${video.author.first_name} ${video.author.last_name}`.trim() || video.author.username || video.author.email
+                : video.author || "نویسنده",
             category: {
                 ...video.category,
                 id: video.category.id.toString()
@@ -301,7 +305,8 @@ export const videosApi = {
                 ...tag,
                 id: tag.id.toString()
             })),
-            thumbnail: convertThumbnailToAbsoluteUrl(video.thumbnail)
+            thumbnail: convertThumbnailToAbsoluteUrl(video.thumbnail),
+            date: video.published_at || video.created_at
         }));
     },
     
@@ -310,10 +315,9 @@ export const videosApi = {
         return {
             ...response.data,
             id: response.data.id.toString(),
-            author: {
-                ...response.data.author,
-                id: response.data.author.id.toString()
-            },
+            author: typeof response.data.author === 'object' 
+                ? `${response.data.author.first_name} ${response.data.author.last_name}`.trim() || response.data.author.username || response.data.author.email
+                : response.data.author || "نویسنده",
             category: {
                 ...response.data.category,
                 id: response.data.category.id.toString()
@@ -322,7 +326,8 @@ export const videosApi = {
                 ...tag,
                 id: tag.id.toString()
             })),
-            thumbnail: convertThumbnailToAbsoluteUrl(response.data.thumbnail)
+            thumbnail: convertThumbnailToAbsoluteUrl(response.data.thumbnail),
+            date: response.data.published_at || response.data.created_at
         };
     }
-}; 
+};
