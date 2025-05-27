@@ -1,0 +1,747 @@
+{
+    "info": {
+        "id": 6,
+        "slug": "reactjs-advanced-concepts",
+        "title": "React.js Advanced Concepts",
+        "description": "Comprehensive course on React.js Advanced Concepts. Learn everything from basics to advanced concepts.",
+        "instructor": {
+            "id": 26,
+            "username": "instructor1",
+            "email": "instructor1@example.com",
+            "first_name": "John",
+            "last_name": "Smith",
+            "avatar": "https://example.com/avatars/instructor1.jpg",
+            "bio": "Senior React Developer with 10+ years of experience"
+        },
+        "price": "99.99",
+        "created_at": "2025-05-26T03:26:52.374491+03:30",
+        "updated_at": "2025-05-26T03:27:06.023170+03:30",
+        "status": "published",
+        "tags": ["react", "javascript", "frontend", "advanced"],
+        "thumbnail": "https://example.com/thumbnails/reactjs-advanced.jpg",
+        "total_duration": 831,
+        "total_lessons": 25,
+        "total_chapters": 5,
+        "average_rating": 4.8,
+        "total_students": 1250,
+        "language": "fa",
+        "level": "advanced",
+        "prerequisites": [
+            "Basic knowledge of JavaScript",
+            "Familiarity with React fundamentals"
+        ],
+        "what_you_will_learn": [
+            "Advanced React Patterns",
+            "Performance Optimization",
+            "State Management",
+            "Custom Hooks",
+            "Testing React Applications"
+        ],
+        "certificate": true,
+        "discount": {
+            "active": true,
+            "percentage": 20,
+            "expires_at": "2025-06-26T03:26:52.374491+03:30"
+        },
+        "progress": {
+            "completed_lessons": 0,
+            "total_lessons": 25,
+            "completed_duration": 0,
+            "total_duration": 831,
+            "progress_percentage": 0,
+            "last_watched_lesson": null,
+            "certificate_eligible": false
+        },
+        "reviews": {
+            "total_reviews": 45,
+            "average_rating": 4.8,
+            "rating_distribution": {
+                "5": 30,
+                "4": 10,
+                "3": 3,
+                "2": 1,
+                "1": 1
+            }
+        }
+    },
+    "chapters": [
+        {
+            "id": 20,
+            "course": 6,
+            "title": "Chapter 1: Advanced Topics",
+            "description": "Detailed coverage of important concepts in Chapter 1",
+            "order": 1,
+            "is_completed": false,
+            "progress_percentage": 0,
+            "completed_lessons": 0,
+            "total_lessons": 5,
+            "lessons": [
+                {
+                    "id": 79,
+                    "chapter": 20,
+                    "title": "Lesson 1: Practice",
+                    "content": "Detailed content for lesson 1 in Chapter 1: Advanced Topics",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-131",
+                    "duration": 54,
+                    "order": 1,
+                    "is_free_preview": false,
+                    "points": 0,
+                    "progress": {
+                        "is_completed": false,
+                        "watched_duration": 0,
+                        "last_watched_at": null,
+                        "notes": [],
+                        "bookmarks": []
+                    },
+                    "resources": [
+                        {
+                            "id": 1,
+                            "title": "Lesson Slides",
+                            "type": "pdf",
+                            "url": "https://example.com/resources/slides-79.pdf",
+                            "size": "2.4MB"
+                        },
+                        {
+                            "id": 2,
+                            "title": "Exercise Files",
+                            "type": "zip",
+                            "url": "https://example.com/resources/exercise-79.zip",
+                            "size": "1.1MB"
+                        }
+                    ],
+                    "assignments": [
+                        {
+                            "id": 1,
+                            "title": "Practice Exercise",
+                            "description": "Complete the coding exercise",
+                            "due_date": null,
+                            "status": "not_started",
+                            "points": 10
+                        }
+                    ],
+                    "quiz": {
+                        "id": 1,
+                        "title": "Chapter 1 Quiz",
+                        "total_questions": 5,
+                        "passing_score": 80,
+                        "time_limit": 15,
+                        "attempts_allowed": 3,
+                        "attempts_taken": 0
+                    }
+                },
+                {
+                    "id": 80,
+                    "chapter": 20,
+                    "title": "Lesson 2: Review",
+                    "content": "Detailed content for lesson 2 in Chapter 1: Advanced Topics",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-866",
+                    "duration": 51,
+                    "order": 2,
+                    "is_free_preview": false,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 81,
+                    "chapter": 20,
+                    "title": "Lesson 3: Project",
+                    "content": "Detailed content for lesson 3 in Chapter 1: Advanced Topics",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-791",
+                    "duration": 38,
+                    "order": 3,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 82,
+                    "chapter": 20,
+                    "title": "Lesson 4: Theory",
+                    "content": "Detailed content for lesson 4 in Chapter 1: Advanced Topics",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-752",
+                    "duration": 29,
+                    "order": 4,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 83,
+                    "chapter": 20,
+                    "title": "Lesson 5: Practice",
+                    "content": "Detailed content for lesson 5 in Chapter 1: Advanced Topics",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-518",
+                    "duration": 33,
+                    "order": 5,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                }
+            ],
+            "total_duration": 205
+        },
+        {
+            "id": 21,
+            "course": 6,
+            "title": "Chapter 2: Final Project",
+            "description": "Detailed coverage of important concepts in Chapter 2",
+            "order": 2,
+            "lessons": [
+                {
+                    "id": 84,
+                    "chapter": 21,
+                    "title": "Lesson 1: Review",
+                    "content": "Detailed content for lesson 1 in Chapter 2: Final Project",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-656",
+                    "duration": 41,
+                    "order": 1,
+                    "is_free_preview": false,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 85,
+                    "chapter": 21,
+                    "title": "Lesson 2: Quiz",
+                    "content": "Detailed content for lesson 2 in Chapter 2: Final Project",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-156",
+                    "duration": 46,
+                    "order": 2,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 86,
+                    "chapter": 21,
+                    "title": "Lesson 3: Project",
+                    "content": "Detailed content for lesson 3 in Chapter 2: Final Project",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-924",
+                    "duration": 36,
+                    "order": 3,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 87,
+                    "chapter": 21,
+                    "title": "Lesson 4: Project",
+                    "content": "Detailed content for lesson 4 in Chapter 2: Final Project",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-680",
+                    "duration": 10,
+                    "order": 4,
+                    "is_free_preview": false,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 88,
+                    "chapter": 21,
+                    "title": "Lesson 5: Theory",
+                    "content": "Detailed content for lesson 5 in Chapter 2: Final Project",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-495",
+                    "duration": 50,
+                    "order": 5,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                }
+            ],
+            "total_duration": 183
+        },
+        {
+            "id": 22,
+            "course": 6,
+            "title": "Chapter 3: Basics",
+            "description": "Detailed coverage of important concepts in Chapter 3",
+            "order": 3,
+            "lessons": [
+                {
+                    "id": 89,
+                    "chapter": 22,
+                    "title": "Lesson 1: Review",
+                    "content": "Detailed content for lesson 1 in Chapter 3: Basics",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-934",
+                    "duration": 37,
+                    "order": 1,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 90,
+                    "chapter": 22,
+                    "title": "Lesson 2: Quiz",
+                    "content": "Detailed content for lesson 2 in Chapter 3: Basics",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-579",
+                    "duration": 31,
+                    "order": 2,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 91,
+                    "chapter": 22,
+                    "title": "Lesson 3: Quiz",
+                    "content": "Detailed content for lesson 3 in Chapter 3: Basics",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-641",
+                    "duration": 46,
+                    "order": 3,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 92,
+                    "chapter": 22,
+                    "title": "Lesson 4: Review",
+                    "content": "Detailed content for lesson 4 in Chapter 3: Basics",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-581",
+                    "duration": 59,
+                    "order": 4,
+                    "is_free_preview": false,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 93,
+                    "chapter": 22,
+                    "title": "Lesson 5: Practice",
+                    "content": "Detailed content for lesson 5 in Chapter 3: Basics",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-833",
+                    "duration": 14,
+                    "order": 5,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                }
+            ],
+            "total_duration": 187
+        },
+        {
+            "id": 23,
+            "course": 6,
+            "title": "Chapter 4: Introduction",
+            "description": "Detailed coverage of important concepts in Chapter 4",
+            "order": 4,
+            "lessons": [
+                {
+                    "id": 94,
+                    "chapter": 23,
+                    "title": "Lesson 1: Quiz",
+                    "content": "Detailed content for lesson 1 in Chapter 4: Introduction",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-552",
+                    "duration": 47,
+                    "order": 1,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 95,
+                    "chapter": 23,
+                    "title": "Lesson 2: Project",
+                    "content": "Detailed content for lesson 2 in Chapter 4: Introduction",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-857",
+                    "duration": 28,
+                    "order": 2,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 96,
+                    "chapter": 23,
+                    "title": "Lesson 3: Practice",
+                    "content": "Detailed content for lesson 3 in Chapter 4: Introduction",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-860",
+                    "duration": 25,
+                    "order": 3,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 97,
+                    "chapter": 23,
+                    "title": "Lesson 4: Review",
+                    "content": "Detailed content for lesson 4 in Chapter 4: Introduction",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-160",
+                    "duration": 18,
+                    "order": 4,
+                    "is_free_preview": false,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 98,
+                    "chapter": 23,
+                    "title": "Lesson 5: Project",
+                    "content": "Detailed content for lesson 5 in Chapter 4: Introduction",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-699",
+                    "duration": 22,
+                    "order": 5,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                }
+            ],
+            "total_duration": 140
+        },
+        {
+            "id": 24,
+            "course": 6,
+            "title": "Chapter 5: Practice Projects",
+            "description": "Detailed coverage of important concepts in Chapter 5",
+            "order": 5,
+            "lessons": [
+                {
+                    "id": 99,
+                    "chapter": 24,
+                    "title": "Lesson 1: Quiz",
+                    "content": "Detailed content for lesson 1 in Chapter 5: Practice Projects",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-154",
+                    "duration": 28,
+                    "order": 1,
+                    "is_free_preview": false,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 100,
+                    "chapter": 24,
+                    "title": "Lesson 2: Practice",
+                    "content": "Detailed content for lesson 2 in Chapter 5: Practice Projects",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-374",
+                    "duration": 21,
+                    "order": 2,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 101,
+                    "chapter": 24,
+                    "title": "Lesson 3: Review",
+                    "content": "Detailed content for lesson 3 in Chapter 5: Practice Projects",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-894",
+                    "duration": 28,
+                    "order": 3,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 102,
+                    "chapter": 24,
+                    "title": "Lesson 4: Theory",
+                    "content": "Detailed content for lesson 4 in Chapter 5: Practice Projects",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-100",
+                    "duration": 16,
+                    "order": 4,
+                    "is_free_preview": true,
+                    "points": 0,
+                    "progress": null
+                },
+                {
+                    "id": 103,
+                    "chapter": 24,
+                    "title": "Lesson 5: Practice",
+                    "content": "Detailed content for lesson 5 in Chapter 5: Practice Projects",
+                    "content_type": "video",
+                    "video_url": "https://example.com/videos/lesson-67",
+                    "duration": 23,
+                    "order": 5,
+                    "is_free_preview": false,
+                    "points": 0,
+                    "progress": null
+                }
+            ],
+            "total_duration": 116
+        }
+    ],
+    "comments": [
+        {
+            "id": 12,
+            "user": {
+                "id": 26,
+                "username": "instructor1",
+                "email": "instructor1@example.com",
+                "first_name": "",
+                "last_name": "",
+                "avatar": "https://example.com/avatars/instructor1.jpg",
+                "role": "instructor"
+            },
+            "content": "حتماً پیشنهاد شما رو در نظر می‌گیریم.",
+            "replies": [],
+            "created_at": "2025-05-27 02:29",
+            "updated_at": "2025-05-27 02:29",
+            "likes_count": 5,
+            "is_liked": false,
+            "is_pinned": false,
+            "attachments": []
+        },
+        {
+            "id": 11,
+            "user": {
+                "id": 48,
+                "username": null,
+                "email": "ccruz@example.com",
+                "first_name": "Christina",
+                "last_name": "Sellers"
+            },
+            "content": "من این دوره رو به همه دوستانم پیشنهاد می‌کنم.",
+            "replies": [
+                {
+                    "id": 12,
+                    "user": {
+                        "id": 26,
+                        "username": null,
+                        "email": "instructor1@example.com",
+                        "first_name": "",
+                        "last_name": ""
+                    },
+                    "content": "حتماً پیشنهاد شما رو در نظر می‌گیریم.",
+                    "replies": [],
+                    "created_at": "2025-05-27 02:29"
+                }
+            ],
+            "created_at": "2025-05-27 02:29"
+        },
+        {
+            "id": 10,
+            "user": {
+                "id": 26,
+                "username": null,
+                "email": "instructor1@example.com",
+                "first_name": "",
+                "last_name": ""
+            },
+            "content": "در دوره‌های بعدی سعی می‌کنیم این مورد رو بهبود بدیم.",
+            "replies": [],
+            "created_at": "2025-05-27 02:29"
+        },
+        {
+            "id": 9,
+            "user": {
+                "id": 21,
+                "username": null,
+                "email": "mtyn33@example.org",
+                "first_name": "Bryan",
+                "last_name": "Smith"
+            },
+            "content": "سوال‌هام به خوبی پاسخ داده شد. ممنون از پشتیبانی خوبتون.",
+            "replies": [
+                {
+                    "id": 10,
+                    "user": {
+                        "id": 26,
+                        "username": null,
+                        "email": "instructor1@example.com",
+                        "first_name": "",
+                        "last_name": ""
+                    },
+                    "content": "در دوره‌های بعدی سعی می‌کنیم این مورد رو بهبود بدیم.",
+                    "replies": [],
+                    "created_at": "2025-05-27 02:29"
+                }
+            ],
+            "created_at": "2025-05-27 02:29"
+        },
+        {
+            "id": 8,
+            "user": {
+                "id": 15,
+                "username": null,
+                "email": "margaretgilbert@example.com",
+                "first_name": "مهدیه",
+                "last_name": "Pearson"
+            },
+            "content": "محتوای دوره بسیار کاربردی و مفید بود.",
+            "replies": [],
+            "created_at": "2025-05-27 02:29"
+        },
+        {
+            "id": 7,
+            "user": {
+                "id": 26,
+                "username": null,
+                "email": "instructor1@example.com",
+                "first_name": "",
+                "last_name": ""
+            },
+            "content": "در دوره‌های بعدی سعی می‌کنیم این مورد رو بهبود بدیم.",
+            "replies": [],
+            "created_at": "2025-05-27 02:29"
+        },
+        {
+            "id": 6,
+            "user": {
+                "id": 37,
+                "username": null,
+                "email": "sdunn@example.net",
+                "first_name": "Victor",
+                "last_name": "زارعی"
+            },
+            "content": "محتوای دوره بسیار کاربردی و مفید بود.",
+            "replies": [
+                {
+                    "id": 7,
+                    "user": {
+                        "id": 26,
+                        "username": null,
+                        "email": "instructor1@example.com",
+                        "first_name": "",
+                        "last_name": ""
+                    },
+                    "content": "در دوره‌های بعدی سعی می‌کنیم این مورد رو بهبود بدیم.",
+                    "replies": [],
+                    "created_at": "2025-05-27 02:29"
+                }
+            ],
+            "created_at": "2025-05-27 02:29"
+        },
+        {
+            "id": 5,
+            "user": {
+                "id": 26,
+                "username": null,
+                "email": "instructor1@example.com",
+                "first_name": "",
+                "last_name": ""
+            },
+            "content": "از حمایت شما سپاسگزاریم.",
+            "replies": [],
+            "created_at": "2025-05-27 02:29"
+        },
+        {
+            "id": 4,
+            "user": {
+                "id": 4,
+                "username": null,
+                "email": "محمد@mastertrader.academy",
+                "first_name": "محمد",
+                "last_name": "ترید‌گر"
+            },
+            "content": "این دوره عالی بود! خیلی چیزها یاد گرفتم.",
+            "replies": [
+                {
+                    "id": 5,
+                    "user": {
+                        "id": 26,
+                        "username": null,
+                        "email": "instructor1@example.com",
+                        "first_name": "",
+                        "last_name": ""
+                    },
+                    "content": "از حمایت شما سپاسگزاریم.",
+                    "replies": [],
+                    "created_at": "2025-05-27 02:29"
+                }
+            ],
+            "created_at": "2025-05-27 02:29"
+        },
+        {
+            "id": 3,
+            "user": {
+                "id": 54,
+                "username": null,
+                "email": "email@gmail.com",
+                "first_name": "علی",
+                "last_name": "علیزاده"
+            },
+            "content": "استاد خیلی خوب توضیح می‌داد. ممنون از زحماتشون.",
+            "replies": [],
+            "created_at": "2025-05-27 02:29"
+        },
+        {
+            "id": 2,
+            "user": {
+                "id": 26,
+                "username": null,
+                "email": "instructor1@example.com",
+                "first_name": "",
+                "last_name": ""
+            },
+            "content": "از حمایت شما سپاسگزاریم.",
+            "replies": [],
+            "created_at": "2025-05-27 02:29"
+        },
+        {
+            "id": 1,
+            "user": {
+                "id": 17,
+                "username": null,
+                "email": "michaelgraves@example.com",
+                "first_name": "Justin",
+                "last_name": "عبدالعلی"
+            },
+            "content": "بعضی قسمت‌ها نیاز به توضیح بیشتری داشت.",
+            "replies": [
+                {
+                    "id": 2,
+                    "user": {
+                        "id": 26,
+                        "username": null,
+                        "email": "instructor1@example.com",
+                        "first_name": "",
+                        "last_name": ""
+                    },
+                    "content": "از حمایت شما سپاسگزاریم.",
+                    "replies": [],
+                    "created_at": "2025-05-27 02:29"
+                }
+            ],
+            "created_at": "2025-05-27 02:29"
+        }
+    ],
+    "next_lesson": {
+        "id": 79,
+        "chapter_id": 20,
+        "title": "Lesson 1: Practice",
+        "content_type": "video"
+    },
+    "breadcrumbs": [
+        {
+            "id": 1,
+            "title": "دوره‌های آموزشی",
+            "url": "/courses"
+        },
+        {
+            "id": 2,
+            "title": "برنامه‌نویسی",
+            "url": "/courses/programming"
+        },
+        {
+            "id": 3,
+            "title": "React.js Advanced Concepts",
+            "url": "/courses/reactjs-advanced-concepts"
+        }
+    ]
+}

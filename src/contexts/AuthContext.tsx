@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { api } from '../lib/api';
+import { TOKEN_STORAGE_KEY } from '../lib/config';
 
 // Define user type
 export type User = {
@@ -10,18 +12,6 @@ export type User = {
   isProfileComplete: boolean;
 };
 
-// Mock user data for demo
-const mockUsers = [
-  {
-    id: "1",
-    phone: "09121234567",
-    name: "کاربر نمونه",
-    email: "user@example.com",
-    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-    isProfileComplete: true
-  }
-];
-
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
@@ -32,6 +22,7 @@ type AuthContextType = {
   verifyOTP: (otp: string) => Promise<void>;
   completeProfile: (name: string, email: string) => Promise<void>;
   updateProfile: (profileData: Partial<User>) => void;
+  updateAvatar: (avatarUrl: string) => void;
   logout: () => void;
 };
 
@@ -44,12 +35,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [phoneNumber, setPhoneNumber] = useState<string>("");
 
   useEffect(() => {
-    // Check for saved user in localStorage
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
+    const initAuth = async () => {
+      try {
+        const stored = localStorage.getItem(TOKEN_STORAGE_KEY);
+        if (stored) {
+          const userData = await api.getProfile();
+          const avatarData = await api.getAvatar();
+          
+          // Convert API user format to our app's user format
+          setUser({
+            id: String(userData.id),
+            phone: userData.phone_number,
+            name: `${userData.first_name} ${userData.last_name}`.trim(),
+            email: userData.email,
+            isProfileComplete: true,
+            avatar: avatarData.avatar,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to initialize auth:', error);
+        api.logout();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
 
   const requestOTP = async (phone: string) => {
@@ -57,17 +68,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      // Simulate API call to request OTP
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo purposes, we just store the phone number
+      await api.requestOTP(phone);
       setPhoneNumber(phone);
-      
-      // In a real app, this would trigger an SMS to be sent
-      console.log(`OTP requested for phone number: ${phone}`);
-      
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطا در ارسال کد تایید");
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -78,34 +83,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      // Simulate API call to verify OTP
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await api.verifyOTP(phoneNumber, otp);
+      const avatarData = await api.getAvatar();
       
-      // For demo purposes, any 5-digit code works
-      if (otp.length !== 5) {
-        throw new Error("کد تایید باید 5 رقم باشد");
-      }
-      
-      // Check if this phone number exists in our mock database
-      const existingUser = mockUsers.find(u => u.phone === phoneNumber);
-      
-      if (existingUser) {
-        // User exists, log them in
-        setUser(existingUser);
-        localStorage.setItem("user", JSON.stringify(existingUser));
-      } else {
-        // New user, create a basic profile
-        const newUser: User = {
-          id: String(mockUsers.length + 1),
-          phone: phoneNumber,
-          isProfileComplete: false
-        };
-        
-        setUser(newUser);
-        localStorage.setItem("user", JSON.stringify(newUser));
-      }
+      // Convert API user format to our app's user format
+      setUser({
+        id: String(response.user.id),
+        phone: response.user.phone_number,
+        name: `${response.user.first_name} ${response.user.last_name}`.trim(),
+        email: response.user.email,
+        isProfileComplete: true,
+        avatar: avatarData.avatar,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "کد تایید نامعتبر است");
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -116,27 +108,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const [firstName, ...lastNameParts] = name.split(' ');
+      const lastName = lastNameParts.join(' ');
       
-      if (!user) {
-        throw new Error("کاربر احراز هویت نشده است");
-      }
+      const updatedUser = await api.updateProfile({
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+      });
       
-      // Update user profile
-      const updatedUser: User = {
-        ...user,
-        name,
-        email,
-        avatar: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 100)}.jpg`,
-        isProfileComplete: true
-      };
+      const avatarData = await api.getAvatar();
       
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      
+      // Convert API user format to our app's user format
+      setUser({
+        id: String(updatedUser.id),
+        phone: updatedUser.phone_number,
+        name: `${updatedUser.first_name} ${updatedUser.last_name}`.trim(),
+        email: updatedUser.email,
+        isProfileComplete: true,
+        avatar: avatarData.avatar,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطا در تکمیل پروفایل");
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -145,16 +139,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateProfile = (profileData: Partial<User>) => {
     if (!user) return;
     
-    // Update user data
-    const updatedUser = { ...user, ...profileData };
-    setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
+    // Convert our app's user format to API format
+    const apiProfileData = {
+      first_name: profileData.name ? profileData.name.split(' ')[0] : undefined,
+      last_name: profileData.name ? profileData.name.split(' ').slice(1).join(' ') : undefined,
+      email: profileData.email,
+    };
+    
+    api.updateProfile(apiProfileData)
+      .then(updatedUser => {
+        setUser({
+          ...user,
+          name: `${updatedUser.first_name} ${updatedUser.last_name}`.trim(),
+          email: updatedUser.email,
+        });
+      })
+      .catch(err => {
+        console.error('Failed to update profile:', err);
+        setError("خطا در بروزرسانی پروفایل");
+      });
+  };
+
+  const updateAvatar = (avatarUrl: string) => {
+    if (!user) return;
+    setUser({
+      ...user,
+      avatar: avatarUrl,
+    });
   };
 
   const logout = () => {
+    api.logout();
     setUser(null);
     setPhoneNumber("");
-    localStorage.removeItem("user");
   };
 
   return (
@@ -168,7 +185,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         requestOTP, 
         verifyOTP, 
         completeProfile,
-        updateProfile, 
+        updateProfile,
+        updateAvatar,
         logout 
       }}
     >

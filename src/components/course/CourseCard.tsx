@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Star, ShoppingCart, Loader } from "lucide-react";
@@ -16,6 +15,7 @@ type CourseCardProps = {
   rating: number;
   progress?: number;
   isFree?: boolean;
+  is_enrolled?: boolean;
 };
 
 const CourseCard: React.FC<CourseCardProps> = ({
@@ -26,7 +26,8 @@ const CourseCard: React.FC<CourseCardProps> = ({
   price,
   rating,
   progress,
-  isFree = false
+  isFree = false,
+  is_enrolled
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -45,8 +46,8 @@ const CourseCard: React.FC<CourseCardProps> = ({
         return;
       }
 
-      if (isFree || isEnrolled) {
-        navigate(`/courses/${id}`);
+      if (isFree || is_enrolled) {
+        navigate(`/learn/${id}`);
         return;
       }
 
@@ -85,24 +86,28 @@ const CourseCard: React.FC<CourseCardProps> = ({
       // Simulate processing delay
       setTimeout(() => {
         setIsProcessing(false);
-        navigate("/my-courses");
+        navigate(`/learn/${id}`);
       }, 1000);
     } catch (error) {
+      console.error('Error processing purchase:', error);
+      setIsProcessing(false);
+      
       toast({
-        title: "خطا در پردازش",
-        description: "مشکلی در خرید دوره پیش آمده است. لطفا دوباره تلاش کنید.",
+        title: "خطا",
+        description: "خطا در پردازش خرید. لطفاً دوباره تلاش کنید.",
         variant: "destructive",
       });
-      setIsProcessing(false);
     }
   };
 
+  console.log(is_enrolled);
+
   return (
     <div className="trader-card h-full flex flex-col">
-      <Link to={`/courses/${id}`} className="block">
+      <Link to={is_enrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
         <div className="relative h-28 w-full">
           <img
-            src={thumbnail}
+            src={thumbnail || "/placeholder-course.jpg"}
             alt={title}
             className="w-full h-full object-cover rounded-t-xl"
           />
@@ -119,7 +124,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
         </div>
       </Link>
       <div className="p-2 flex-1 flex flex-col">
-        <Link to={`/courses/${id}`} className="block">
+        <Link to={is_enrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
           <h3 className="font-bold text-xs line-clamp-1 mb-0.5">{title}</h3>
           <p className="text-gray-600 text-[10px] mb-1">مدرس: {instructor}</p>
         </Link>
@@ -129,12 +134,19 @@ const CourseCard: React.FC<CourseCardProps> = ({
               <Star className="h-3 w-3 text-yellow-500 ml-0.5" />
               <span className="text-[10px] font-medium">{rating}</span>
             </div>
-            <p className={`font-bold ${isFree ? "text-green-600" : "text-trader-500"} text-xs`}>
-              {isFree ? "رایگان" : `${price.toLocaleString()} تومان`}
-            </p>
+            {!is_enrolled && (
+              <p className={`font-bold ${isFree ? "text-green-600" : "text-trader-500"} text-xs`}>
+                {isFree ? "رایگان" : `${price.toLocaleString()} تومان`}
+              </p>
+            )}
+            {is_enrolled && (
+              <p className="font-bold text-green-600 text-xs">
+                ادامه یادگیری
+              </p>
+            )}
           </div>
           <Button 
-            variant={isEnrolled ? "outline" : "default"}
+            variant={is_enrolled ? "outline" : "default"}
             className="w-full text-[10px] py-0 h-6"
             onClick={handleQuickBuy}
             disabled={isProcessing}
@@ -143,8 +155,8 @@ const CourseCard: React.FC<CourseCardProps> = ({
               <Loader className="h-3 w-3 animate-spin mx-auto" />
             ) : (
               <>
-                <ShoppingCart className="h-3 w-3 ml-0.5" />
-                {isEnrolled ? "مشاهده دوره" : isFree ? "ثبت‌نام رایگان" : "خرید سریع"}
+                {!is_enrolled && <ShoppingCart className="h-3 w-3 ml-0.5" />}
+                {is_enrolled ? "ادامه یادگیری" : isFree ? "ثبت‌نام رایگان" : "خرید سریع"}
               </>
             )}
           </Button>

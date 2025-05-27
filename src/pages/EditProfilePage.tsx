@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,21 +6,91 @@ import { ArrowRight, User, Mail, Phone as PhoneIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 
 const EditProfilePage: React.FC = () => {
-  const { user, updateProfile } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user, updateProfile, updateAvatar } = useAuth();
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    phone: user?.phone || "",
-    avatar: user?.avatar || ""
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    avatar: ""
   });
   
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      const [firstName, ...lastNameParts] = (user.name || "").split(" ");
+      setFormData({
+        first_name: firstName || "",
+        last_name: lastNameParts.join(" ") || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        avatar: user.avatar || ""
+      });
+    }
+  }, [user]);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingAvatar(true);
+    setError("");
+
+    try {
+      const response = await api.uploadAvatar(file);
+      setFormData(prev => ({ ...prev, avatar: response.avatar }));
+      toast({
+        title: "موفقیت",
+        description: "تصویر پروفایل با موفقیت بروزرسانی شد.",
+      });
+    } catch (err) {
+      setError("خطا در آپلود تصویر پروفایل");
+      toast({
+        title: "خطا",
+        description: "خطا در آپلود تصویر پروفایل",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    setIsUploadingAvatar(true);
+    setError("");
+
+    try {
+      const response = await api.deleteAvatar();
+      setFormData(prev => ({ ...prev, avatar: response.avatar }));
+      toast({
+        title: "موفقیت",
+        description: "تصویر پروفایل با موفقیت حذف شد.",
+      });
+    } catch (err) {
+      setError("خطا در حذف تصویر پروفایل");
+      toast({
+        title: "خطا",
+        description: "خطا در حذف تصویر پروفایل",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -36,17 +105,18 @@ const EditProfilePage: React.FC = () => {
     
     try {
       // Update profile with the form data
-      setTimeout(() => {
-        updateProfile(formData);
-        setSuccess(true);
-        setIsLoading(false);
-        toast({
-          title: "موفقیت",
-          description: "اطلاعات شخصی با موفقیت بروزرسانی شد.",
-        });
-      }, 1000);
+      updateProfile({
+        name: `${formData.first_name} ${formData.last_name}`.trim(),
+        email: formData.email,
+      });
+      setSuccess(true);
+      toast({
+        title: "موفقیت",
+        description: "اطلاعات شخصی با موفقیت بروزرسانی شد.",
+      });
     } catch (err) {
       setError("خطایی در بروزرسانی پروفایل رخ داد. لطفاً دوباره تلاش کنید.");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -91,10 +161,10 @@ const EditProfilePage: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex items-center mb-6">
               <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center ml-4">
-                {user.avatar ? (
+                {formData.avatar ? (
                   <img
-                    src={user.avatar}
-                    alt={user.name}
+                    src={formData.avatar}
+                    alt={formData.first_name}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -103,29 +173,72 @@ const EditProfilePage: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-bold mb-1">تصویر پروفایل</h3>
-                <button type="button" className="text-trader-500 text-sm font-medium">
-                  تغییر تصویر
-                </button>
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAvatarClick}
+                    className="text-trader-500 text-sm font-medium disabled:opacity-50"
+                    disabled={isUploadingAvatar}
+                  >
+                    {isUploadingAvatar ? "در حال آپلود..." : "تغییر تصویر"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteAvatar}
+                    className="text-red-500 text-sm font-medium disabled:opacity-50"
+                    disabled={isUploadingAvatar}
+                  >
+                    حذف
+                  </button>
+                </div>
               </div>
             </div>
             
             <div className="grid gap-6">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  نام و نام خانوادگی
-                </label>
-                <div className="relative">
-                  <User className="absolute top-3 right-3 h-5 w-5 text-gray-400" />
-                  <Input
-                    id="name"
-                    name="name"
-                    type="text"
-                    className="pr-10"
-                    placeholder="نام و نام خانوادگی"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                  />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
+                    نام
+                  </label>
+                  <div className="relative">
+                    <User className="absolute top-3 right-3 h-5 w-5 text-gray-400" />
+                    <Input
+                      id="first_name"
+                      name="first_name"
+                      type="text"
+                      className="pr-10"
+                      placeholder="نام"
+                      value={formData.first_name}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
+                    نام خانوادگی
+                  </label>
+                  <div className="relative">
+                    <User className="absolute top-3 right-3 h-5 w-5 text-gray-400" />
+                    <Input
+                      id="last_name"
+                      name="last_name"
+                      type="text"
+                      className="pr-10"
+                      placeholder="نام خانوادگی"
+                      value={formData.last_name}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
                 </div>
               </div>
               
@@ -163,8 +276,10 @@ const EditProfilePage: React.FC = () => {
                     placeholder="09xxxxxxxxx"
                     value={formData.phone}
                     onChange={handleChange}
+                    disabled
                   />
                 </div>
+                <p className="mt-1 text-xs text-gray-500">شماره موبایل قابل ویرایش نیست</p>
               </div>
             </div>
             

@@ -1,0 +1,504 @@
+{
+	"info": {
+		"_postman_id": "7bf62e5e-44f2-48ce-9f79-9340e78b18eb",
+		"name": "trade",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "18148474",
+		"_collection_link": "https://lively-trinity-241221.postman.co/workspace/TradeAcademy~5503ead9-b8c6-4c6a-9d65-c63dcb0c17ed/collection/18148474-7bf62e5e-44f2-48ce-9f79-9340e78b18eb?action=share&source=collection_link&creator=18148474"
+	},
+	"item": [
+		{
+			"name": "request otp",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"phone_number\": \"09352554850\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{local}}/user/auth/request-otp/",
+					"host": [
+						"{{local}}"
+					],
+					"path": [
+						"user",
+						"auth",
+						"request-otp",
+						""
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "request otp",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone_number\": \"09352554850\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/user/auth/request-otp/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"user",
+								"auth",
+								"request-otp",
+								""
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Date",
+							"value": "Tue, 27 May 2025 01:21:01 GMT"
+						},
+						{
+							"key": "Server",
+							"value": "WSGIServer/0.2 CPython/3.9.6"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Vary",
+							"value": "Accept, origin, Accept-Language"
+						},
+						{
+							"key": "Allow",
+							"value": "POST, OPTIONS"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Length",
+							"value": "50"
+						},
+						{
+							"key": "Content-Language",
+							"value": "fa"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "Referrer-Policy",
+							"value": "same-origin"
+						},
+						{
+							"key": "Cross-Origin-Opener-Policy",
+							"value": "same-origin"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"message\": \"OTP sent successfully\",\n    \"code\": \"56882\"\n}"
+				}
+			]
+		},
+		{
+			"name": "verify otp",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"phone_number\": \"09352554850\",\n    \"code\": 83844\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{local}}/user/auth/verify-otp/",
+					"host": [
+						"{{local}}"
+					],
+					"path": [
+						"user",
+						"auth",
+						"verify-otp",
+						""
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "verify otp",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone_number\": \"09352554850\",\n    \"code\": 56882\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/user/auth/verify-otp/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"user",
+								"auth",
+								"verify-otp",
+								""
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Date",
+							"value": "Tue, 27 May 2025 01:21:19 GMT"
+						},
+						{
+							"key": "Server",
+							"value": "WSGIServer/0.2 CPython/3.9.6"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Vary",
+							"value": "Accept, origin, Accept-Language"
+						},
+						{
+							"key": "Allow",
+							"value": "POST, OPTIONS"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Length",
+							"value": "649"
+						},
+						{
+							"key": "Content-Language",
+							"value": "fa"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "Referrer-Policy",
+							"value": "same-origin"
+						},
+						{
+							"key": "Cross-Origin-Opener-Policy",
+							"value": "same-origin"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"is_new\": false,\n    \"refresh\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0ODM5NTI3OSwiaWF0IjoxNzQ4MzA4ODc5LCJqdGkiOiIxYzkwMTE4YTJlYzI0NmIxOTQ1MzUxYjQ5NDYzMTlmNCIsInVzZXJfaWQiOjU0fQ.agVXkrt-7Lsy4LE72cfZHc91LzRwkHDx0PVXcfk7JTs\",\n    \"access\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ4MzEyNDc5LCJpYXQiOjE3NDgzMDg4NzksImp0aSI6IjMxY2RjMmI2YjIxNzQ3OTg5NzE0NjkwYjQ5YmM0MTU2IiwidXNlcl9pZCI6NTR9.2RlAzs4gtDsMtdyOv2OfoqFrhRs6brTNgaDWOpBNmX0\",\n    \"user\": {\n        \"id\": 54,\n        \"phone_number\": \"09352554850\",\n        \"first_name\": \"علی\",\n        \"last_name\": \"علیزاده\",\n        \"email\": \"email@gmail.com\",\n        \"is_phone_verified\": true\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "profile update",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{jwt}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\": \"علی\",\n    \"last_name\": \"علیزاده\",\n    \"email\": \"email@gmail.com\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{local}}/user/profile/",
+					"host": [
+						"{{local}}"
+					],
+					"path": [
+						"user",
+						"profile",
+						""
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "New Request",
+					"originalRequest": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{jwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"علی\",\n    \"last_name\": \"علیزاده\",\n    \"email\": \"email@gmail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/user/profile/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"user",
+								"profile",
+								""
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Date",
+							"value": "Tue, 27 May 2025 01:20:24 GMT"
+						},
+						{
+							"key": "Server",
+							"value": "WSGIServer/0.2 CPython/3.9.6"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Vary",
+							"value": "Accept, origin, Accept-Language"
+						},
+						{
+							"key": "Allow",
+							"value": "GET, PUT, HEAD, OPTIONS"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Length",
+							"value": "140"
+						},
+						{
+							"key": "Content-Language",
+							"value": "fa"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "Referrer-Policy",
+							"value": "same-origin"
+						},
+						{
+							"key": "Cross-Origin-Opener-Policy",
+							"value": "same-origin"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"id\": 54,\n    \"phone_number\": \"09352554850\",\n    \"first_name\": \"علی\",\n    \"last_name\": \"علیزاده\",\n    \"email\": \"email@gmail.com\",\n    \"is_phone_verified\": true\n}"
+				}
+			]
+		},
+		{
+			"name": "profile",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{jwt}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{local}}/user/profile/",
+					"host": [
+						"{{local}}"
+					],
+					"path": [
+						"user",
+						"profile",
+						""
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "New Request",
+					"originalRequest": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{jwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"علی\",\n    \"last_name\": \"علیزاده\",\n    \"email\": \"email@gmail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/user/profile/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"user",
+								"profile",
+								""
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Date",
+							"value": "Tue, 27 May 2025 01:18:57 GMT"
+						},
+						{
+							"key": "Server",
+							"value": "WSGIServer/0.2 CPython/3.9.6"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Vary",
+							"value": "Accept, origin, Accept-Language"
+						},
+						{
+							"key": "Allow",
+							"value": "GET, PUT, HEAD, OPTIONS"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Length",
+							"value": "140"
+						},
+						{
+							"key": "Content-Language",
+							"value": "fa"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "Referrer-Policy",
+							"value": "same-origin"
+						},
+						{
+							"key": "Cross-Origin-Opener-Policy",
+							"value": "same-origin"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"id\": 54,\n    \"phone_number\": \"09352554850\",\n    \"first_name\": \"علی\",\n    \"last_name\": \"علیزاده\",\n    \"email\": \"email@gmail.com\",\n    \"is_phone_verified\": true\n}"
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "local",
+			"value": "http://127.0.0.1:8000",
+			"type": "string"
+		},
+		{
+			"key": "jwt",
+			"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ4MzA5MzEyLCJpYXQiOjE3NDgzMDU3MTIsImp0aSI6ImFiNjY1NGM1NGI2YjRkYjI4YWFiOWQ1ZjQzZGVjYmIwIiwidXNlcl9pZCI6NTR9.7l3CARcAcf2I6JgNvREvbwWUS4LKABSX6cyti83VbCI",
+			"type": "string"
+		}
+	]
+}
