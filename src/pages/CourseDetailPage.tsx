@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -11,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import CourseHero from "@/components/course/CourseHero";
 import CourseInfoCard from "@/components/course/CourseInfoCard";
 import CourseContent from "@/components/course/CourseContent";
+import CommentSection from "@/components/comments/CommentSection";
 
 const CourseDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -211,10 +211,11 @@ const CourseDetailPage: React.FC = () => {
             {/* Main Content - Left Side */}
             <div className="lg:col-span-2">
               <Tabs defaultValue="content" className="w-full">
-                <TabsList className="grid w-full grid-cols-3" dir="rtl">
+                <TabsList className="grid w-full grid-cols-4" dir="rtl">
                   <TabsTrigger value="content">محتوای دوره</TabsTrigger>
                   <TabsTrigger value="info">اطلاعات دوره</TabsTrigger>
                   <TabsTrigger value="comments">نظرات</TabsTrigger>
+                  <TabsTrigger value="reviews">بازخوردها</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="content" className="mt-6">
@@ -286,7 +287,17 @@ const CourseDetailPage: React.FC = () => {
                 
                 <TabsContent value="comments" className="mt-6">
                   <div className="bg-white rounded-lg p-6 shadow-sm">
-                    <h2 className="text-2xl font-bold mb-6 text-right">نظرات دانشجویان</h2>
+                    <CommentSection
+                      contentType="course"
+                      contentId={courseData.info.id}
+                      comments={courseData.comments}
+                    />
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="reviews" className="mt-6">
+                  <div className="bg-white rounded-lg p-6 shadow-sm">
+                    <h2 className="text-2xl font-bold mb-6 text-right">بازخوردهای دانشجویان</h2>
                     
                     {courseData.comments && courseData.comments.length > 0 ? (
                       <div className="space-y-6">
@@ -324,7 +335,7 @@ const CourseDetailPage: React.FC = () => {
                       </div>
                     ) : (
                       <div className="text-center py-8 text-gray-500">
-                        هنوز نظری برای این دوره ثبت نشده است
+                        هنوز بازخوردی برای این دوره ثبت نشده است
                       </div>
                     )}
                   </div>

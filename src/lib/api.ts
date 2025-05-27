@@ -1,4 +1,3 @@
-
 import { API_BASE_URL, API_ENDPOINTS, TOKEN_STORAGE_KEY } from './config';
 import axios from './axios';
 
@@ -15,6 +14,7 @@ interface User {
     email: string;
     is_phone_verified: boolean;
     isProfileComplete: boolean;
+    thumbnail?: string;
 }
 
 interface RequestOTPResponse {

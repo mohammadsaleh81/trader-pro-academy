@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -9,6 +8,7 @@ import { ArrowRight, Bookmark, BookmarkPlus, Share, Clock, Eye, User } from "luc
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
 import { Article, articlesApi } from "@/lib/api";
+import CommentSection from "@/components/comments/CommentSection";
 
 const ArticleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -204,10 +204,18 @@ const ArticleDetailPage: React.FC = () => {
             )}
 
             <div 
-              className="prose prose-lg max-w-none text-right prose-headings:text-right prose-p:text-right" 
+              className="prose prose-lg max-w-none text-right prose-headings:text-right prose-p:text-right mb-12" 
               dir="rtl"
               dangerouslySetInnerHTML={{ __html: article.content }}
             />
+
+            {/* Comments Section */}
+            <div className="mt-12 pt-8 border-t border-gray-200">
+              <CommentSection
+                contentType="article"
+                contentId={id!}
+              />
+            </div>
 
             {/* Related content section */}
             <div className="mt-12 pt-8 border-t border-gray-200">

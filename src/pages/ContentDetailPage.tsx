@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -12,6 +11,7 @@ import ContentStats from "@/components/content/ContentStats";
 import ContentActions from "@/components/content/ContentActions";
 import ContentMedia from "@/components/content/ContentMedia";
 import RelatedContent from "@/components/content/RelatedContent";
+import CommentSection from "@/components/comments/CommentSection";
 
 type ContentType = Article | Video;
 
@@ -192,19 +192,29 @@ const ContentDetailPage: React.FC = () => {
 
             {'content' in content ? (
               <div 
-                className="prose prose-lg max-w-none text-right prose-headings:text-right prose-p:text-right" 
+                className="prose prose-lg max-w-none text-right prose-headings:text-right prose-p:text-right mb-12" 
                 dir="rtl"
                 dangerouslySetInnerHTML={{ __html: content.content }}
               />
             ) : (
               <div 
-                className="prose prose-lg max-w-none text-right prose-headings:text-right prose-p:text-right" 
+                className="prose prose-lg max-w-none text-right prose-headings:text-right prose-p:text-right mb-12" 
                 dir="rtl"
                 dangerouslySetInnerHTML={{ __html: content.description }}
               />
             )}
 
-            <RelatedContent />
+            {/* Comments Section */}
+            <div className="mt-12 pt-8 border-t border-gray-200">
+              <CommentSection
+                contentType={type?.replace(/s$/, '') as "article" | "video"}
+                contentId={id!}
+              />
+            </div>
+
+            <div className="mt-12">
+              <RelatedContent />
+            </div>
           </CardContent>
         </Card>
       </div>
