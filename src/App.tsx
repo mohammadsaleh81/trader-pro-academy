@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -26,61 +27,70 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes
+    },
+  },
+});
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <DataProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Public Routes */}
-              <Route element={<PublicRoute />}>
-                <Route path="/login" element={<LoginPage />} />
-              </Route>
-
-              {/* Semi-Public Routes */}
-              <Route path="/" element={<HomePage />} />
-              <Route path="/about-us" element={<AboutUsPage />} />
-              <Route path="/contact-us" element={<ContactUsPage />} />
-              <Route path="/content" element={<ContentHubPage />} />
-              <Route path="/content/:type/:id" element={<ContentDetailPage />} />
-              
-              {/* Article routes */}
-              <Route path="/articles/:id" element={<ArticleDetailPage />} />
-              
-              <Route path="/courses" element={<CourseListPage />} />
-              <Route path="/courses/:slug" element={<CourseDetailPage />} />
-
-              {/* Protected Routes */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/complete-profile" element={<CompleteProfilePage />} />
-                <Route path="/my-courses" element={<MyCoursesPage />} />
-                <Route path="/bookmarks" element={<BookmarksPage />} />
-                <Route path="/wallet" element={<WalletPage />} />
-                <Route path="/orders" element={<OrdersPage />} />
-                
-                {/* Profile Routes */}
-                <Route path="/profile">
-                  <Route index element={<ProfilePage />} />
-                  <Route path="edit" element={<EditProfilePage />} />
+const App: React.FC = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <DataProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                {/* Public Routes */}
+                <Route element={<PublicRoute />}>
+                  <Route path="/login" element={<LoginPage />} />
                 </Route>
-                
-                {/* Alternative edit profile route */}
-                <Route path="/edit-profile" element={<EditProfilePage />} />
-              </Route>
 
-              {/* Fallback Routes */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </DataProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+                {/* Semi-Public Routes */}
+                <Route path="/" element={<HomePage />} />
+                <Route path="/about-us" element={<AboutUsPage />} />
+                <Route path="/contact-us" element={<ContactUsPage />} />
+                <Route path="/content" element={<ContentHubPage />} />
+                <Route path="/content/:type/:id" element={<ContentDetailPage />} />
+                
+                {/* Article routes */}
+                <Route path="/articles/:id" element={<ArticleDetailPage />} />
+                
+                <Route path="/courses" element={<CourseListPage />} />
+                <Route path="/courses/:slug" element={<CourseDetailPage />} />
+
+                {/* Protected Routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/complete-profile" element={<CompleteProfilePage />} />
+                  <Route path="/my-courses" element={<MyCoursesPage />} />
+                  <Route path="/bookmarks" element={<BookmarksPage />} />
+                  <Route path="/wallet" element={<WalletPage />} />
+                  <Route path="/orders" element={<OrdersPage />} />
+                  
+                  {/* Profile Routes */}
+                  <Route path="/profile">
+                    <Route index element={<ProfilePage />} />
+                    <Route path="edit" element={<EditProfilePage />} />
+                  </Route>
+                  
+                  {/* Alternative edit profile route */}
+                  <Route path="/edit-profile" element={<EditProfilePage />} />
+                </Route>
+
+                {/* Fallback Routes */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </DataProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
