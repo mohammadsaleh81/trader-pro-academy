@@ -38,10 +38,13 @@ const ContentList = <T extends ContentItem>({
   // Helper function to format author
   const formatAuthor = (author: string | CourseUser | undefined): string => {
     if (!author) return "نویسنده";
+    if (typeof author === 'string') {
+      return author;
+    }
     if (typeof author === 'object' && author !== null) {
       return `${author.first_name || ''} ${author.last_name || ''}`.trim() || author.username || author.email || "نویسنده";
     }
-    return author || "نویسنده";
+    return "نویسنده";
   };
 
   const renderContentCard = (item: ContentItem, contentType: string, key: string) => {

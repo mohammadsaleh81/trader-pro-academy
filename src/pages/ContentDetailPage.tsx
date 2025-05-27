@@ -5,7 +5,7 @@ import { useData } from "@/contexts/DataContext";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Bookmark, BookmarkPlus, Share, Play, Download, Clock, Eye, User } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkPlus, Share, Play, Clock, Eye, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
 import { Article, Video, articlesApi, videosApi } from "@/lib/api";
@@ -116,7 +116,10 @@ const ContentDetailPage: React.FC = () => {
       return (
         <div className="w-full aspect-video bg-gray-100 rounded-lg mb-6 relative">
           {content.video_embed ? (
-            <div dangerouslySetInnerHTML={{ __html: content.video_embed }} />
+            <div 
+              className="w-full h-full rounded-lg overflow-hidden"
+              dangerouslySetInnerHTML={{ __html: content.video_embed }} 
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <div className="text-center">
@@ -142,7 +145,7 @@ const ContentDetailPage: React.FC = () => {
     if (!content) return null;
 
     return (
-      <div className="flex items-center gap-6 text-sm text-gray-500 mb-6 justify-end">
+      <div className="flex items-center gap-6 text-sm text-gray-500 mb-6 justify-end flex-wrap">
         {content.author && (
           <div className="flex items-center gap-2">
             <User className="h-4 w-4" />
@@ -155,7 +158,7 @@ const ContentDetailPage: React.FC = () => {
           <span>{formatDate('published' in content ? content.published : content.created_at)}</span>
         </div>
         
-        {'duration' in content && (
+        {'duration' in content && content.duration && (
           <div className="flex items-center gap-2">
             <Play className="h-4 w-4" />
             <span>{content.duration}</span>
@@ -191,13 +194,15 @@ const ContentDetailPage: React.FC = () => {
     return (
       <Layout>
         <div className="trader-container py-8">
-          <div className="text-center">محتوای مورد نظر یافت نشد</div>
-          <Button 
-            onClick={() => navigate("/content")}
-            className="mt-4 mx-auto block"
-          >
-            بازگشت به کتابخانه محتوا
-          </Button>
+          <div className="text-center">
+            <p className="text-lg text-gray-600 mb-4">محتوای مورد نظر یافت نشد</p>
+            <Button 
+              onClick={() => navigate("/content")}
+              className="mx-auto"
+            >
+              بازگشت به کتابخانه محتوا
+            </Button>
+          </div>
         </div>
       </Layout>
     );
@@ -276,7 +281,6 @@ const ContentDetailPage: React.FC = () => {
             <div className="mt-12 pt-8 border-t border-gray-200">
               <h3 className="text-lg font-semibold mb-4 text-right">محتوای مرتبط</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* This could be populated with related content in the future */}
                 <div className="text-center text-gray-500 py-8">
                   محتوای مرتبط به‌زودی اضافه خواهد شد
                 </div>
