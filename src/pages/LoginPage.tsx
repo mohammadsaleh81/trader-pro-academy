@@ -19,7 +19,7 @@ const LoginPage: React.FC = () => {
   const { requestOTP, verifyOTP, isLoading, error, user, devOTP } = useAuth();
   const navigate = useNavigate();
 
-  // If user is already logged in and profile is complete, redirect to profile page
+  // If user is already logged in, redirect appropriately
   useEffect(() => {
     if (user) {
       console.log("User is logged in, redirecting...", user);
@@ -35,14 +35,22 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     console.log("Submitting phone:", phone);
     
-    // Basic validation
-    if (!phone || phone.length < 10) {
-      console.log("Phone validation failed");
+    // Validate phone number
+    if (!phone || phone.length < 11) {
+      console.log("Phone validation failed - phone too short");
+      return;
+    }
+    
+    // Clean phone number (remove spaces and validate format)
+    const cleanPhone = phone.replace(/\s/g, '');
+    if (!cleanPhone.match(/^09\d{9}$/)) {
+      console.log("Phone validation failed - invalid format");
       return;
     }
     
     try {
-      await requestOTP(phone);
+      console.log("Requesting OTP for phone:", cleanPhone);
+      await requestOTP(cleanPhone);
       console.log("OTP requested successfully, changing step to OTP_VERIFICATION");
       setStep(AuthStep.OTP_VERIFICATION);
     } catch (error) {
@@ -54,7 +62,13 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     console.log("Submitting OTP:", otp);
     
+    if (!otp || otp.length !== 5) {
+      console.log("OTP validation failed - invalid length");
+      return;
+    }
+    
     try {
+      console.log("Verifying OTP:", otp);
       await verifyOTP(otp);
       console.log("OTP verified successfully");
     } catch (error) {
@@ -68,22 +82,23 @@ const LoginPage: React.FC = () => {
     setOTP("");
   };
 
+  const handleOTPChange = (value: string) => {
+    console.log("OTP changed:", value);
+    setOTP(value);
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log("Phone changed:", value);
+    setPhone(value);
+  };
+
   console.log("Current step:", step);
   console.log("Current phone:", phone);
   console.log("Current OTP:", otp);
   console.log("Is loading:", isLoading);
   console.log("Error:", error);
   console.log("Dev OTP:", devOTP);
-
-  if (isLoading && step === AuthStep.PHONE_ENTRY) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <p className="text-lg">در حال پردازش...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -98,7 +113,7 @@ const LoginPage: React.FC = () => {
         </div>
         
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm text-center">
             {error}
           </div>
         )}
@@ -119,8 +134,9 @@ const LoginPage: React.FC = () => {
                   className="text-left pr-10"
                   placeholder="09123456789"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={handlePhoneChange}
                   required
+                  disabled={isLoading}
                 />
               </div>
               <p className="mt-1 text-xs text-gray-500">
@@ -131,7 +147,7 @@ const LoginPage: React.FC = () => {
             <Button 
               type="submit" 
               className="w-full bg-trader-500 hover:bg-trader-600 py-3"
-              disabled={isLoading || phone.length < 10}
+              disabled={isLoading || phone.length < 11}
             >
               {isLoading ? "در حال ارسال کد..." : "ارسال کد تایید"}
             </Button>
@@ -151,7 +167,12 @@ const LoginPage: React.FC = () => {
               )}
               
               <div className="flex justify-center py-4">
-                <InputOTP maxLength={5} value={otp} onChange={setOTP}>
+                <InputOTP 
+                  maxLength={5} 
+                  value={otp} 
+                  onChange={handleOTPChange}
+                  disabled={isLoading}
+                >
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
                     <InputOTPSlot index={1} />
