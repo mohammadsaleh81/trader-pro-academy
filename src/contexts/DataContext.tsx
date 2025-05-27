@@ -1,11 +1,12 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api from "@/lib/axios";
 import { Article, Video, articlesApi, videosApi } from "@/lib/api";
 
 // Course Types
 export type CourseLesson = {
-  id: number;
-  chapter: number;
+  id: string;
+  chapter: string;
   title: string;
   content: string;
   content_type: string;
@@ -18,8 +19,8 @@ export type CourseLesson = {
 };
 
 export type CourseChapter = {
-  id: number;
-  course: number;
+  id: string;
+  course: string;
   title: string;
   description: string;
   order: number;
@@ -28,7 +29,7 @@ export type CourseChapter = {
 };
 
 export type CourseUser = {
-  id: number;
+  id: string;
   username: string | null;
   email: string;
   first_name: string;
@@ -36,7 +37,7 @@ export type CourseUser = {
 };
 
 export type CourseComment = {
-  id: number;
+  id: string;
   user: CourseUser;
   content: string;
   replies: CourseComment[];
@@ -56,23 +57,23 @@ export type CourseProgressData = {
 };
 
 export type ChapterProgress = {
-  id: number;
+  id: string;
   title: string;
   order: number;
   progress_percentage: number;
 };
 
 export type NextLesson = {
-  id: number;
+  id: string;
   title: string;
   chapter: string;
   order: number;
 };
 
 export type CourseEnrollment = {
-  id: number;
-  user: number;
-  course: number;
+  id: string;
+  user: string;
+  course: string;
   course_title: string;
   price_paid: string;
   discount_used: number | null;
@@ -93,7 +94,7 @@ export type UserProgress = {
 
 export type CourseDetails = {
   info: {
-    id: number;
+    id: string;
     title: string;
     description: string;
     instructor: string;
