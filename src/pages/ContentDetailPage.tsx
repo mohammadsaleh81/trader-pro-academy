@@ -5,7 +5,7 @@ import { useData } from "@/contexts/DataContext";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Bookmark, BookmarkPlus, Share } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkPlus, Share, Play, Download, Clock, Eye, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
 import { Article, Video, articlesApi, videosApi } from "@/lib/api";
@@ -114,12 +114,15 @@ const ContentDetailPage: React.FC = () => {
 
     if ('video_type' in content) { // It's a video
       return (
-        <div className="w-full aspect-video bg-gray-100 rounded-lg mb-6">
+        <div className="w-full aspect-video bg-gray-100 rounded-lg mb-6 relative">
           {content.video_embed ? (
             <div dangerouslySetInnerHTML={{ __html: content.video_embed }} />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <p>ویدیو در دسترس نیست</p>
+              <div className="text-center">
+                <Play className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">ویدیو در دسترس نیست</p>
+              </div>
             </div>
           )}
         </div>
@@ -133,6 +136,40 @@ const ContentDetailPage: React.FC = () => {
         />
       ) : null;
     }
+  };
+
+  const renderContentStats = () => {
+    if (!content) return null;
+
+    return (
+      <div className="flex items-center gap-6 text-sm text-gray-500 mb-6 justify-end">
+        {content.author && (
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            <span>{content.author}</span>
+          </div>
+        )}
+        
+        <div className="flex items-center gap-2">
+          <Clock className="h-4 w-4" />
+          <span>{formatDate('published' in content ? content.published : content.created_at)}</span>
+        </div>
+        
+        {'duration' in content && (
+          <div className="flex items-center gap-2">
+            <Play className="h-4 w-4" />
+            <span>{content.duration}</span>
+          </div>
+        )}
+        
+        {'view_count' in content && (
+          <div className="flex items-center gap-2">
+            <Eye className="h-4 w-4" />
+            <span>{content.view_count.toLocaleString()} بازدید</span>
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -181,7 +218,7 @@ const ContentDetailPage: React.FC = () => {
         <Card className="border-none shadow-md">
           <CardContent className="p-6">
             <div className="flex justify-between items-start mb-6">
-              <h1 className="text-2xl font-bold text-right">{content.title}</h1>
+              <h1 className="text-2xl font-bold text-right flex-1 ml-4">{content.title}</h1>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -190,7 +227,7 @@ const ContentDetailPage: React.FC = () => {
                   className="rounded-full"
                 >
                   {isBookmarked ? (
-                    <Bookmark className="h-5 w-5" />
+                    <Bookmark className="h-5 w-5 fill-current" />
                   ) : (
                     <BookmarkPlus className="h-5 w-5" />
                   )}
@@ -206,19 +243,7 @@ const ContentDetailPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 text-gray-500 mb-6 justify-end">
-              {content.author && (
-                <span>{content.author}</span>
-              )}
-              <span>•</span>
-              <span>{formatDate('published' in content ? content.published : content.created_at)}</span>
-              {'duration' in content && (
-                <>
-                  <span>•</span>
-                  <span>{content.duration}</span>
-                </>
-              )}
-            </div>
+            {renderContentStats()}
 
             <div className="flex flex-wrap gap-2 mb-8 justify-end">
               {content.tags.map((tag) => (
@@ -235,17 +260,28 @@ const ContentDetailPage: React.FC = () => {
 
             {'content' in content ? (
               <div 
-                className="prose prose-lg max-w-none text-right" 
+                className="prose prose-lg max-w-none text-right prose-headings:text-right prose-p:text-right" 
                 dir="rtl"
                 dangerouslySetInnerHTML={{ __html: content.content }}
               />
             ) : (
               <div 
-                className="prose prose-lg max-w-none text-right" 
+                className="prose prose-lg max-w-none text-right prose-headings:text-right prose-p:text-right" 
                 dir="rtl"
                 dangerouslySetInnerHTML={{ __html: content.description }}
               />
             )}
+
+            {/* Related content section */}
+            <div className="mt-12 pt-8 border-t border-gray-200">
+              <h3 className="text-lg font-semibold mb-4 text-right">محتوای مرتبط</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* This could be populated with related content in the future */}
+                <div className="text-center text-gray-500 py-8">
+                  محتوای مرتبط به‌زودی اضافه خواهد شد
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

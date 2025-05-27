@@ -75,19 +75,23 @@ const CourseCard: React.FC<CourseCardProps> = ({
         date: new Date().toLocaleDateString("fa-IR"),
       };
 
-      updateWallet(wallet.balance - price, [...wallet.transactions, newTransaction]);
-      enrollCourse(id);
+      const updateResult = await updateWallet(wallet.balance - price);
+      if (updateResult.success) {
+        enrollCourse(id);
 
-      toast({
-        title: "خرید موفق",
-        description: `دوره ${title} با موفقیت خریداری شد`,
-      });
+        toast({
+          title: "خرید موفق",
+          description: `دوره ${title} با موفقیت خریداری شد`,
+        });
 
-      // Simulate processing delay
-      setTimeout(() => {
-        setIsProcessing(false);
-        navigate(`/learn/${id}`);
-      }, 1000);
+        // Simulate processing delay
+        setTimeout(() => {
+          setIsProcessing(false);
+          navigate(`/learn/${id}`);
+        }, 1000);
+      } else {
+        throw new Error(updateResult.error);
+      }
     } catch (error) {
       console.error('Error processing purchase:', error);
       setIsProcessing(false);

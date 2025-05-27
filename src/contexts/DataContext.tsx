@@ -234,7 +234,7 @@ interface DataContextType {
   addBookmark: (itemId: string, itemType: ItemType, userId: string) => void;
   removeBookmark: (id: string) => void;
   addComment: (comment: Omit<Comment, "id" | "date">) => void;
-  enrollCourse: (courseId: string, userId: string) => void;
+  enrollCourse: (courseId: string) => void;
   updateWallet: (amount: number) => Promise<{ success: boolean; new_balance?: number; error?: string }>;
   fetchCourseDetails: (slug: string) => Promise<CourseDetails | null>;
   isLoading: {
@@ -457,7 +457,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setComments([...comments, newComment]);
   };
 
-  const enrollCourse = (courseId: string, userId: string) => {
+  const enrollCourse = (courseId: string) => {
     const course = courses.find((c) => c.id === courseId);
     if (course && !myCourses.find((c) => c.id === courseId)) {
       setMyCourses([...myCourses, { ...course, completedLessons: 0 }]);
