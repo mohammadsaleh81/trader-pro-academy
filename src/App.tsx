@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { DataProvider } from "./contexts/DataContext";
 import HomePage from "./pages/HomePage";
@@ -36,6 +36,12 @@ const queryClient = new QueryClient({
   },
 });
 
+// Component for handling video redirect
+const VideoRedirect: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/content/video/${id}`} replace />;
+};
+
 const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -59,7 +65,7 @@ const App: React.FC = () => {
                 <Route path="/content/:type/:id" element={<ContentDetailPage />} />
                 
                 {/* Redirect old video routes to new format */}
-                <Route path="/videos/:id" element={<Navigate to="/content/video/:id" replace />} />
+                <Route path="/videos/:id" element={<VideoRedirect />} />
                 
                 {/* Article routes */}
                 <Route path="/articles/:id" element={<ArticleDetailPage />} />
