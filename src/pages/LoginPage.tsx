@@ -50,9 +50,11 @@ const LoginPage: React.FC = () => {
     
     try {
       console.log("Requesting OTP for phone:", cleanPhone);
-      await requestOTP(cleanPhone);
-      console.log("OTP requested successfully, changing step to OTP_VERIFICATION");
+      const result = await requestOTP(cleanPhone);
+      console.log("OTP request result:", result);
+      console.log("Setting step to OTP_VERIFICATION");
       setStep(AuthStep.OTP_VERIFICATION);
+      console.log("Step set successfully");
     } catch (error) {
       console.error("Error requesting OTP:", error);
     }
@@ -92,6 +94,11 @@ const LoginPage: React.FC = () => {
     console.log("Phone changed:", value);
     setPhone(value);
   };
+
+  // Add useEffect to track step changes
+  useEffect(() => {
+    console.log("Step changed to:", step);
+  }, [step]);
 
   console.log("Current step:", step);
   console.log("Current phone:", phone);
