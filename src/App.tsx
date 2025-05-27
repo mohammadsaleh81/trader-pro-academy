@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +9,7 @@ import { DataProvider } from "./contexts/DataContext";
 import HomePage from "./pages/HomePage";
 import ContentHubPage from "./pages/ContentHubPage";
 import ContentDetailPage from "./pages/ContentDetailPage";
+import ArticleDetailPage from "./pages/ArticleDetailPage";
 import MyCoursesPage from "./pages/MyCoursesPage";
 import BookmarksPage from "./pages/BookmarksPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -46,6 +48,10 @@ const App = () => (
               <Route path="/contact-us" element={<ContactUsPage />} />
               <Route path="/content" element={<ContentHubPage />} />
               <Route path="/content/:type/:id" element={<ContentDetailPage />} />
+              
+              {/* Article routes */}
+              <Route path="/articles/:id" element={<ArticleDetailPage />} />
+              
               <Route path="/courses" element={<CourseListPage />} />
               <Route path="/courses/:slug" element={<CourseDetailPage />} />
 
