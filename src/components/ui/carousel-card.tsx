@@ -6,6 +6,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ type CarouselCardProps = {
   controlsClassName?: string;
   showControls?: boolean;
   itemClassName?: string;
+  setApi?: (api: CarouselApi) => void;
 };
 
 const CarouselCard: React.FC<CarouselCardProps> = ({
@@ -22,7 +24,8 @@ const CarouselCard: React.FC<CarouselCardProps> = ({
   className,
   controlsClassName,
   showControls = true,
-  itemClassName = "basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5"
+  itemClassName = "basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5",
+  setApi
 }) => {
   const [isRtl, setIsRtl] = useState(false);
   
@@ -40,6 +43,7 @@ const CarouselCard: React.FC<CarouselCardProps> = ({
         direction: isRtl ? "rtl" : "ltr",
         slidesToScroll: 1,
       }}
+      setApi={setApi}
     >
       <CarouselContent className="-ml-2 -mr-2">
         {React.Children.map(children, (child, index) => (

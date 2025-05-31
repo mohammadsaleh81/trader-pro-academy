@@ -5,10 +5,12 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useData } from "@/contexts/DataContext";
 import { Link } from "react-router-dom";
+import type { CarouselApi } from "@/components/ui/carousel";
 
 const HeroCarousel: React.FC = () => {
   const [isRtl, setIsRtl] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [api, setApi] = useState<CarouselApi>();
   const isMobile = useIsMobile();
   const { courses } = useData();
   
@@ -18,6 +20,31 @@ const HeroCarousel: React.FC = () => {
 
   // Get first 3 courses for the hero carousel
   const heroSlides = courses.slice(0, 3);
+
+  // Listen to carousel changes
+  useEffect(() => {
+    if (!api) {
+      return;
+    }
+
+    const onSelect = () => {
+      setActiveSlide(api.selectedScrollSnap());
+    };
+
+    api.on("select", onSelect);
+    onSelect();
+
+    return () => {
+      api?.off("select", onSelect);
+    };
+  }, [api]);
+
+  // Handle dot click
+  const handleDotClick = (index: number) => {
+    if (api) {
+      api.scrollTo(index);
+    }
+  };
 
   // If no courses available, show loading or empty state
   if (heroSlides.length === 0) {
@@ -36,13 +63,13 @@ const HeroCarousel: React.FC = () => {
         className="w-full"
         controlsClassName="bg-white/70 text-trader-500 hover:bg-white"
         itemClassName={isMobile ? 'basis-full' : 'basis-1/2'}
+        setApi={setApi}
       >
         {heroSlides.map((course, index) => (
           <Link 
             key={course.id} 
             to={`/courses/${course.id}`}
             className="relative w-full rounded-2xl overflow-hidden block"
-            onFocus={() => setActiveSlide(index)}
           >
             <div className="relative h-[180px] md:h-[240px] lg:h-[300px] w-full">
               <img
@@ -68,17 +95,17 @@ const HeroCarousel: React.FC = () => {
         ))}
       </CarouselCard>
       
-      <div className="flex justify-center gap-2 mt-3">
+      <div className="flex justify-center gap-3 mt-4">
         {heroSlides.map((course, index) => (
           <div 
             key={course.id} 
             className={cn(
-              "w-3 h-3 rounded-full transition-all duration-300 cursor-pointer", 
+              "w-4 h-4 rounded-full transition-all duration-300 cursor-pointer hover:scale-110", 
               index === activeSlide 
                 ? "bg-trader-500 scale-110" 
                 : "bg-gray-300 hover:bg-gray-400"
             )}
-            onClick={() => setActiveSlide(index)}
+            onClick={() => handleDotClick(index)}
           />
         ))}
       </div>
