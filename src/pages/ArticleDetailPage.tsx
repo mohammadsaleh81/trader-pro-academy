@@ -1,13 +1,15 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Bookmark, BookmarkPlus, Share, Clock, Eye, User } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatDate } from "@/lib/utils";
 import { Article, articlesApi } from "@/lib/api";
+import ContentActions from "@/components/content/ContentActions";
+import ContentFooter from "@/components/content/ContentFooter";
 import CommentSection from "@/components/comments/CommentSection";
 
 const ArticleDetailPage: React.FC = () => {
@@ -84,14 +86,6 @@ const ArticleDetailPage: React.FC = () => {
     }
   };
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast({
-      title: "لینک کپی شد",
-      description: "لینک این مقاله در کلیپ‌بورد کپی شد",
-    });
-  };
-
   if (isLoading) {
     return (
       <Layout>
@@ -141,58 +135,14 @@ const ArticleDetailPage: React.FC = () => {
           <CardContent className="p-6">
             <div className="flex justify-between items-start mb-6">
               <h1 className="text-2xl font-bold text-right flex-1 ml-4">{article.title}</h1>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleBookmark}
-                  className="rounded-full"
-                >
-                  {isBookmarked ? (
-                    <Bookmark className="h-5 w-5 fill-current" />
-                  ) : (
-                    <BookmarkPlus className="h-5 w-5" />
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleShare}
-                  className="rounded-full"
-                >
-                  <Share className="h-5 w-5" />
-                </Button>
-              </div>
             </div>
 
-            <div className="flex items-center gap-6 text-sm text-gray-500 mb-6 justify-end flex-wrap">
-              {article.author && (
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  <span>{article.author}</span>
-                </div>
-              )}
-              
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <span>{formatDate(article.published)}</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Eye className="h-4 w-4" />
-                <span>{article.view_count.toLocaleString()} بازدید</span>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mb-8 justify-end">
-              {article.tags.map((tag) => (
-                <span
-                  key={tag.id}
-                  className="bg-trader-100 text-trader-800 text-xs px-3 py-1 rounded-full"
-                >
-                  {tag.name}
-                </span>
-              ))}
+            <div className="flex justify-end mb-6">
+              <ContentActions 
+                isBookmarked={isBookmarked}
+                onBookmark={handleBookmark}
+                title={article.title}
+              />
             </div>
 
             {article.thumbnail && (
@@ -207,6 +157,13 @@ const ArticleDetailPage: React.FC = () => {
               className="prose prose-lg max-w-none text-right prose-headings:text-right prose-p:text-right mb-12" 
               dir="rtl"
               dangerouslySetInnerHTML={{ __html: article.content }}
+            />
+
+            <ContentFooter
+              author={article.author}
+              publishDate={article.published}
+              viewCount={article.view_count}
+              tags={article.tags}
             />
 
             {/* Comments Section */}
