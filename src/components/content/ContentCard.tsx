@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Bookmark, BookmarkCheck, Calendar, Clock, User } from "lucide-react";
@@ -94,6 +95,27 @@ const ContentCard: React.FC<ContentCardProps> = ({
     }
   };
 
+  // Format date to show only date without time
+  const formatDateOnly = (dateString?: string) => {
+    if (!dateString) return "";
+    
+    try {
+      // If it's already in YYYY-MM-DD format, just return it
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        return dateString;
+      }
+      
+      // If it contains time, extract only the date part
+      if (dateString.includes('T') || dateString.includes(' ')) {
+        return dateString.split('T')[0].split(' ')[0];
+      }
+      
+      return dateString;
+    } catch (error) {
+      return dateString;
+    }
+  };
+
   return (
     <Link to={getContentUrl()} className={cn("block", className)}>
       <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -140,7 +162,7 @@ const ContentCard: React.FC<ContentCardProps> = ({
             {date && (
               <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
-                <span>{date}</span>
+                <span>{formatDateOnly(date)}</span>
               </div>
             )}
             {duration && (

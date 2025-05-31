@@ -88,18 +88,22 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Latest Videos */}
-        <section className="mb-6 px-2 sm:px-0">
-          <SectionTitle 
-            title="ویدیوهای آموزشی" 
-            viewAllLink="/content?type=videos"
-            icon={<Video className="text-trader-500 h-5 w-5" />}
-          />
-          <ContentList 
-            items={videos.slice(0, 8)} 
-            type="video" 
-            isLoading={isLoading}
-            skeletonCount={8}
-          />
+        <section className="mb-6 bg-gray-50 py-4 -mx-4 sm:-mx-6 lg:-mx-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <SectionTitle 
+              title="ویدیوهای آموزشی" 
+              viewAllLink="/content?type=videos"
+              icon={<Video className="text-trader-500 h-5 w-5" />}
+              className="mb-4"
+            />
+            <ContentList 
+              items={videos.slice(0, 8)} 
+              type="video" 
+              showCarousel={true}
+              isLoading={isLoading}
+              skeletonCount={8}
+            />
+          </div>
         </section>
 
         {/* Latest Podcasts */}
@@ -114,6 +118,7 @@ const HomePage: React.FC = () => {
             <ContentList 
               items={podcasts.slice(0, 8)} 
               type="podcast" 
+              showCarousel={true}
               isLoading={isLoading}
               skeletonCount={8}
             />
