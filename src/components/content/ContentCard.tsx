@@ -1,4 +1,5 @@
 
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Bookmark, BookmarkCheck, Calendar, Clock, User } from "lucide-react";
@@ -118,12 +119,12 @@ const ContentCard: React.FC<ContentCardProps> = ({
 
   return (
     <Link to={getContentUrl()} className={cn("block", className)}>
-      <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+      <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 h-full min-h-[320px] flex flex-col">
         <div className="relative">
           <img
             src={thumbnail || defaultThumbnail}
             alt={title}
-            className="w-full h-48 object-cover rounded-t-lg"
+            className="w-full h-44 object-cover rounded-t-lg"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = defaultThumbnail;
@@ -147,16 +148,16 @@ const ContentCard: React.FC<ContentCardProps> = ({
             {getTypeLabel()}
           </div>
         </div>
-        <div className="p-4">
-          <h3 className="text-lg font-semibold mb-2 line-clamp-2 min-h-[3.5rem]">{title}</h3>
+        <div className="p-4 flex-1 flex flex-col">
+          <h3 className="text-base font-semibold mb-2 line-clamp-2 min-h-[3rem]">{title}</h3>
           {description && (
-            <p className="text-gray-600 text-sm mb-4 line-clamp-2">{description}</p>
+            <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-1">{description}</p>
           )}
-          <div className="flex items-center text-sm text-gray-500 gap-4">
+          <div className="flex items-center text-sm text-gray-500 gap-4 mt-auto">
             {author && (
               <div className="flex items-center gap-1">
                 <User className="w-4 h-4" />
-                <span>{author}</span>
+                <span className="truncate">{author}</span>
               </div>
             )}
             {date && (

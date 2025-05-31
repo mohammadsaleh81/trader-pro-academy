@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Star, ShoppingCart, Loader } from "lucide-react";
@@ -107,59 +108,59 @@ const CourseCard: React.FC<CourseCardProps> = ({
   console.log(is_enrolled);
 
   return (
-    <div className="trader-card h-full flex flex-col">
+    <div className="trader-card h-full flex flex-col min-h-[280px]">
       <Link to={is_enrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
-        <div className="relative h-28 w-full">
+        <div className="relative h-40 w-full">
           <img
             src={thumbnail || "/placeholder-course.jpg"}
             alt={title}
             className="w-full h-full object-cover rounded-t-xl"
           />
           {progress !== undefined && (
-            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 py-0.5 px-1">
+            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 py-1 px-2">
               <div className="progress-bar">
                 <div className="progress-value" style={{ width: `${progress}%` }}></div>
               </div>
-              <p className="text-white text-[10px] mt-0.5 text-center">
+              <p className="text-white text-xs mt-1 text-center">
                 {progress}% تکمیل شده
               </p>
             </div>
           )}
         </div>
       </Link>
-      <div className="p-2 flex-1 flex flex-col">
+      <div className="p-3 flex-1 flex flex-col">
         <Link to={is_enrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
-          <h3 className="font-bold text-xs line-clamp-1 mb-0.5">{title}</h3>
-          <p className="text-gray-600 text-[10px] mb-1">مدرس: {instructor}</p>
+          <h3 className="font-bold text-sm line-clamp-2 mb-1 min-h-[2.5rem]">{title}</h3>
+          <p className="text-gray-600 text-xs mb-2">مدرس: {instructor}</p>
         </Link>
         <div className="mt-auto">
-          <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center">
-              <Star className="h-3 w-3 text-yellow-500 ml-0.5" />
-              <span className="text-[10px] font-medium">{rating}</span>
+              <Star className="h-4 w-4 text-yellow-500 ml-1" />
+              <span className="text-xs font-medium">{rating}</span>
             </div>
             {!is_enrolled && (
-              <p className={`font-bold ${isFree ? "text-green-600" : "text-trader-500"} text-xs`}>
+              <p className={`font-bold ${isFree ? "text-green-600" : "text-trader-500"} text-sm`}>
                 {isFree ? "رایگان" : `${price.toLocaleString()} تومان`}
               </p>
             )}
             {is_enrolled && (
-              <p className="font-bold text-green-600 text-xs">
+              <p className="font-bold text-green-600 text-sm">
                 ادامه یادگیری
               </p>
             )}
           </div>
           <Button 
             variant={is_enrolled ? "outline" : "default"}
-            className="w-full text-[10px] py-0 h-6"
+            className="w-full text-xs py-2 h-8"
             onClick={handleQuickBuy}
             disabled={isProcessing}
           >
             {isProcessing ? (
-              <Loader className="h-3 w-3 animate-spin mx-auto" />
+              <Loader className="h-4 w-4 animate-spin mx-auto" />
             ) : (
               <>
-                {!is_enrolled && <ShoppingCart className="h-3 w-3 ml-0.5" />}
+                {!is_enrolled && <ShoppingCart className="h-4 w-4 ml-1" />}
                 {is_enrolled ? "ادامه یادگیری" : isFree ? "ثبت‌نام رایگان" : "خرید سریع"}
               </>
             )}
