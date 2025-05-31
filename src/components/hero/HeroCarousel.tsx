@@ -3,51 +3,32 @@ import React, { useState, useEffect } from "react";
 import CarouselCard from "@/components/ui/carousel-card";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-type HeroSlide = {
-  id: string;
-  image: string;
-  title: string;
-  subtitle: string;
-  buttonText: string;
-  buttonLink: string;
-};
-
-const slides: HeroSlide[] = [
-  {
-    id: "1",
-    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop",
-    title: "دوره آنلایـــن جامع",
-    subtitle: "بیزینس کوچینگ",
-    buttonText: "نجات کسب‌وکارها",
-    buttonLink: "/courses/business-coaching",
-  },
-  {
-    id: "2",
-    image: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop",
-    title: "استراتژی‌های معاملاتی",
-    subtitle: "فارکس پیشرفته",
-    buttonText: "شروع یادگیری",
-    buttonLink: "/courses/forex-advanced",
-  },
-  {
-    id: "3",
-    image: "https://images.unsplash.com/photo-1620228885847-9eab2a1adddc?q=80&w=2070&auto=format&fit=crop",
-    title: "آشنایی با ارزهای دیجیتال",
-    subtitle: "کریپتوکارنسی",
-    buttonText: "مشاهده دوره",
-    buttonLink: "/courses/crypto-intro",
-  },
-];
+import { useData } from "@/contexts/DataContext";
+import { Link } from "react-router-dom";
 
 const HeroCarousel: React.FC = () => {
   const [isRtl, setIsRtl] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const isMobile = useIsMobile();
+  const { courses } = useData();
   
   useEffect(() => {
     setIsRtl(document.documentElement.dir === "rtl");
   }, []);
+
+  // Get first 3 courses for the hero carousel
+  const heroSlides = courses.slice(0, 3);
+
+  // If no courses available, show loading or empty state
+  if (heroSlides.length === 0) {
+    return (
+      <div className="relative w-full">
+        <div className="w-full rounded-2xl overflow-hidden bg-gray-200 animate-pulse">
+          <div className="h-[180px] md:h-[240px] lg:h-[300px] w-full bg-gray-300"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full">
@@ -56,39 +37,41 @@ const HeroCarousel: React.FC = () => {
         controlsClassName="bg-white/70 text-trader-500 hover:bg-white"
         itemClassName={isMobile ? 'basis-full' : 'basis-1/2'}
       >
-        {slides.map((slide, index) => (
-          <div 
-            key={slide.id} 
-            className="relative w-full rounded-2xl overflow-hidden"
+        {heroSlides.map((course, index) => (
+          <Link 
+            key={course.id} 
+            to={`/courses/${course.id}`}
+            className="relative w-full rounded-2xl overflow-hidden block"
             onFocus={() => setActiveSlide(index)}
           >
             <div className="relative h-[180px] md:h-[240px] lg:h-[300px] w-full">
               <img
-                src={slide.image}
-                alt={slide.title}
+                src={course.thumbnail || "https://placehold.co/600x400/e2e8f0/64748b?text=No+Image"}
+                alt={course.title}
                 className="w-full h-full object-cover brightness-[0.7]"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "https://placehold.co/600x400/e2e8f0/64748b?text=No+Image";
+                }}
               />
               <div className={`absolute inset-0 bg-gradient-to-${isRtl ? 'r' : 'l'} from-trader-500/50 to-blue-900/60 flex items-center ${isRtl ? 'justify-start' : 'justify-end'}`}>
                 <div className={`text-white ${isRtl ? 'text-left' : 'text-right'} p-4 md:p-8 max-w-md ${isRtl ? 'ml-0 md:ml-6' : 'mr-0 md:mr-6'}`}>
-                  <h2 className="text-sm md:text-lg mb-1 font-light">{slide.title}</h2>
-                  <h1 className="text-xl md:text-3xl lg:text-4xl font-bold mb-3">{slide.subtitle}</h1>
-                  <a 
-                    href={slide.buttonLink} 
-                    className="inline-block bg-trader-500 hover:bg-trader-600 text-white text-xs md:text-sm px-4 py-1.5 rounded-full transition-colors duration-300"
-                  >
-                    {slide.buttonText}
-                  </a>
+                  <h2 className="text-sm md:text-lg mb-1 font-light">دوره آموزشی</h2>
+                  <h1 className="text-xl md:text-3xl lg:text-4xl font-bold mb-3">{course.title}</h1>
+                  <div className="inline-block bg-trader-500 hover:bg-trader-600 text-white text-xs md:text-sm px-4 py-1.5 rounded-full transition-colors duration-300">
+                    {course.price === 0 ? 'مشاهده رایگان' : `${course.price.toLocaleString()} تومان`}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </CarouselCard>
       
       <div className="flex justify-center gap-2 mt-3">
-        {slides.map((slide, index) => (
+        {heroSlides.map((course, index) => (
           <div 
-            key={slide.id} 
+            key={course.id} 
             className={cn(
               "w-3 h-3 rounded-full transition-all duration-300 cursor-pointer", 
               index === activeSlide 
