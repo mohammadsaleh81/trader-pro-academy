@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from "react";
-import { Dot } from "lucide-react";
 import CarouselCard from "@/components/ui/carousel-card";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -86,14 +85,17 @@ const HeroCarousel: React.FC = () => {
         ))}
       </CarouselCard>
       
-      <div className="flex justify-center gap-1 mt-1">
+      <div className="flex justify-center gap-2 mt-3">
         {slides.map((slide, index) => (
-          <Dot 
+          <div 
             key={slide.id} 
             className={cn(
-              "h-2.5 w-2.5", 
-              index === activeSlide ? "text-trader-500" : "text-gray-300"
-            )} 
+              "w-3 h-3 rounded-full transition-all duration-300 cursor-pointer", 
+              index === activeSlide 
+                ? "bg-trader-500 scale-110" 
+                : "bg-gray-300 hover:bg-gray-400"
+            )}
+            onClick={() => setActiveSlide(index)}
           />
         ))}
       </div>
