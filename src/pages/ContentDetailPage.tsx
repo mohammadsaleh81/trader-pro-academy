@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -8,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Article, Video, articlesApi, videosApi } from "@/lib/api";
 import ContentDetailHeader from "@/components/content/ContentDetailHeader";
-import ContentStats from "@/components/content/ContentStats";
 import ContentActions from "@/components/content/ContentActions";
 import ContentMedia from "@/components/content/ContentMedia";
+import ContentFooter from "@/components/content/ContentFooter";
 import RelatedContent from "@/components/content/RelatedContent";
 import CommentSection from "@/components/comments/CommentSection";
 
@@ -168,25 +167,8 @@ const ContentDetailPage: React.FC = () => {
               <ContentActions 
                 isBookmarked={isBookmarked}
                 onBookmark={handleBookmark}
+                title={content.title}
               />
-            </div>
-
-            <ContentStats
-              author={content.author}
-              publishDate={'published' in content ? content.published : content.created_at}
-              duration={'duration' in content ? content.duration : undefined}
-              viewCount={'view_count' in content ? content.view_count : undefined}
-            />
-
-            <div className="flex flex-wrap gap-2 mb-8 justify-end">
-              {content.tags.map((tag) => (
-                <span
-                  key={tag.id}
-                  className="bg-trader-100 text-trader-800 text-xs px-3 py-1 rounded-full"
-                >
-                  {tag.name}
-                </span>
-              ))}
             </div>
 
             <ContentMedia content={content} />
@@ -204,6 +186,14 @@ const ContentDetailPage: React.FC = () => {
                 dangerouslySetInnerHTML={{ __html: content.description }}
               />
             )}
+
+            <ContentFooter
+              author={content.author}
+              publishDate={'published' in content ? content.published : content.created_at}
+              duration={'duration' in content ? content.duration : undefined}
+              viewCount={'view_count' in content ? content.view_count : undefined}
+              tags={content.tags}
+            />
 
             <div className="mt-12 pt-8 border-t border-gray-200">
               <CommentSection

@@ -1,28 +1,20 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Bookmark, BookmarkPlus, Share } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Bookmark, BookmarkPlus } from "lucide-react";
+import ShareMenu from "./ShareMenu";
 
 interface ContentActionsProps {
   isBookmarked: boolean;
   onBookmark: () => void;
+  title?: string;
 }
 
 const ContentActions: React.FC<ContentActionsProps> = ({
   isBookmarked,
-  onBookmark
+  onBookmark,
+  title = "محتوای جالب"
 }) => {
-  const { toast } = useToast();
-
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast({
-      title: "لینک کپی شد",
-      description: "لینک این محتوا در کلیپ‌بورد کپی شد",
-    });
-  };
-
   return (
     <div className="flex gap-2">
       <Button
@@ -37,14 +29,7 @@ const ContentActions: React.FC<ContentActionsProps> = ({
           <BookmarkPlus className="h-5 w-5" />
         )}
       </Button>
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handleShare}
-        className="rounded-full"
-      >
-        <Share className="h-5 w-5" />
-      </Button>
+      <ShareMenu title={title} />
     </div>
   );
 };
