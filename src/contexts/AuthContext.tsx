@@ -10,6 +10,7 @@ export type User = {
   phone: string;
   email?: string;
   avatar?: string;
+  thumbnail?: string;
   isProfileComplete: boolean;
   first_name?: string;
   last_name?: string;
