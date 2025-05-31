@@ -8,6 +8,9 @@ import HeroCarousel from "@/components/hero/HeroCarousel";
 import ContentCategories from "@/components/content-categories/ContentCategories";
 import SectionTitle from "@/components/section-title/SectionTitle";
 import { BookOpen, FileText, Headphones, Video } from "lucide-react";
+import CarouselCard from "@/components/ui/carousel-card";
+import CourseCard from "@/components/course/CourseCard";
+import CourseCardSkeleton from "@/components/course/CourseCardSkeleton";
 
 const HomePage: React.FC = () => {
   const { courses, articles, videos, podcasts } = useData();
@@ -42,7 +45,27 @@ const HomePage: React.FC = () => {
             viewAllLink="/courses"
             icon={<BookOpen className="text-trader-500 h-5 w-5" />}
           />
-          <CourseList courses={courses} isLoading={isLoading} skeletonCount={5} />
+          
+          <CarouselCard controlsClassName="bg-white shadow-md">
+            {isLoading 
+              ? Array.from({ length: 5 }).map((_, index) => (
+                  <CourseCardSkeleton key={`skeleton-${index}`} />
+                ))
+              : courses.slice(0, 8).map((course, index) => (
+                  <CourseCard
+                    key={course.id}
+                    id={course.id}
+                    title={course.title}
+                    instructor={course.instructor}
+                    thumbnail={course.thumbnail}
+                    price={course.price}
+                    rating={course.rating}
+                    isFree={index % 3 === 0}
+                    is_enrolled={course.is_enrolled}
+                  />
+                ))
+            }
+          </CarouselCard>
         </section>
 
         {/* Latest Articles */}
