@@ -45,7 +45,13 @@ const VideoRedirect: React.FC = () => {
   console.log('VideoRedirect: Redirecting video ID:', id);
   
   if (!id) {
-    console.error('VideoRedirect: No ID provided');
+    console.error('VideoRedirect: No ID provided, redirecting to content hub');
+    return <Navigate to="/content?type=videos" replace />;
+  }
+  
+  // Validate ID format (basic validation)
+  if (!/^\d+$/.test(id)) {
+    console.error('VideoRedirect: Invalid ID format:', id);
     return <Navigate to="/content?type=videos" replace />;
   }
   

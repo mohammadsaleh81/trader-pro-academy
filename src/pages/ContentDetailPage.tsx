@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -33,7 +34,7 @@ const ContentDetailPage: React.FC = () => {
       if (!id || !type) {
         console.error('ContentDetailPage: Missing ID or type parameters');
         setError('پارامترهای مورد نیاز یافت نشد');
-        navigate('/content');
+        setIsLoading(false);
         return;
       }
 
@@ -57,7 +58,7 @@ const ContentDetailPage: React.FC = () => {
           default:
             console.error('ContentDetailPage: Unknown content type:', contentType);
             setError('نوع محتوای نامشخص');
-            navigate('/content');
+            setIsLoading(false);
             return;
         }
 
@@ -66,7 +67,7 @@ const ContentDetailPage: React.FC = () => {
         if (!data) {
           console.error('ContentDetailPage: No data received for ID:', id);
           setError('محتوا یافت نشد');
-          navigate('/content');
+          setIsLoading(false);
           return;
         }
 
@@ -204,7 +205,6 @@ const ContentDetailPage: React.FC = () => {
               />
             )}
 
-            {/* Comments Section */}
             <div className="mt-12 pt-8 border-t border-gray-200">
               <CommentSection
                 contentType={type?.replace(/s$/, '') as "article" | "video"}
