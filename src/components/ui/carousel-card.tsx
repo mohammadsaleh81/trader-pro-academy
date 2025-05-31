@@ -24,7 +24,7 @@ const CarouselCard: React.FC<CarouselCardProps> = ({
   className,
   controlsClassName,
   showControls = true,
-  itemClassName = "basis-1/2 sm:basis-1/3 md:basis-1/4",
+  itemClassName = "basis-1/2 sm:basis-1/3 lg:basis-1/4",
   setApi
 }) => {
   const [isRtl, setIsRtl] = useState(false);
@@ -45,11 +45,11 @@ const CarouselCard: React.FC<CarouselCardProps> = ({
       }}
       setApi={setApi}
     >
-      <CarouselContent className="-ml-3 -mr-3">
+      <CarouselContent className="-ml-2 -mr-2">
         {React.Children.map(children, (child, index) => (
           <CarouselItem 
             key={index} 
-            className={cn("pl-3 pr-3 transition-opacity hover:opacity-100 focus:opacity-100", itemClassName)}
+            className={cn("pl-2 pr-2 transition-opacity hover:opacity-100 focus:opacity-100", itemClassName)}
           >
             {child}
           </CarouselItem>

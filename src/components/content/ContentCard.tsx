@@ -1,5 +1,3 @@
-
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Bookmark, BookmarkCheck, Calendar, Clock, User } from "lucide-react";
@@ -119,12 +117,12 @@ const ContentCard: React.FC<ContentCardProps> = ({
 
   return (
     <Link to={getContentUrl()} className={cn("block", className)}>
-      <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 h-full min-h-[320px] flex flex-col">
+      <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 h-full min-h-[260px] sm:min-h-[320px] flex flex-col">
         <div className="relative">
           <img
             src={thumbnail || defaultThumbnail}
             alt={title}
-            className="w-full h-44 object-cover rounded-t-lg"
+            className="w-full h-32 sm:h-44 object-cover rounded-t-lg"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = defaultThumbnail;
@@ -137,9 +135,9 @@ const ContentCard: React.FC<ContentCardProps> = ({
                 className="p-1.5 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200"
               >
                 {bookmark ? (
-                  <BookmarkCheck className="w-5 h-5 text-trader-500" />
+                  <BookmarkCheck className="w-4 h-4 sm:w-5 sm:h-5 text-trader-500" />
                 ) : (
-                  <Bookmark className="w-5 h-5 text-gray-500" />
+                  <Bookmark className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                 )}
               </button>
             )}
@@ -148,28 +146,28 @@ const ContentCard: React.FC<ContentCardProps> = ({
             {getTypeLabel()}
           </div>
         </div>
-        <div className="p-4 flex-1 flex flex-col">
-          <h3 className="text-base font-semibold mb-2 line-clamp-2 min-h-[3rem]">{title}</h3>
+        <div className="p-3 sm:p-4 flex-1 flex flex-col">
+          <h3 className="text-sm sm:text-base font-semibold mb-2 line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem]">{title}</h3>
           {description && (
-            <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-1">{description}</p>
+            <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2 flex-1">{description}</p>
           )}
-          <div className="flex items-center text-sm text-gray-500 gap-4 mt-auto">
+          <div className="flex items-center text-xs sm:text-sm text-gray-500 gap-2 sm:gap-4 mt-auto">
             {author && (
               <div className="flex items-center gap-1">
-                <User className="w-4 h-4" />
-                <span className="truncate">{author}</span>
+                <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="truncate text-xs">{author}</span>
               </div>
             )}
             {date && (
               <div className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                <span>{formatDateOnly(date)}</span>
+                <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="text-xs">{formatDateOnly(date)}</span>
               </div>
             )}
             {duration && (
               <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                <span>{duration}</span>
+                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="text-xs">{duration}</span>
               </div>
             )}
           </div>
