@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -81,7 +82,7 @@ const CourseDetailPage: React.FC = () => {
           variant: "destructive",
         });
         
-        localStorage.setItem("pendingCourseId", courseData.info.id);
+        localStorage.setItem("pendingCourseId", courseData.info.id.toString());
         navigate("/wallet");
         return;
       }
@@ -139,7 +140,7 @@ const CourseDetailPage: React.FC = () => {
         variant: "destructive",
       });
       
-      localStorage.setItem("pendingCourseId", courseData.info.id);
+      localStorage.setItem("pendingCourseId", courseData.info.id.toString());
       navigate("/wallet");
       return;
     }
@@ -198,7 +199,8 @@ const CourseDetailPage: React.FC = () => {
     );
   }
 
-  const isEnrolled = myCourses.some(c => c.id === courseData.info.id) || courseData.info.is_enrolled;
+  // بررسی ثبت‌نام کاربر در دوره
+  const isEnrolled = courseData.user_progress !== undefined && courseData.user_progress !== null;
   const coursePrice = parseFloat(courseData.info.price);
   const isFree = coursePrice === 0;
 
@@ -319,7 +321,7 @@ const CourseDetailPage: React.FC = () => {
                   <div className="bg-white rounded-lg p-6 shadow-sm">
                     <CommentSection
                       contentType="course"
-                      contentId={courseData.info.id}
+                      contentId={courseData.info.id.toString()}
                       comments={courseData.comments}
                     />
                   </div>
