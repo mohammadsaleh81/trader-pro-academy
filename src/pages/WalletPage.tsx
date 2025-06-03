@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { useData } from "@/contexts/DataContext";
@@ -24,12 +23,13 @@ type DepositFormValues = z.infer<typeof depositSchema>;
 
 const WalletPage: React.FC = () => {
   const navigate = useNavigate();
-  const { wallet, updateWallet, courses, enrollCourse, isLoading: dataLoading, error: dataError } = useData();
+  const { wallet, updateWallet, courses, enrollCourse, isLoading: dataLoading } = useData();
   const { user } = useAuth();
   const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingCourse, setPendingCourse] = useState<{id: string, price: number, title: string} | null>(null);
   const [walletError, setWalletError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const depositForm = useForm<DepositFormValues>({
     resolver: zodResolver(depositSchema),
@@ -62,12 +62,12 @@ const WalletPage: React.FC = () => {
 
   // Handle wallet loading errors
   useEffect(() => {
-    if (dataError) {
+    if (dataLoading) {
       setWalletError("خطا در بارگذاری اطلاعات کیف پول. لطفاً صفحه را رفرش کنید.");
     } else {
       setWalletError(null);
     }
-  }, [dataError]);
+  }, [dataLoading]);
 
   const handleDeposit = async (values: DepositFormValues) => {
     if (!wallet || !user) return;
