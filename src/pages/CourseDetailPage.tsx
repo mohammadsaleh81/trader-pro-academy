@@ -336,7 +336,7 @@ const CourseDetailPage: React.FC = () => {
                             <div className="flex justify-between items-start mb-3">
                               <div className="text-right flex items-center">
                                 <img 
-                                  src={comment.user.thumbnail} 
+                                  src={comment.user.thumbnail || 'https://api.gport.sbs/media/user.png'} 
                                   alt={`${comment.user.first_name} ${comment.user.last_name}`}
                                   className="w-10 h-10 rounded-full ml-3"
                                 />
@@ -357,7 +357,7 @@ const CourseDetailPage: React.FC = () => {
                                     <div className="flex justify-between items-start mb-2">
                                       <div className="flex items-center">
                                         <img 
-                                          src={reply.user.thumbnail} 
+                                          src={reply.user.thumbnail || 'https://api.gport.sbs/media/user.png'} 
                                           alt={`${reply.user.first_name} ${reply.user.last_name}`}
                                           className="w-8 h-8 rounded-full ml-2"
                                         />

@@ -33,6 +33,7 @@ export type CourseUser = {
   email: string;
   first_name: string;
   last_name: string;
+  thumbnail: string;
 };
 
 export type CourseComment = {
@@ -89,6 +90,7 @@ export type UserProgress = {
   enrollment: CourseEnrollment;
   course_progress: CourseProgressData;
   chapter_progress: ChapterProgress[];
+  next_lesson: NextLesson | null;
 };
 
 export type CourseDetails = {
