@@ -1,5 +1,6 @@
 
 import { useCallback, useMemo, useRef } from 'react';
+import React from 'react';
 
 // Debounce hook for performance optimization
 export const useDebounce = <T extends (...args: any[]) => void>(
@@ -43,7 +44,7 @@ export const useThrottle = <T extends (...args: any[]) => void>(
 };
 
 // Memoized component wrapper
-export const withMemo = <P extends object>(
+export const withMemo = <P extends Record<string, any>>(
   Component: React.ComponentType<P>,
   propsAreEqual?: (prevProps: P, nextProps: P) => boolean
 ) => {
