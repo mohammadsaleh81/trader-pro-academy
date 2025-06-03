@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -6,12 +7,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Article, Video, articlesApi, videosApi } from "@/lib/api";
+import { sanitizeHtml } from "@/lib/sanitize";
 import ContentDetailHeader from "@/components/content/ContentDetailHeader";
 import ContentActions from "@/components/content/ContentActions";
 import ContentMedia from "@/components/content/ContentMedia";
 import ContentFooter from "@/components/content/ContentFooter";
 import RelatedContent from "@/components/content/RelatedContent";
 import CommentSection from "@/components/comments/CommentSection";
+import ErrorBoundary from "@/components/error/ErrorBoundary";
 
 type ContentType = Article | Video;
 
@@ -94,7 +97,7 @@ const ContentDetailPage: React.FC = () => {
     fetchContent();
   }, [id, type, navigate, toast, bookmarks]);
 
-  const handleBookmark = () => {
+  const handleBookmark = React.useCallback(() => {
     if (!content || !id || !type) return;
     
     const contentType = type.replace(/s$/, '') as "article" | "video";
@@ -119,7 +122,7 @@ const ContentDetailPage: React.FC = () => {
         description: "این محتوا به نشان‌های شما اضافه شد",
       });
     }
-  };
+  }, [content, id, type, isBookmarked, bookmarks, removeBookmark, addBookmark, toast]);
 
   if (isLoading) {
     return (
@@ -157,58 +160,60 @@ const ContentDetailPage: React.FC = () => {
   }
 
   return (
-    <Layout>
-      <div className="trader-container py-8">
-        <Card className="border-none shadow-md">
-          <CardContent className="p-6">
-            <ContentDetailHeader title={content.title} />
-            
-            <div className="flex justify-end mb-6">
-              <ContentActions 
-                isBookmarked={isBookmarked}
-                onBookmark={handleBookmark}
-                title={content.title}
+    <ErrorBoundary>
+      <Layout>
+        <div className="trader-container py-8">
+          <Card className="border-none shadow-md">
+            <CardContent className="p-6">
+              <ContentDetailHeader title={content.title} />
+              
+              <div className="flex justify-end mb-6">
+                <ContentActions 
+                  isBookmarked={isBookmarked}
+                  onBookmark={handleBookmark}
+                  title={content.title}
+                />
+              </div>
+
+              <ContentMedia content={content} />
+
+              {'content' in content ? (
+                <div 
+                  className="prose prose-lg max-w-none text-right prose-headings:text-right prose-p:text-right mb-12" 
+                  dir="rtl"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(content.content) }}
+                />
+              ) : (
+                <div 
+                  className="prose prose-lg max-w-none text-right prose-headings:text-right prose-p:text-right mb-12" 
+                  dir="rtl"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(content.description) }}
+                />
+              )}
+
+              <ContentFooter
+                author={content.author}
+                publishDate={'published' in content ? content.published : content.created_at}
+                duration={'duration' in content ? content.duration : undefined}
+                viewCount={'view_count' in content ? content.view_count : undefined}
+                tags={content.tags}
               />
-            </div>
 
-            <ContentMedia content={content} />
+              <div className="mt-12 pt-8 border-t border-gray-200">
+                <CommentSection
+                  contentType={type?.replace(/s$/, '') as "article" | "video"}
+                  contentId={id!}
+                />
+              </div>
 
-            {'content' in content ? (
-              <div 
-                className="prose prose-lg max-w-none text-right prose-headings:text-right prose-p:text-right mb-12" 
-                dir="rtl"
-                dangerouslySetInnerHTML={{ __html: content.content }}
-              />
-            ) : (
-              <div 
-                className="prose prose-lg max-w-none text-right prose-headings:text-right prose-p:text-right mb-12" 
-                dir="rtl"
-                dangerouslySetInnerHTML={{ __html: content.description }}
-              />
-            )}
-
-            <ContentFooter
-              author={content.author}
-              publishDate={'published' in content ? content.published : content.created_at}
-              duration={'duration' in content ? content.duration : undefined}
-              viewCount={'view_count' in content ? content.view_count : undefined}
-              tags={content.tags}
-            />
-
-            <div className="mt-12 pt-8 border-t border-gray-200">
-              <CommentSection
-                contentType={type?.replace(/s$/, '') as "article" | "video"}
-                contentId={id!}
-              />
-            </div>
-
-            <div className="mt-12">
-              <RelatedContent />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </Layout>
+              <div className="mt-12">
+                <RelatedContent />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    </ErrorBoundary>
   );
 };
 

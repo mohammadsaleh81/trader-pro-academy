@@ -4,6 +4,7 @@ import Header from "./Header";
 import MobileNavigation from "./MobileNavigation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Loader } from "lucide-react";
+import ErrorBoundary from "@/components/error/ErrorBoundary";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -99,22 +100,24 @@ const Layout: React.FC<LayoutProps> = ({
   }, [browserInfo]);
 
   return (
-    <div className={`flex flex-col min-h-screen bg-gray-50 ${browserInfo.isSafari ? 'safari-flex-fix' : ''}`} dir="rtl">
-      <Header />
-      <main className={`flex-1 pb-20 px-4 sm:px-6 ${!fullWidth && "max-w-7xl mx-auto w-full"}`}>
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-[50vh]">
-            <Loader className="h-12 w-12 text-trader-500 animate-spin mb-4" />
-            <p className="text-lg font-medium text-gray-600">در حال بارگیری...</p>
-          </div>
-        ) : (
-          <div className={mounted ? "page-transition" : ""}>
-            {children}
-          </div>
-        )}
-      </main>
-      {isMobile && <MobileNavigation />}
-    </div>
+    <ErrorBoundary>
+      <div className={`flex flex-col min-h-screen bg-gray-50 ${browserInfo.isSafari ? 'safari-flex-fix' : ''}`} dir="rtl">
+        <Header />
+        <main className={`flex-1 pb-20 px-4 sm:px-6 ${!fullWidth && "max-w-7xl mx-auto w-full"}`}>
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center h-[50vh]">
+              <Loader className="h-12 w-12 text-trader-500 animate-spin mb-4" />
+              <p className="text-lg font-medium text-gray-600">در حال بارگیری...</p>
+            </div>
+          ) : (
+            <div className={mounted ? "page-transition" : ""}>
+              {children}
+            </div>
+          )}
+        </main>
+        {isMobile && <MobileNavigation />}
+      </div>
+    </ErrorBoundary>
   );
 };
 

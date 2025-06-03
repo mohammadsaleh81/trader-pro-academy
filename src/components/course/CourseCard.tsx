@@ -19,7 +19,7 @@ type CourseCardProps = {
   is_enrolled?: boolean;
 };
 
-const CourseCard: React.FC<CourseCardProps> = ({
+const CourseCard: React.FC<CourseCardProps> = React.memo(({
   id,
   title,
   instructor,
@@ -37,7 +37,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
   
   const isEnrolled = myCourses.some(c => c.id === id);
 
-  const handleQuickBuy = async (e: React.MouseEvent) => {
+  const handleQuickBuy = React.useCallback(async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigating to course detail
     setIsProcessing(true);
     
@@ -103,7 +103,12 @@ const CourseCard: React.FC<CourseCardProps> = ({
         variant: "destructive",
       });
     }
-  };
+  }, [user, isFree, is_enrolled, wallet, price, id, title, navigate, updateWallet, enrollCourse]);
+
+  const handleImageError = React.useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const target = e.target as HTMLImageElement;
+    target.src = "/placeholder-course.jpg";
+  }, []);
 
   console.log(is_enrolled);
 
@@ -115,6 +120,8 @@ const CourseCard: React.FC<CourseCardProps> = ({
             src={thumbnail || "/placeholder-course.jpg"}
             alt={title}
             className="w-full h-full object-cover rounded-t-xl"
+            onError={handleImageError}
+            loading="lazy"
           />
           {progress !== undefined && (
             <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 py-1 px-2">
@@ -169,6 +176,20 @@ const CourseCard: React.FC<CourseCardProps> = ({
       </div>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.id === nextProps.id &&
+    prevProps.title === nextProps.title &&
+    prevProps.instructor === nextProps.instructor &&
+    prevProps.thumbnail === nextProps.thumbnail &&
+    prevProps.price === nextProps.price &&
+    prevProps.rating === nextProps.rating &&
+    prevProps.progress === nextProps.progress &&
+    prevProps.isFree === nextProps.isFree &&
+    prevProps.is_enrolled === nextProps.is_enrolled
+  );
+});
+
+CourseCard.displayName = 'CourseCard';
 
 export default CourseCard;

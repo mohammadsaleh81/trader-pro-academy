@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Bookmark, BookmarkCheck, Calendar, Clock, User } from "lucide-react";
@@ -23,7 +24,7 @@ interface ContentCardProps {
   className?: string;
 }
 
-const ContentCard: React.FC<ContentCardProps> = ({
+const ContentCard: React.FC<ContentCardProps> = React.memo(({
   id,
   title,
   description,
@@ -46,7 +47,7 @@ const ContentCard: React.FC<ContentCardProps> = ({
     b => b.itemId === stringId && b.itemType === type && b.userId === user.id
   ) : null;
   
-  const handleBookmark = (e: React.MouseEvent) => {
+  const handleBookmark = React.useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -57,9 +58,9 @@ const ContentCard: React.FC<ContentCardProps> = ({
     } else {
       addBookmark(stringId, type, user.id);
     }
-  };
+  }, [user, bookmark, removeBookmark, addBookmark, stringId, type]);
   
-  const getContentUrl = () => {
+  const getContentUrl = React.useCallback(() => {
     switch (type) {
       case "article": return `/articles/${stringId}`;
       case "podcast": return `/podcasts/${stringId}`;
@@ -68,10 +69,10 @@ const ContentCard: React.FC<ContentCardProps> = ({
       case "file": return `/files/${stringId}`;
       default: return "#";
     }
-  };
+  }, [type, stringId]);
 
   // Mapping for content type labels in Persian
-  const getTypeLabel = () => {
+  const getTypeLabel = React.useCallback(() => {
     switch (type) {
       case "article": return "مقاله";
       case "podcast": return "پادکست";
@@ -80,10 +81,10 @@ const ContentCard: React.FC<ContentCardProps> = ({
       case "file": return "فایل";
       default: return type;
     }
-  };
+  }, [type]);
 
   // Get a background color based on content type
-  const getTypeBgColor = () => {
+  const getTypeBgColor = React.useCallback(() => {
     switch (type) {
       case "article": return "bg-blue-500"; 
       case "podcast": return "bg-purple-500";
@@ -92,10 +93,10 @@ const ContentCard: React.FC<ContentCardProps> = ({
       case "file": return "bg-gray-500";
       default: return "bg-gray-500";
     }
-  };
+  }, [type]);
 
   // Format date to show only date without time
-  const formatDateOnly = (dateString?: string) => {
+  const formatDateOnly = React.useCallback((dateString?: string) => {
     if (!dateString) return "";
     
     try {
@@ -113,7 +114,12 @@ const ContentCard: React.FC<ContentCardProps> = ({
     } catch (error) {
       return dateString;
     }
-  };
+  }, []);
+
+  const handleImageError = React.useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const target = e.target as HTMLImageElement;
+    target.src = defaultThumbnail;
+  }, []);
 
   return (
     <Link to={getContentUrl()} className={cn("block", className)}>
@@ -123,16 +129,15 @@ const ContentCard: React.FC<ContentCardProps> = ({
             src={thumbnail || defaultThumbnail}
             alt={title}
             className="w-full h-32 sm:h-44 object-cover rounded-t-lg"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = defaultThumbnail;
-            }}
+            onError={handleImageError}
+            loading="lazy"
           />
           <div className="absolute top-2 right-2">
             {user && (
               <button
                 onClick={handleBookmark}
                 className="p-1.5 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200"
+                aria-label={bookmark ? "حذف از نشان‌ها" : "اضافه به نشان‌ها"}
               >
                 {bookmark ? (
                   <BookmarkCheck className="w-4 h-4 sm:w-5 sm:h-5 text-trader-500" />
@@ -175,6 +180,19 @@ const ContentCard: React.FC<ContentCardProps> = ({
       </div>
     </Link>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for better performance
+  return (
+    prevProps.id === nextProps.id &&
+    prevProps.title === nextProps.title &&
+    prevProps.thumbnail === nextProps.thumbnail &&
+    prevProps.type === nextProps.type &&
+    prevProps.date === nextProps.date &&
+    prevProps.author === nextProps.author &&
+    prevProps.duration === nextProps.duration
+  );
+});
+
+ContentCard.displayName = 'ContentCard';
 
 export default ContentCard;

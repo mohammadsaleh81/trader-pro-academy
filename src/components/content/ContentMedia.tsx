@@ -2,6 +2,7 @@
 import React from "react";
 import { Play } from "lucide-react";
 import { Article, Video } from "@/lib/api";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface ContentMediaProps {
   content: Article | Video;
@@ -14,7 +15,7 @@ const ContentMedia: React.FC<ContentMediaProps> = ({ content }) => {
         {content.video_embed && content.video_embed.trim() !== '' ? (
           <div 
             className="w-full h-full rounded-lg overflow-hidden"
-            dangerouslySetInnerHTML={{ __html: content.video_embed }} 
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(content.video_embed) }} 
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -32,6 +33,7 @@ const ContentMedia: React.FC<ContentMediaProps> = ({ content }) => {
         src={content.thumbnail}
         alt={content.title}
         className="w-full h-64 object-cover rounded-lg mb-6"
+        loading="lazy"
       />
     ) : null;
   }

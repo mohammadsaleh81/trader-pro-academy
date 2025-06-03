@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Article, articlesApi } from "@/lib/api";
+import { sanitizeHtml } from "@/lib/sanitize";
 import ContentActions from "@/components/content/ContentActions";
 import ContentFooter from "@/components/content/ContentFooter";
 import CommentSection from "@/components/comments/CommentSection";
+import ErrorBoundary from "@/components/error/ErrorBoundary";
 
 const ArticleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -61,7 +63,7 @@ const ArticleDetailPage: React.FC = () => {
     fetchArticle();
   }, [id, navigate, toast, bookmarks]);
 
-  const handleBookmark = () => {
+  const handleBookmark = React.useCallback(() => {
     if (!article || !id) return;
     
     if (isBookmarked) {
@@ -84,7 +86,7 @@ const ArticleDetailPage: React.FC = () => {
         description: "این مقاله به نشان‌های شما اضافه شد",
       });
     }
-  };
+  }, [article, id, isBookmarked, bookmarks, removeBookmark, addBookmark, toast]);
 
   if (isLoading) {
     return (
@@ -120,73 +122,76 @@ const ArticleDetailPage: React.FC = () => {
   }
 
   return (
-    <Layout>
-      <div className="trader-container py-8">
-        <Button
-          variant="ghost"
-          className="mb-6 flex items-center gap-2"
-          onClick={() => navigate("/content")}
-        >
-          <ArrowRight size={18} />
-          <span>بازگشت به کتابخانه محتوا</span>
-        </Button>
+    <ErrorBoundary>
+      <Layout>
+        <div className="trader-container py-8">
+          <Button
+            variant="ghost"
+            className="mb-6 flex items-center gap-2"
+            onClick={() => navigate("/content")}
+          >
+            <ArrowRight size={18} />
+            <span>بازگشت به کتابخانه محتوا</span>
+          </Button>
 
-        <Card className="border-none shadow-md">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start mb-6">
-              <h1 className="text-2xl font-bold text-right flex-1 ml-4">{article.title}</h1>
-            </div>
+          <Card className="border-none shadow-md">
+            <CardContent className="p-6">
+              <div className="flex justify-between items-start mb-6">
+                <h1 className="text-2xl font-bold text-right flex-1 ml-4">{article.title}</h1>
+              </div>
 
-            <div className="flex justify-end mb-6">
-              <ContentActions 
-                isBookmarked={isBookmarked}
-                onBookmark={handleBookmark}
-                title={article.title}
+              <div className="flex justify-end mb-6">
+                <ContentActions 
+                  isBookmarked={isBookmarked}
+                  onBookmark={handleBookmark}
+                  title={article.title}
+                />
+              </div>
+
+              {article.thumbnail && (
+                <img
+                  src={article.thumbnail}
+                  alt={article.title}
+                  className="w-full h-64 object-cover rounded-lg mb-6"
+                  loading="lazy"
+                />
+              )}
+
+              <div 
+                className="prose prose-lg max-w-none text-right prose-headings:text-right prose-p:text-right mb-12" 
+                dir="rtl"
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.content) }}
               />
-            </div>
 
-            {article.thumbnail && (
-              <img
-                src={article.thumbnail}
-                alt={article.title}
-                className="w-full h-64 object-cover rounded-lg mb-6"
+              <ContentFooter
+                author={article.author}
+                publishDate={article.published}
+                viewCount={article.view_count}
+                tags={article.tags}
               />
-            )}
 
-            <div 
-              className="prose prose-lg max-w-none text-right prose-headings:text-right prose-p:text-right mb-12" 
-              dir="rtl"
-              dangerouslySetInnerHTML={{ __html: article.content }}
-            />
+              {/* Comments Section */}
+              <div className="mt-12 pt-8 border-t border-gray-200">
+                <CommentSection
+                  contentType="article"
+                  contentId={id!}
+                />
+              </div>
 
-            <ContentFooter
-              author={article.author}
-              publishDate={article.published}
-              viewCount={article.view_count}
-              tags={article.tags}
-            />
-
-            {/* Comments Section */}
-            <div className="mt-12 pt-8 border-t border-gray-200">
-              <CommentSection
-                contentType="article"
-                contentId={id!}
-              />
-            </div>
-
-            {/* Related content section */}
-            <div className="mt-12 pt-8 border-t border-gray-200">
-              <h3 className="text-lg font-semibold mb-4 text-right">مقالات مرتبط</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="text-center text-gray-500 py-8">
-                  مقالات مرتبط به‌زودی اضافه خواهد شد
+              {/* Related content section */}
+              <div className="mt-12 pt-8 border-t border-gray-200">
+                <h3 className="text-lg font-semibold mb-4 text-right">مقالات مرتبط</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="text-center text-gray-500 py-8">
+                    مقالات مرتبط به‌زودی اضافه خواهد شد
+                  </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </Layout>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    </ErrorBoundary>
   );
 };
 
