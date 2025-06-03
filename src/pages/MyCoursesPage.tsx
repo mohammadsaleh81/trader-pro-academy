@@ -1,6 +1,6 @@
+
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
-import CourseList from "@/components/course/CourseList";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
@@ -14,13 +14,16 @@ const MyCoursesPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log("MyCoursesPage - myCourses data:", myCourses);
+    console.log("MyCoursesPage - myCourses length:", myCourses.length);
+    
     // Simulate data loading
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [myCourses]);
 
   if (!user) {
     return (
@@ -35,13 +38,28 @@ const MyCoursesPage: React.FC = () => {
     );
   }
 
+  console.log("MyCoursesPage render - isLoading:", isLoading, "myCourses:", myCourses);
+
   return (
     <Layout>
       <div className="trader-container py-6">
         <h1 className="text-2xl font-bold mb-6 fade-in">دوره‌های من</h1>
         
         {isLoading ? (
-          <CourseList courses={[]} isLoading={true} showProgress skeletonCount={8} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={`skeleton-${index}`} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
+                <div className="w-full h-48 bg-gray-300"></div>
+                <div className="p-4">
+                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-300 rounded mb-4"></div>
+                  <div className="h-2 bg-gray-300 rounded mb-1"></div>
+                  <div className="h-2 bg-gray-300 rounded mb-4"></div>
+                  <div className="h-8 bg-gray-300 rounded"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : myCourses.length > 0 ? (
           <div className="fade-in">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -52,6 +70,11 @@ const MyCoursesPage: React.FC = () => {
                       src={course.thumbnail}
                       alt={course.title}
                       className="w-full h-48 object-cover"
+                      onError={(e) => {
+                        console.log("Image load error for course:", course.id, course.thumbnail);
+                        const target = e.target as HTMLImageElement;
+                        target.src = "/placeholder.svg";
+                      }}
                     />
                   </Link>
                   <div className="p-4">
@@ -66,7 +89,7 @@ const MyCoursesPage: React.FC = () => {
                     <div className="mb-4">
                       <div className="flex justify-between text-sm mb-1">
                         <span>پیشرفت دوره</span>
-                        <span>{course.progress_percentage?.toFixed(1)}%</span>
+                        <span>{course.progress_percentage?.toFixed(1) || 0}%</span>
                       </div>
                       <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                         <div 

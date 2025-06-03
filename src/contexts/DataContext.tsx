@@ -360,35 +360,47 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchMyCourses = async () => {
       try {
         const auth = localStorage.getItem('auth_tokens');
-        if (!auth) return;
+        if (!auth) {
+          console.log('No auth tokens found, skipping my courses fetch');
+          setMyCourses([]);
+          return;
+        }
         
         const access_token = JSON.parse(auth).access;
+        console.log('Fetching my courses with token:', access_token.substring(0, 20) + '...');
+        
         const response = await api.get('/crs/my-courses/', {
           headers: {
             'Authorization': `Bearer ${access_token}`
           }
         });
         
+        console.log('My courses API response:', response.data);
+        
         // Transform API data to match our Course type
-        const transformedCourses = response.data.map((course: any) => ({
-          id: course.id.toString(),
-          title: course.title,
-          instructor: course.instructor_name || "Unknown Instructor",
-          thumbnail: course.thumbnail,
-          description: "",
-          price: parseFloat(course.price),
-          rating: course.rating_avg,
-          totalLessons: undefined,
-          completedLessons: undefined,
-          createdAt: course.created,
-          updatedAt: course.created,
-          categories: course.tags || [],
-          duration: course.total_duration ? `${course.total_duration} دقیقه` : undefined,
-          level: course.level as "beginner" | "intermediate" | "advanced",
-          is_enrolled: true,
-          progress_percentage: course.progress_percentage
-        }));
+        const transformedCourses = response.data.map((course: any) => {
+          console.log('Transforming course:', course);
+          return {
+            id: course.id.toString(),
+            title: course.title,
+            instructor: course.instructor_name || "مدرس ناشناس",
+            thumbnail: course.thumbnail,
+            description: course.description || "",
+            price: parseFloat(course.price || '0'),
+            rating: course.rating_avg || 0,
+            totalLessons: course.total_lessons,
+            completedLessons: course.completed_lessons,
+            createdAt: course.created,
+            updatedAt: course.updated || course.created,
+            categories: course.tags || [],
+            duration: course.total_duration ? `${course.total_duration} دقیقه` : undefined,
+            level: course.level as "beginner" | "intermediate" | "advanced",
+            is_enrolled: true,
+            progress_percentage: course.progress_percentage || 0
+          };
+        });
 
+        console.log('Transformed my courses:', transformedCourses);
         setMyCourses(transformedCourses);
       } catch (error) {
         console.error('Error fetching my courses:', error);
