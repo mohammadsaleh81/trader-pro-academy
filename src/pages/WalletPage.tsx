@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Minus, ShoppingCart, ArrowUpCircle } from "lucide-react";
+import { Plus, Minus, ShoppingCart, ArrowUpCircle, AlertCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -23,11 +24,12 @@ type DepositFormValues = z.infer<typeof depositSchema>;
 
 const WalletPage: React.FC = () => {
   const navigate = useNavigate();
-  const { wallet, updateWallet, courses, enrollCourse } = useData();
+  const { wallet, updateWallet, courses, enrollCourse, isLoading: dataLoading, error: dataError } = useData();
   const { user } = useAuth();
   const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingCourse, setPendingCourse] = useState<{id: string, price: number, title: string} | null>(null);
+  const [walletError, setWalletError] = useState<string | null>(null);
 
   const depositForm = useForm<DepositFormValues>({
     resolver: zodResolver(depositSchema),
@@ -49,14 +51,23 @@ const WalletPage: React.FC = () => {
         });
         
         // If there's a pending course, auto-open deposit dialog with the required amount
-        const requiredAmount = course.price - (wallet?.balance || 0);
-        if (requiredAmount > 0) {
+        if (wallet && wallet.balance < course.price) {
+          const requiredAmount = course.price - wallet.balance;
           depositForm.setValue("amount", requiredAmount);
           setIsDepositDialogOpen(true);
         }
       }
     }
   }, [courses, wallet]);
+
+  // Handle wallet loading errors
+  useEffect(() => {
+    if (dataError) {
+      setWalletError("خطا در بارگذاری اطلاعات کیف پول. لطفاً صفحه را رفرش کنید.");
+    } else {
+      setWalletError(null);
+    }
+  }, [dataError]);
 
   const handleDeposit = async (values: DepositFormValues) => {
     if (!wallet || !user) return;
@@ -93,6 +104,7 @@ const WalletPage: React.FC = () => {
         });
       }
     } catch (error) {
+      console.error("Wallet deposit error:", error);
       toast({
         title: "خطا در پرداخت",
         description: "متأسفانه پرداخت با مشکل مواجه شد. لطفاً دوباره تلاش کنید",
@@ -101,6 +113,10 @@ const WalletPage: React.FC = () => {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleRetry = () => {
+    window.location.reload();
   };
 
   const formatDate = (dateString: string) => {
@@ -149,11 +165,36 @@ const WalletPage: React.FC = () => {
     );
   }
 
-  if (!wallet) {
+  if (dataLoading) {
     return (
       <Layout>
         <div className="trader-container py-12 text-center">
-          <h2 className="text-xl font-bold mb-4">خطا در بارگذاری اطلاعات کیف پول</h2>
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-trader-500 mb-4"></div>
+            <h2 className="text-xl font-bold mb-2">در حال بارگذاری...</h2>
+            <p className="text-gray-600">لطفاً صبر کنید</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (walletError || !wallet) {
+    return (
+      <Layout>
+        <div className="trader-container py-12 text-center">
+          <div className="flex flex-col items-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+            <h2 className="text-xl font-bold mb-4 text-red-600">
+              {walletError || "خطا در بارگذاری اطلاعات کیف پول"}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              در صورت تداوم مشکل، لطفاً با پشتیبانی تماس بگیرید
+            </p>
+            <Button onClick={handleRetry} className="bg-trader-500 hover:bg-trader-600">
+              تلاش مجدد
+            </Button>
+          </div>
         </div>
       </Layout>
     );
@@ -221,33 +262,33 @@ const WalletPage: React.FC = () => {
           <h3 className="text-xl font-bold mb-6">تاریخچه تراکنش‌ها</h3>
           
           <div className="space-y-4">
-            {wallet.transactions.map((transaction, index) => (
-              <div 
-                key={index}
-                className="flex items-center justify-between border-b border-gray-100 pb-4"
-              >
-                <div className="flex items-center">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center ml-3">
-                    {getTransactionIcon(transaction.transaction_type)}
+            {wallet.transactions && wallet.transactions.length > 0 ? (
+              wallet.transactions.map((transaction, index) => (
+                <div 
+                  key={index}
+                  className="flex items-center justify-between border-b border-gray-100 pb-4"
+                >
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center ml-3">
+                      {getTransactionIcon(transaction.transaction_type)}
+                    </div>
+                    <div>
+                      <p className="font-medium">{transaction.description}</p>
+                      <p className="text-gray-500 text-sm">{formatDate(transaction.created_at)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">{transaction.description}</p>
-                    <p className="text-gray-500 text-sm">{formatDate(transaction.created_at)}</p>
+                  <div className="text-left">
+                    <p className={`font-bold ${getTransactionColor(transaction.transaction_type)}`}>
+                      {transaction.transaction_type === "purchase" ? "-" : "+"}
+                      {parseFloat(transaction.amount).toLocaleString()} تومان
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      مانده: {parseFloat(transaction.balance_after).toLocaleString()} تومان
+                    </p>
                   </div>
                 </div>
-                <div className="text-left">
-                  <p className={`font-bold ${getTransactionColor(transaction.transaction_type)}`}>
-                    {transaction.transaction_type === "purchase" ? "-" : "+"}
-                    {parseFloat(transaction.amount).toLocaleString()} تومان
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    مانده: {parseFloat(transaction.balance_after).toLocaleString()} تومان
-                  </p>
-                </div>
-              </div>
-            ))}
-
-            {wallet.transactions.length === 0 && (
+              ))
+            ) : (
               <div className="text-center py-8 text-gray-500">
                 هنوز هیچ تراکنشی انجام نشده است
               </div>

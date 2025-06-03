@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { PhoneIcon } from "lucide-react";
+import { persianToEnglishDigits, formatPhoneNumber, validateIranianPhoneNumber } from "@/utils/persianToEnglish";
 
 enum AuthStep {
   PHONE_ENTRY,
@@ -43,22 +44,18 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     console.log("Submitting phone:", phone);
     
-    // Validate phone number
-    if (!phone || phone.length < 11) {
-      console.log("Phone validation failed - phone too short");
-      return;
-    }
+    // Format and validate phone number
+    const formattedPhone = formatPhoneNumber(phone);
+    console.log("Formatted phone:", formattedPhone);
     
-    // Clean phone number (remove spaces and validate format)
-    const cleanPhone = phone.replace(/\s/g, '');
-    if (!cleanPhone.match(/^09\d{9}$/)) {
+    if (!validateIranianPhoneNumber(formattedPhone)) {
       console.log("Phone validation failed - invalid format");
       return;
     }
     
     try {
-      console.log("Requesting OTP for phone:", cleanPhone);
-      await requestOTP(cleanPhone);
+      console.log("Requesting OTP for phone:", formattedPhone);
+      await requestOTP(formattedPhone);
       console.log("OTP requested successfully");
     } catch (error) {
       console.error("Error requesting OTP:", error);
@@ -69,14 +66,18 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     console.log("Submitting OTP:", otp);
     
-    if (!otp || otp.length !== 5) {
+    // Convert Persian/Arabic digits to English in OTP
+    const englishOTP = persianToEnglishDigits(otp);
+    console.log("English OTP:", englishOTP);
+    
+    if (!englishOTP || englishOTP.length !== 5) {
       console.log("OTP validation failed - invalid length");
       return;
     }
     
     try {
-      console.log("Verifying OTP:", otp);
-      await verifyOTP(otp);
+      console.log("Verifying OTP:", englishOTP);
+      await verifyOTP(englishOTP);
       console.log("OTP verified successfully");
     } catch (error) {
       console.error("Error verifying OTP:", error);
@@ -91,13 +92,19 @@ const LoginPage: React.FC = () => {
 
   const handleOTPChange = (value: string) => {
     console.log("OTP changed:", value);
-    setOTP(value);
+    // Convert Persian/Arabic digits to English automatically
+    const englishValue = persianToEnglishDigits(value);
+    console.log("English OTP value:", englishValue);
+    setOTP(englishValue);
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     console.log("Phone changed:", value);
-    setPhone(value);
+    // Convert Persian/Arabic digits to English automatically
+    const englishValue = persianToEnglishDigits(value);
+    console.log("English phone value:", englishValue);
+    setPhone(englishValue);
   };
 
   console.log("LoginPage render - Step:", step, "Phone:", phone, "PhoneNumber from context:", phoneNumber, "DevOTP:", devOTP);
@@ -142,14 +149,14 @@ const LoginPage: React.FC = () => {
                 />
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                کد تایید به این شماره ارسال خواهد شد
+                کد تایید به این شماره ارسال خواهد شد (می‌توانید از کیبورد فارسی استفاده کنید)
               </p>
             </div>
             
             <Button 
               type="submit" 
               className="w-full bg-trader-500 hover:bg-trader-600 py-3"
-              disabled={isLoading || phone.length < 11}
+              disabled={isLoading || !validateIranianPhoneNumber(formatPhoneNumber(phone))}
             >
               {isLoading ? "در حال ارسال کد..." : "ارسال کد تایید"}
             </Button>
@@ -168,14 +175,15 @@ const LoginPage: React.FC = () => {
                 </div>
               )}
               
-              <div className="flex justify-center py-4">
+              <div className="flex justify-center py-4" dir="ltr">
                 <InputOTP 
                   maxLength={5} 
                   value={otp} 
                   onChange={handleOTPChange}
                   disabled={isLoading}
+                  dir="ltr"
                 >
-                  <InputOTPGroup>
+                  <InputOTPGroup dir="ltr">
                     <InputOTPSlot index={0} />
                     <InputOTPSlot index={1} />
                     <InputOTPSlot index={2} />
@@ -186,7 +194,7 @@ const LoginPage: React.FC = () => {
               </div>
               
               <p className="text-xs text-gray-500 text-center">
-                کد 5 رقمی ارسال شده را وارد کنید
+                کد 5 رقمی ارسال شده را وارد کنید (می‌توانید از کیبورد فارسی استفاده کنید)
               </p>
             </div>
             
@@ -194,7 +202,7 @@ const LoginPage: React.FC = () => {
               <Button 
                 type="submit" 
                 className="w-full bg-trader-500 hover:bg-trader-600 py-3"
-                disabled={isLoading || otp.length !== 5}
+                disabled={isLoading || persianToEnglishDigits(otp).length !== 5}
               >
                 {isLoading ? "در حال تایید..." : "تایید کد"}
               </Button>
