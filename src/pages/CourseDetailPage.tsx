@@ -11,6 +11,7 @@ import CourseHero from "@/components/course/CourseHero";
 import CourseInfoCard from "@/components/course/CourseInfoCard";
 import CourseContent from "@/components/course/CourseContent";
 import CommentSection from "@/components/comments/CommentSection";
+import { CheckCircle, Clock, Users, Star } from "lucide-react";
 
 const CourseDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -197,7 +198,7 @@ const CourseDetailPage: React.FC = () => {
     );
   }
 
-  const isEnrolled = myCourses.some(c => c.id === courseData.info.id);
+  const isEnrolled = myCourses.some(c => c.id === courseData.info.id) || courseData.info.is_enrolled;
   const coursePrice = parseFloat(courseData.info.price);
   const isFree = coursePrice === 0;
 
@@ -225,6 +226,34 @@ const CourseDetailPage: React.FC = () => {
                 <TabsContent value="info" className="mt-6">
                   <div className="bg-white rounded-lg p-6 shadow-sm">
                     <h2 className="text-2xl font-bold mb-6 text-right">درباره دوره</h2>
+                    
+                    {/* Course Highlights */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                      <div className="bg-orange-50 rounded-lg p-4 text-center">
+                        <Clock className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+                        <div className="text-lg font-bold text-orange-600">{Math.floor(courseData.info.total_duration / 60)}</div>
+                        <div className="text-sm text-gray-600">دقیقه ویدیو</div>
+                      </div>
+                      
+                      <div className="bg-blue-50 rounded-lg p-4 text-center">
+                        <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                        <div className="text-lg font-bold text-blue-600">{courseData.info.total_students}</div>
+                        <div className="text-sm text-gray-600">دانشجو</div>
+                      </div>
+                      
+                      <div className="bg-green-50 rounded-lg p-4 text-center">
+                        <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                        <div className="text-lg font-bold text-green-600">{courseData.info.total_lessons}</div>
+                        <div className="text-sm text-gray-600">درس</div>
+                      </div>
+                      
+                      <div className="bg-purple-50 rounded-lg p-4 text-center">
+                        <Star className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+                        <div className="text-lg font-bold text-purple-600">{courseData.info.average_rating.toFixed(1)}</div>
+                        <div className="text-sm text-gray-600">امتیاز</div>
+                      </div>
+                    </div>
+
                     <div className="prose prose-lg max-w-none text-right" dir="rtl">
                       <p className="text-gray-700 leading-relaxed mb-6">
                         {courseData.info.description}
@@ -241,7 +270,8 @@ const CourseDetailPage: React.FC = () => {
                             <span className="text-gray-600">سطح دوره:</span>
                             <span className="font-medium">
                               {courseData.info.level === 'beginner' ? 'مقدماتی' : 
-                               courseData.info.level === 'intermediate' ? 'متوسط' : 'پیشرفته'}
+                               courseData.info.level === 'intermediate' ? 'متوسط' : 
+                               courseData.info.level === 'advanced' ? 'پیشرفته' : courseData.info.level}
                             </span>
                           </div>
                           
@@ -264,7 +294,7 @@ const CourseDetailPage: React.FC = () => {
                           
                           <div className="flex justify-between items-center py-3 border-b">
                             <span className="text-gray-600">مدت زمان:</span>
-                            <span className="font-medium">{Math.floor(courseData.info.total_duration / 60)} ساعت</span>
+                            <span className="font-medium">{Math.floor(courseData.info.total_duration / 60)} دقیقه</span>
                           </div>
                         </div>
                       </div>
@@ -304,7 +334,12 @@ const CourseDetailPage: React.FC = () => {
                         {courseData.comments.map((comment) => (
                           <div key={comment.id} className="border border-gray-200 rounded-lg p-4">
                             <div className="flex justify-between items-start mb-3">
-                              <div className="text-right">
+                              <div className="text-right flex items-center">
+                                <img 
+                                  src={comment.user.thumbnail} 
+                                  alt={`${comment.user.first_name} ${comment.user.last_name}`}
+                                  className="w-10 h-10 rounded-full ml-3"
+                                />
                                 <span className="font-medium">
                                   {comment.user.first_name} {comment.user.last_name}
                                 </span>
@@ -320,9 +355,16 @@ const CourseDetailPage: React.FC = () => {
                                 {comment.replies.map((reply) => (
                                   <div key={reply.id} className="bg-gray-50 p-3 rounded-lg">
                                     <div className="flex justify-between items-start mb-2">
-                                      <span className="text-sm font-medium">
-                                        {reply.user.first_name} {reply.user.last_name}
-                                      </span>
+                                      <div className="flex items-center">
+                                        <img 
+                                          src={reply.user.thumbnail} 
+                                          alt={`${reply.user.first_name} ${reply.user.last_name}`}
+                                          className="w-8 h-8 rounded-full ml-2"
+                                        />
+                                        <span className="text-sm font-medium">
+                                          {reply.user.first_name} {reply.user.last_name}
+                                        </span>
+                                      </div>
                                       <span className="text-xs text-gray-500">{reply.created_at}</span>
                                     </div>
                                     <p className="text-sm text-gray-700 text-right">{reply.content}</p>
