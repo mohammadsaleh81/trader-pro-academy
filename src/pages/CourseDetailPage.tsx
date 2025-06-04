@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -5,7 +6,7 @@ import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { CourseDetails } from "@/contexts/DataContext";
+import { CourseDetails } from "@/types/course";
 import { useAuth } from "@/contexts/AuthContext";
 import CourseHero from "@/components/course/CourseHero";
 import CourseInfoCard from "@/components/course/CourseInfoCard";
@@ -70,7 +71,7 @@ const CourseDetailPage: React.FC = () => {
     setIsProcessing(true);
 
     try {
-      const coursePrice = parseFloat(courseData.info.price);
+      const coursePrice = parseFloat(courseData.info.price.toString());
       
       if (wallet.balance < coursePrice) {
         const shortfall = coursePrice - wallet.balance;
@@ -122,7 +123,7 @@ const CourseDetailPage: React.FC = () => {
 
     if (!courseData) return;
 
-    const coursePrice = parseFloat(courseData.info.price);
+    const coursePrice = parseFloat(courseData.info.price.toString());
 
     if (coursePrice === 0) {
       enrollCourse(courseData.info.id.toString());
@@ -200,7 +201,7 @@ const CourseDetailPage: React.FC = () => {
 
   // بررسی ثبت‌نام کاربر در دوره
   const isEnrolled = courseData.user_progress !== undefined && courseData.user_progress !== null;
-  const coursePrice = parseFloat(courseData.info.price);
+  const coursePrice = parseFloat(courseData.info.price.toString());
   const isFree = coursePrice === 0;
 
   return (
@@ -250,7 +251,7 @@ const CourseDetailPage: React.FC = () => {
                       
                       <div className="bg-purple-50 rounded-lg p-4 text-center">
                         <Star className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                        <div className="text-lg font-bold text-purple-600">{courseData.info.average_rating ? courseData.info.average_rating.toFixed(1) : '0.0'}</div>
+                        <div className="text-lg font-bold text-purple-600">{courseData.info.get_average_rating ? courseData.info.get_average_rating.toFixed(1) : '0.0'}</div>
                         <div className="text-sm text-gray-600">امتیاز</div>
                       </div>
                     </div>
@@ -321,7 +322,13 @@ const CourseDetailPage: React.FC = () => {
                     <CommentSection
                       contentType="course"
                       contentId={courseData.info.id.toString()}
-                      comments={courseData.comments}
+                      comments={courseData.comments ? courseData.comments.map(comment => ({
+                        ...comment,
+                        user: {
+                          ...comment.user,
+                          id: comment.user.id.toString()
+                        }
+                      })) : []}
                     />
                   </div>
                 </TabsContent>

@@ -1,9 +1,10 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Loader, Play, Clock, BookOpen, Award } from "lucide-react";
-import { CourseDetails } from "@/contexts/DataContext";
+import { CourseDetails } from "@/types/course";
 
 interface CourseInfoCardProps {
   courseData: CourseDetails;
@@ -204,10 +205,10 @@ const CourseInfoCard: React.FC<CourseInfoCardProps> = ({
               <span className="font-medium">{courseData.info.total_students?.toLocaleString() || '0'}</span>
             </div>
 
-            {courseData.info.average_rating && courseData.info.average_rating > 0 && (
+            {courseData.info.get_average_rating && courseData.info.get_average_rating > 0 && (
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">امتیاز:</span>
-                <span className="font-medium">{courseData.info.average_rating.toFixed(1)} از 5</span>
+                <span className="font-medium">{courseData.info.get_average_rating.toFixed(1)} از 5</span>
               </div>
             )}
           </div>

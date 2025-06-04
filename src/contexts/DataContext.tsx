@@ -59,3 +59,10 @@ export const useData = () => {
 export * from "@/types/course";
 export * from "@/types/content";
 export * from "@/types/wallet";
+
+// Legacy type export for backward compatibility
+export type CourseUser = {
+  id: string;
+  name: string;
+  email: string;
+};
