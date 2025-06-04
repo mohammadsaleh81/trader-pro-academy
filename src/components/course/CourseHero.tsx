@@ -3,7 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import { CourseDetails } from "@/contexts/DataContext";
+import { CourseDetails } from "@/types/course";
 
 interface CourseHeroProps {
   courseData: CourseDetails;

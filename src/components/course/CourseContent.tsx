@@ -1,7 +1,7 @@
 
 import React from "react";
 import CourseChaptersList from "./CourseChaptersList";
-import { CourseDetails } from "@/contexts/DataContext";
+import { CourseDetails } from "@/types/course";
 
 interface CourseContentProps {
   courseData: CourseDetails;

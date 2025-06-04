@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock } from "lucide-react";
-import { CourseChapter } from "@/contexts/DataContext";
+import { CourseChapter } from "@/types/course";
 
 interface CourseChaptersListProps {
   chapters: CourseChapter[];

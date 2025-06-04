@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { CourseComment } from "@/contexts/DataContext";
+import { CourseComment } from "@/types/course";
 
 interface CourseCommentsProps {
   comments: CourseComment[];
