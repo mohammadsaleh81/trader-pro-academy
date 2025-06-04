@@ -240,6 +240,7 @@ interface DataContextType {
   updateWallet: (amount: number) => Promise<{ success: boolean; new_balance?: number; error?: string }>;
   fetchCourseDetails: (slug: string) => Promise<CourseDetails | null>;
   isLoading: {
+    courses: boolean;
     articles: boolean;
     videos: boolean;
   };
@@ -264,6 +265,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [comments, setComments] = useState<Comment[]>([]);
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [isLoading, setIsLoading] = useState({
+    courses: true,
     articles: true,
     videos: true
   });
@@ -317,6 +319,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const fetchCourses = async () => {
       try {
+        setIsLoading(prev => ({ ...prev, courses: true }));
         const auth = localStorage.getItem('auth_tokens');
         const access_token = JSON.parse(auth || '{}').access;
         const response = await api.get(
@@ -351,6 +354,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error) {
         console.error('Error fetching courses:', error);
         setCourses([]);
+      } finally {
+        setIsLoading(prev => ({ ...prev, courses: false }));
       }
     };
 
