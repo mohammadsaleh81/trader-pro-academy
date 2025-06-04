@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api from "@/lib/axios";
 import { Course, CourseDetails } from "@/types/course";
@@ -27,10 +28,17 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return `/learn/${courseId}`;
   };
 
-  // Fetch course details
+  // Fetch course details using slug
   const fetchCourseDetails = async (slug: string): Promise<CourseDetails | null> => {
     try {
-      const response = await api.get(`/crs/courses/${slug}/?include_comments=true&include_chapters=true`);
+      console.log('Fetching course details for slug:', slug);
+      const response = await api.get(`/crs/courses/${slug}/`, {
+        params: {
+          include_comments: true,
+          include_chapters: true
+        }
+      });
+      console.log('Course details response:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching course details:', error);
@@ -68,6 +76,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // Transform API data to match our Course type
         const transformedCourses = response.data.map((course: any) => ({
           id: course.id.toString(),
+          slug: course.slug,
           title: course.title,
           instructor: course.instructor_name || "Unknown Instructor",
           thumbnail: course.thumbnail,
@@ -125,6 +134,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           console.log('Transforming course:', course);
           return {
             id: course.id.toString(),
+            slug: course.slug,
             title: course.title,
             instructor: course.instructor_name || "مدرس ناشناس",
             thumbnail: course.thumbnail,

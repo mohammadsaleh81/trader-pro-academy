@@ -52,8 +52,10 @@ const CourseList: React.FC<CourseListProps> = ({
                 rating={course.rating}
                 isFree={index % 3 === 0} // Just for demo purposes to show some free courses
                 progress={showProgress && course.completedLessons !== undefined 
-                  ? Math.round((course.completedLessons / course.totalLessons) * 100) 
+                  ? Math.round((course.completedLessons / (course.totalLessons || 1)) * 100) 
                   : undefined}
+                slug={course.slug}
+                is_enrolled={course.is_enrolled}
               />
             ))
         }
