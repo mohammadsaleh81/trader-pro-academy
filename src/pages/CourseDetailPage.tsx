@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -251,7 +250,7 @@ const CourseDetailPage: React.FC = () => {
                       
                       <div className="bg-purple-50 rounded-lg p-4 text-center">
                         <Star className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                        <div className="text-lg font-bold text-purple-600">{courseData.info.average_rating.toFixed(1)}</div>
+                        <div className="text-lg font-bold text-purple-600">{courseData.info.average_rating ? courseData.info.average_rating.toFixed(1) : '0.0'}</div>
                         <div className="text-sm text-gray-600">امتیاز</div>
                       </div>
                     </div>
