@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api from "@/lib/axios";
 import { Course, CourseDetails } from "@/types/course";
@@ -28,23 +27,49 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return `/learn/${courseId}`;
   };
 
-  // Fetch course details using slug
+  // Fetch course details using slug or ID
   const fetchCourseDetails = async (slug: string): Promise<CourseDetails | null> => {
     try {
       console.log('Fetching course details for slug:', slug);
       
-      // Check if slug is actually a numeric ID and handle appropriately
+      // Determine if it's an ID or slug
       const isNumericId = /^\d+$/.test(slug);
       const endpoint = isNumericId ? `/crs/courses/${slug}/` : `/crs/courses/slug/${slug}/`;
       
-      const response = await api.get(endpoint, {
-        params: {
-          include_comments: true,
-          include_chapters: true
-        }
-      });
+      console.log('Using endpoint:', endpoint);
+      
+      const response = await api.get(endpoint);
       console.log('Course details response:', response.data);
-      return response.data;
+      
+      // Transform the response to match our CourseDetails interface
+      const courseData = response.data;
+      
+      const transformedData: CourseDetails = {
+        info: {
+          id: courseData.id?.toString() || '0',
+          title: courseData.title || '',
+          description: courseData.description || '',
+          instructor: courseData.instructor || courseData.instructor_name || 'Unknown Instructor',
+          price: parseFloat(courseData.price || '0'),
+          created_at: courseData.created || courseData.created_at || new Date().toISOString(),
+          updated_at: courseData.updated || courseData.updated_at || new Date().toISOString(),
+          status: courseData.status || 'active',
+          level: courseData.level || 'beginner',
+          language: courseData.language || 'fa',
+          tags: courseData.tags || [],
+          total_students: courseData.total_students || 0,
+          total_duration: courseData.total_duration || 0,
+          get_average_rating: courseData.get_average_rating || courseData.rating_avg || 0,
+          total_chapters: courseData.total_chapters || courseData.chapters?.length || 0,
+          total_lessons: courseData.total_lessons || 0,
+          thumbnail: courseData.thumbnail || '',
+        },
+        chapters: courseData.chapters || [],
+        comments: courseData.comments || [],
+        user_progress: courseData.user_progress || null
+      };
+      
+      return transformedData;
     } catch (error) {
       console.error('Error fetching course details:', error);
       return null;
