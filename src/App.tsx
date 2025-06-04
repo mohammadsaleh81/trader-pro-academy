@@ -23,6 +23,7 @@ import ContactUsPage from "./pages/ContactUsPage";
 import AboutUsPage from "./pages/AboutUsPage";
 import OrdersPage from "./pages/OrdersPage";
 import EditProfilePage from "./pages/EditProfilePage";
+import LearnPage from "./pages/LearnPage";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
@@ -95,6 +96,7 @@ const App: React.FC = () => {
                 <Route element={<ProtectedRoute />}>
                   <Route path="/complete-profile" element={<CompleteProfilePage />} />
                   <Route path="/my-courses" element={<MyCoursesPage />} />
+                  <Route path="/learn/:courseId" element={<LearnPage />} />
                   <Route path="/bookmarks" element={<BookmarksPage />} />
                   <Route path="/wallet" element={<WalletPage />} />
                   <Route path="/orders" element={<OrdersPage />} />

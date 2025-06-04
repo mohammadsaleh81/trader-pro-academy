@@ -32,6 +32,7 @@ from course.permissions import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from django.utils import timezone
+
 # Create your views here.
 
 class TagListCreateView(APIView):
@@ -99,7 +100,7 @@ class CourseDetailView(APIView):
     permission_classes = [IsInstructorOrReadOnly]
 
     def get_object(self, slug):
-        return get_object_or_404(Course, pk=slug)
+        return get_object_or_404(Course, slug=slug)
 
     def get(self, request, slug):
         course = self.get_object(slug)
@@ -126,25 +127,17 @@ class CourseDetailView(APIView):
 
     def get_user_progress(self, request, user, course, enrollment):
         progress_data = {}
-        # این context برای تمام سریالایزرهای داخل این متد استفاده خواهد شد
-        # شامل request, user, course.pk است که می‌تواند برای سریالایزرها مفید باشد
         context_for_progress = {
             'request': request,
             'user': user,
-            'course_pk': course.pk, # یا 'course': course اگر خود شیء course لازم است
+            'course_pk': course.pk,
         }
-        print(context_for_progress) # این خط دیباگ را می‌توانید حذف کنید
 
-        # پاس دادن context به EnrollmentDetailSerializer
         progress_data['enrollment'] = EnrollmentDetailSerializer(enrollment, context=context_for_progress).data
 
-        # اطمینان حاصل کنید CourseProgress یک شیء قابل سریالایز کردن است
-        # یا اینکه CourseProgressSerializer می‌داند چگونه با (user, course) کار کند
-        course_progress_obj = CourseProgress(user, course) # فرض بر این است که CourseProgress یک کلاس است
-        # پاس دادن context به CourseProgressSerializer
+        course_progress_obj = CourseProgress(user, course)
         progress_data['course_progress'] = CourseProgressSerializer(course_progress_obj, context=context_for_progress).data
 
-        # پاس دادن context به ChapterProgressSerializer (این قسمت در کد اصلی شما درست بود)
         chapters_for_progress = course.chapters.all().prefetch_related('lessons', 'lessons__progress')
         progress_data['chapter_progress'] = ChapterProgressSerializer(
             chapters_for_progress,
@@ -254,6 +247,7 @@ class CourseLearnView(APIView):
             chapters.append(chapter_data)
 
         return Response({
+            'course': CourseInfoSerializer(course).data,
             'chapters': chapters,
             'progress': course_progress.completion_percentage,
             'next_lesson': course_progress.get_next_lesson(),

@@ -342,10 +342,10 @@ class ChapterProgressSerializer(serializers.ModelSerializer):
         ]
 
     def get_progress_percentage(self, obj):
-        print(self.context)
-        print("0000000000000")
-        user = self.context['user']
-        course_progress = CourseProgress(user, obj.course)
+        context = self.context
+        user = context.get('user') or context.get('request').user
+        course = obj.course
+        course_progress = CourseProgress(user, course)
         return course_progress.get_chapter_progress(obj)
 
 class EnrollmentDetailSerializer(EnrollmentSerializer):

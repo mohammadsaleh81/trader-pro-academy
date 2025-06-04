@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api from "@/lib/axios";
 import { Course, CourseDetails } from "@/types/course";
@@ -8,6 +7,7 @@ interface CourseContextType {
   myCourses: Course[];
   enrollCourse: (courseId: string) => void;
   fetchCourseDetails: (slug: string) => Promise<CourseDetails | null>;
+  navigateToLearn: (courseId: string) => string;
   isLoading: {
     courses: boolean;
   };
@@ -21,6 +21,11 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isLoading, setIsLoading] = useState({
     courses: true
   });
+
+  // Helper function to navigate to learn page
+  const navigateToLearn = (courseId: string): string => {
+    return `/learn/${courseId}`;
+  };
 
   // Fetch course details
   const fetchCourseDetails = async (slug: string): Promise<CourseDetails | null> => {
@@ -163,6 +168,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         myCourses,
         enrollCourse,
         fetchCourseDetails,
+        navigateToLearn,
         isLoading
       }}
     >
