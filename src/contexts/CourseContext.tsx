@@ -32,7 +32,12 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const fetchCourseDetails = async (slug: string): Promise<CourseDetails | null> => {
     try {
       console.log('Fetching course details for slug:', slug);
-      const response = await api.get(`/crs/courses/${slug}/`, {
+      
+      // Check if slug is actually a numeric ID and handle appropriately
+      const isNumericId = /^\d+$/.test(slug);
+      const endpoint = isNumericId ? `/crs/courses/${slug}/` : `/crs/courses/slug/${slug}/`;
+      
+      const response = await api.get(endpoint, {
         params: {
           include_comments: true,
           include_chapters: true

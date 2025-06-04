@@ -1,4 +1,3 @@
-
 export interface Course {
   id: string;
   slug?: string;
@@ -93,7 +92,6 @@ export interface CourseDetails {
     total_students: number;
     total_duration: number;
     get_average_rating: number;
-    average_rating?: number;
     total_chapters: number;
     total_lessons: number;
     thumbnail: string;
