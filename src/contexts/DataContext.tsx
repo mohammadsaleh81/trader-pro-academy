@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api from "@/lib/axios";
 import { Article, Video, articlesApi, videosApi } from "@/lib/api";
@@ -315,21 +316,32 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Fetch courses from API
+  // Fetch courses from API - works for both logged in and non-logged in users
   useEffect(() => {
     const fetchCourses = async () => {
       try {
         setIsLoading(prev => ({ ...prev, courses: true }));
+        console.log('Fetching courses...');
+        
+        // Try to get auth token but don't require it
         const auth = localStorage.getItem('auth_tokens');
-        const access_token = JSON.parse(auth || '{}').access;
-        const response = await api.get(
-          '/crs/courses/',
-          access_token ? {
-            headers: {
-              'Authorization': `Bearer ${access_token}`
+        let headers = {};
+        
+        if (auth) {
+          try {
+            const tokens = JSON.parse(auth);
+            if (tokens.access) {
+              headers = {
+                'Authorization': `Bearer ${tokens.access}`
+              };
             }
-          } : undefined
-        );
+          } catch (e) {
+            console.log('Invalid auth token, proceeding without authentication');
+          }
+        }
+        
+        const response = await api.get('/crs/courses/', { headers });
+        console.log('Courses API response:', response.data);
         
         // Transform API data to match our Course type
         const transformedCourses = response.data.map((course: any) => ({
@@ -337,19 +349,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           title: course.title,
           instructor: course.instructor_name || "Unknown Instructor",
           thumbnail: course.thumbnail,
-          description: "",  // API doesn't provide description
-          price: parseFloat(course.price),
-          rating: course.rating_avg,
-          totalLessons: undefined,  // API doesn't provide this
-          completedLessons: undefined,  // API doesn't provide this
+          description: course.description || "",
+          price: parseFloat(course.price || '0'),
+          rating: course.rating_avg || 0,
+          totalLessons: course.total_lessons || undefined,
+          completedLessons: course.completed_lessons || undefined,
           createdAt: course.created,
-          updatedAt: course.created,  // Using created as update date since API doesn't provide updated
+          updatedAt: course.updated || course.created,
           categories: course.tags || [],
           duration: course.total_duration ? `${course.total_duration} دقیقه` : undefined,
           level: course.level as "beginner" | "intermediate" | "advanced",
-          is_enrolled: course.is_enrolled
+          is_enrolled: course.is_enrolled || false,
+          progress_percentage: course.progress_percentage || 0
         }));
 
+        console.log('Transformed courses:', transformedCourses);
         setCourses(transformedCourses);
       } catch (error) {
         console.error('Error fetching courses:', error);
