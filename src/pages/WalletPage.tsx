@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { useData } from "@/contexts/DataContext";
@@ -248,7 +247,7 @@ const WalletPage: React.FC = () => {
                   </div>
                   <div className="text-left">
                     <p className={`font-bold ${getTransactionColor(transaction.transaction_type)}`}>
-                      {transaction.amount < 0 ? "" : "+"}
+                      {parseFloat(transaction.amount) < 0 ? "" : "+"}
                       {parseFloat(transaction.amount).toLocaleString()} تومان
                     </p>
                     <p className="text-sm text-gray-500">
