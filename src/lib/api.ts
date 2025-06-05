@@ -91,6 +91,63 @@ export interface Video {
     date: string;
 }
 
+// Course detail types
+export interface CourseDetailResponse {
+    id: number;
+    slug: string;
+    title: string;
+    description: string;
+    instructor_name: string;
+    cover_image_url: string;
+    price: number;
+    category_name: string;
+    is_enrolled: boolean;
+    progress?: number;
+    chapters: Chapter[];
+}
+
+export interface Chapter {
+    id: number;
+    title: string;
+    order: number;
+    lessons: Lesson[];
+}
+
+export interface Lesson {
+    id: number;
+    title: string;
+    lesson_type: string;
+    order: number;
+    is_completed: boolean;
+}
+
+export interface UserCourse {
+    id: number;
+    slug: string;
+    title: string;
+    cover_image_url: string;
+    progress: number;
+}
+
+export interface OrderData {
+    items: Array<{
+        item_id: number;
+        item_type: string;
+        quantity: number;
+        unit_price: number;
+    }>;
+}
+
+export interface PaymentRequest {
+    order_id: number;
+    amount: number;
+}
+
+export interface PaymentVerification {
+    order_id: number;
+    authority: string;
+}
+
 class ApiService {
     private getHeaders(requiresAuth: boolean = false): HeadersInit {
         const headers: HeadersInit = {
@@ -222,6 +279,88 @@ class ApiService {
 
         if (!response.ok) {
             throw new Error('Failed to delete avatar');
+        }
+
+        return response.json();
+    }
+
+    async getCourseDetail(slug: string): Promise<CourseDetailResponse> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COURSE_DETAIL(slug)}`, {
+            method: 'GET',
+            headers: this.getHeaders(true),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get course details');
+        }
+
+        return response.json();
+    }
+
+    async getMyCourses(): Promise<UserCourse[]> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.MY_COURSES}`, {
+            method: 'GET',
+            headers: this.getHeaders(true),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get my courses');
+        }
+
+        return response.json();
+    }
+
+    async markLessonProgress(lessonId: number): Promise<any> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.LESSON_PROGRESS}`, {
+            method: 'POST',
+            headers: this.getHeaders(true),
+            body: JSON.stringify({ lesson_id: lessonId }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to mark lesson progress');
+        }
+
+        return response.json();
+    }
+
+    async createOrder(orderData: OrderData): Promise<any> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.CREATE_ORDER}`, {
+            method: 'POST',
+            headers: this.getHeaders(true),
+            body: JSON.stringify(orderData),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create order');
+        }
+
+        return response.json();
+    }
+
+    async requestPayment(paymentData: PaymentRequest): Promise<any> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.REQUEST_PAYMENT}`, {
+            method: 'POST',
+            headers: this.getHeaders(true),
+            body: JSON.stringify(paymentData),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to request payment');
+        }
+
+        return response.json();
+    }
+
+    async verifyPayment(verificationData: PaymentVerification): Promise<any> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.VERIFY_PAYMENT}`, {
+            method: 'POST',
+            headers: this.getHeaders(true),
+            body: JSON.stringify(verificationData),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to verify payment');
         }
 
         return response.json();

@@ -1,29 +1,45 @@
 
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
-import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { BookOpen } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { toast } from "@/hooks/use-toast";
+import { api, UserCourse } from "@/lib/api";
 
 const MyCoursesPage: React.FC = () => {
-  const { myCourses } = useData();
   const { user } = useAuth();
+  const [myCourses, setMyCourses] = useState<UserCourse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log("MyCoursesPage - myCourses data:", myCourses);
-    console.log("MyCoursesPage - myCourses length:", myCourses.length);
-    
-    // Simulate data loading
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    const fetchMyCourses = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
 
-    return () => clearTimeout(timer);
-  }, [myCourses]);
+      try {
+        setIsLoading(true);
+        const courses = await api.getMyCourses();
+        setMyCourses(courses);
+      } catch (error) {
+        console.error('Error fetching my courses:', error);
+        toast({
+          title: "خطا",
+          description: "خطا در دریافت دوره‌های شما",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMyCourses();
+  }, [user]);
 
   if (!user) {
     return (
@@ -37,8 +53,6 @@ const MyCoursesPage: React.FC = () => {
       </Layout>
     );
   }
-
-  console.log("MyCoursesPage render - isLoading:", isLoading, "myCourses:", myCourses);
 
   return (
     <Layout>
@@ -65,45 +79,38 @@ const MyCoursesPage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {myCourses.map((course) => (
                 <div key={course.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                  <Link to={`/courses/${course.id}`}>
+                  <Link to={`/courses/${course.slug}`}>
                     <img
-                      src={course.thumbnail}
+                      src={course.cover_image_url}
                       alt={course.title}
                       className="w-full h-48 object-cover"
                       onError={(e) => {
-                        console.log("Image load error for course:", course.id, course.thumbnail);
                         const target = e.target as HTMLImageElement;
                         target.src = "/placeholder.svg";
                       }}
                     />
                   </Link>
                   <div className="p-4">
-                    <Link to={`/courses/${course.id}`}>
+                    <Link to={`/courses/${course.slug}`}>
                       <h3 className="font-bold text-lg mb-2 hover:text-trader-500 transition-colors">
                         {course.title}
                       </h3>
                     </Link>
-                    <p className="text-gray-600 text-sm mb-4">{course.instructor}</p>
                     
                     {/* Progress Bar */}
                     <div className="mb-4">
                       <div className="flex justify-between text-sm mb-1">
                         <span>پیشرفت دوره</span>
-                        <span>{course.progress_percentage?.toFixed(1) || 0}%</span>
+                        <span>{course.progress.toFixed(1)}%</span>
                       </div>
-                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-trader-500 rounded-full transition-all duration-300"
-                          style={{ width: `${course.progress_percentage || 0}%` }}
-                        />
-                      </div>
+                      <Progress value={course.progress} className="h-2" />
                     </div>
                     
                     <Button 
                       asChild
                       className="w-full bg-trader-500 hover:bg-trader-600"
                     >
-                      <Link to={`/courses/${course.id}`}>
+                      <Link to={`/courses/${course.slug}`}>
                         ادامه دوره
                       </Link>
                     </Button>
@@ -120,7 +127,7 @@ const MyCoursesPage: React.FC = () => {
               description="از بین دوره‌های متنوع ما، دوره‌های مورد علاقه خود را انتخاب کنید"
               action={
                 <Button asChild className="mt-4 bg-trader-500 hover:bg-trader-600 btn-click">
-                  <Link to="/">مشاهده دوره‌ها</Link>
+                  <Link to="/courses">مشاهده دوره‌ها</Link>
                 </Button>
               }
             />
