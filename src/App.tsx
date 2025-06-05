@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -25,7 +26,6 @@ import EditProfilePage from "./pages/EditProfilePage";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
-import PaymentVerifyPage from "./pages/PaymentVerifyPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,9 +90,6 @@ const App: React.FC = () => {
                 
                 <Route path="/courses" element={<CourseListPage />} />
                 <Route path="/courses/:slug" element={<CourseDetailPage />} />
-                
-                {/* Payment routes */}
-                <Route path="/payment/verify" element={<PaymentVerifyPage />} />
 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>

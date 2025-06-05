@@ -3,7 +3,7 @@ import Layout from "@/components/layout/Layout";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, ShoppingCart, ArrowUpCircle, AlertCircle } from "lucide-react";
+import { Plus, Minus, ShoppingCart, ArrowUpCircle, AlertCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,8 @@ const WalletPage: React.FC = () => {
   const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingCourse, setPendingCourse] = useState<{id: string, price: number, title: string} | null>(null);
+  const [walletError, setWalletError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const depositForm = useForm<DepositFormValues>({
     resolver: zodResolver(depositSchema),
@@ -56,7 +58,16 @@ const WalletPage: React.FC = () => {
         }
       }
     }
-  }, [courses, wallet, depositForm]);
+  }, [courses, wallet]);
+
+  // Handle wallet loading errors
+  useEffect(() => {
+    if (dataLoading) {
+      setWalletError("خطا در بارگذاری اطلاعات کیف پول. لطفاً صفحه را رفرش کنید.");
+    } else {
+      setWalletError(null);
+    }
+  }, [dataLoading]);
 
   const handleDeposit = async (values: DepositFormValues) => {
     if (!wallet || !user) return;
@@ -64,7 +75,7 @@ const WalletPage: React.FC = () => {
     setIsProcessing(true);
     
     try {
-      const result = await updateWallet(wallet.balance + values.amount);
+      const result = await updateWallet(values.amount);
       
       if (result.success && result.new_balance !== undefined) {
         toast({
@@ -79,16 +90,12 @@ const WalletPage: React.FC = () => {
             description: "در حال پردازش خرید دوره...",
           });
           
-          // Remove pending course from localStorage
-          localStorage.removeItem("pendingCourseId");
-          
           // Redirect to course page to complete the purchase
           navigate(`/courses/${pendingCourse.id}`);
         }
         
         setIsDepositDialogOpen(false);
         depositForm.reset();
-        setPendingCourse(null);
       } else {
         toast({
           title: "خطا در پرداخت",
@@ -106,6 +113,10 @@ const WalletPage: React.FC = () => {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleRetry = () => {
+    window.location.reload();
   };
 
   const formatDate = (dateString: string) => {
@@ -154,7 +165,7 @@ const WalletPage: React.FC = () => {
     );
   }
 
-  if (dataLoading.courses || !wallet) {
+  if (dataLoading) {
     return (
       <Layout>
         <div className="trader-container py-12 text-center">
@@ -162,6 +173,27 @@ const WalletPage: React.FC = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-trader-500 mb-4"></div>
             <h2 className="text-xl font-bold mb-2">در حال بارگذاری...</h2>
             <p className="text-gray-600">لطفاً صبر کنید</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (walletError || !wallet) {
+    return (
+      <Layout>
+        <div className="trader-container py-12 text-center">
+          <div className="flex flex-col items-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+            <h2 className="text-xl font-bold mb-4 text-red-600">
+              {walletError || "خطا در بارگذاری اطلاعات کیف پول"}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              در صورت تداوم مشکل، لطفاً با پشتیبانی تماس بگیرید
+            </p>
+            <Button onClick={handleRetry} className="bg-trader-500 hover:bg-trader-600">
+              تلاش مجدد
+            </Button>
           </div>
         </div>
       </Layout>
@@ -247,7 +279,7 @@ const WalletPage: React.FC = () => {
                   </div>
                   <div className="text-left">
                     <p className={`font-bold ${getTransactionColor(transaction.transaction_type)}`}>
-                      {parseFloat(transaction.amount) < 0 ? "" : "+"}
+                      {transaction.transaction_type === "purchase" ? "-" : "+"}
                       {parseFloat(transaction.amount).toLocaleString()} تومان
                     </p>
                     <p className="text-sm text-gray-500">

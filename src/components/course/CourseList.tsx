@@ -41,7 +41,7 @@ const CourseList: React.FC<CourseListProps> = ({
           ? Array.from({ length: skeletonCount }).map((_, index) => (
               <CourseCardSkeleton key={`skeleton-${index}`} />
             ))
-          : courses.map((course) => (
+          : courses.map((course, index) => (
               <CourseCard
                 key={course.id}
                 id={course.id}
@@ -50,10 +50,9 @@ const CourseList: React.FC<CourseListProps> = ({
                 thumbnail={course.thumbnail}
                 price={course.price}
                 rating={course.rating}
-                isFree={course.price === 0}
-                is_enrolled={course.is_enrolled}
-                progress={showProgress && course.progress_percentage !== undefined 
-                  ? course.progress_percentage 
+                isFree={index % 3 === 0} // Just for demo purposes to show some free courses
+                progress={showProgress && course.completedLessons !== undefined 
+                  ? Math.round((course.completedLessons / course.totalLessons) * 100) 
                   : undefined}
               />
             ))

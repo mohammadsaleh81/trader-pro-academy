@@ -1,21 +1,25 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useData } from "@/contexts/DataContext";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { toast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { CourseDetails } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { api, CourseDetailResponse } from "@/lib/api";
-import { Loader, Play, BookOpen, Clock, Users, Star } from "lucide-react";
+import CourseHero from "@/components/course/CourseHero";
+import CourseInfoCard from "@/components/course/CourseInfoCard";
+import CourseContent from "@/components/course/CourseContent";
+import CommentSection from "@/components/comments/CommentSection";
+import { CheckCircle, Clock, Users, Star } from "lucide-react";
 
 const CourseDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { user } = useAuth();
-  const [courseData, setCourseData] = useState<CourseDetailResponse | null>(null);
+  const { wallet, updateWallet, enrollCourse, fetchCourseDetails, myCourses } = useData();
+  const [courseData, setCourseData] = useState<CourseDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -28,8 +32,17 @@ const CourseDetailPage: React.FC = () => {
 
       setIsLoading(true);
       try {
-        const details = await api.getCourseDetail(slug);
-        setCourseData(details);
+        const details = await fetchCourseDetails(slug);
+        if (details) {
+          setCourseData(details);
+        } else {
+          toast({
+            title: "خطا",
+            description: "مشکلی در دریافت اطلاعات دوره وجود دارد.",
+            variant: "destructive",
+          });
+          navigate('/courses');
+        }
       } catch (error) {
         console.error("Failed to fetch course details", error);
         toast({
@@ -44,7 +57,7 @@ const CourseDetailPage: React.FC = () => {
     };
 
     loadCourseDetails();
-  }, [slug, navigate]);
+  }, [slug, navigate, toast, fetchCourseDetails]);
 
   const handlePurchase = async () => {
     if (!user) {
@@ -52,35 +65,43 @@ const CourseDetailPage: React.FC = () => {
       return;
     }
 
-    if (!courseData) return;
+    if (!courseData || !wallet) return;
 
     setIsProcessing(true);
 
     try {
-      // Create order
-      const orderData = {
-        items: [{
-          item_id: courseData.id,
-          item_type: 'course',
-          quantity: 1,
-          unit_price: courseData.price
-        }]
-      };
-
-      const orderResponse = await api.createOrder(orderData);
+      const coursePrice = parseFloat(courseData.info.price);
       
-      // Request payment
-      const paymentResponse = await api.requestPayment({
-        order_id: orderResponse.order_id,
-        amount: orderResponse.total_amount_to_pay
-      });
+      if (wallet.balance < coursePrice) {
+        const shortfall = coursePrice - wallet.balance;
+        
+        toast({
+          title: "موجودی ناکافی",
+          description: `برای خرید این دوره نیاز به ${shortfall.toLocaleString()} تومان شارژ اضافی دارید`,
+          variant: "destructive",
+        });
+        
+        localStorage.setItem("pendingCourseId", courseData.info.id.toString());
+        navigate("/wallet");
+        return;
+      }
 
-      // Store order ID for verification
-      localStorage.setItem('pending_order_id', orderResponse.order_id.toString());
+      const updateResult = await updateWallet(wallet.balance - coursePrice);
+      if (updateResult.success) {
+        enrollCourse(courseData.info.id.toString());
 
-      // Redirect to payment gateway
-      window.location.href = paymentResponse.payment_url;
+        toast({
+          title: "خرید موفق",
+          description: `دوره ${courseData.info.title} با موفقیت خریداری شد`,
+        });
 
+        setTimeout(() => {
+          setIsProcessing(false);
+          navigate("/my-courses");
+        }, 1000);
+      } else {
+        throw new Error(updateResult.error);
+      }
     } catch (error) {
       console.error('Error processing purchase:', error);
       setIsProcessing(false);
@@ -93,23 +114,50 @@ const CourseDetailPage: React.FC = () => {
     }
   };
 
-  const handleToggleLessonComplete = async (lessonId: number) => {
-    try {
-      await api.markLessonProgress(lessonId);
+  const handleEnroll = async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    if (!courseData) return;
+
+    const coursePrice = parseFloat(courseData.info.price);
+
+    if (coursePrice === 0) {
+      enrollCourse(courseData.info.id.toString());
+      navigate("/my-courses");
+      return;
+    }
+
+    if (!wallet || wallet.balance < coursePrice) {
+      const shortfall = coursePrice - (wallet?.balance || 0);
       
-      // Refresh course data to get updated progress
-      const updatedDetails = await api.getCourseDetail(slug!);
-      setCourseData(updatedDetails);
+      toast({
+        title: "موجودی ناکافی",
+        description: `برای خرید این دوره نیاز به ${shortfall.toLocaleString()} تومان شارژ اضافی دارید`,
+        variant: "destructive",
+      });
+      
+      localStorage.setItem("pendingCourseId", courseData.info.id.toString());
+      navigate("/wallet");
+      return;
+    }
+
+    const updateResult = await updateWallet(wallet.balance - coursePrice);
+    if (updateResult.success) {
+      enrollCourse(courseData.info.id.toString());
 
       toast({
-        title: "موفق",
-        description: "وضعیت درس بروزرسانی شد",
+        title: "خرید موفق",
+        description: `دوره ${courseData.info.title} با موفقیت خریداری شد`,
       });
-    } catch (error) {
-      console.error('Error updating lesson progress:', error);
+
+      navigate("/my-courses");
+    } else {
       toast({
         title: "خطا",
-        description: "خطا در بروزرسانی وضعیت درس",
+        description: "خطا در پردازش خرید. لطفاً دوباره تلاش کنید.",
         variant: "destructive",
       });
     }
@@ -150,163 +198,205 @@ const CourseDetailPage: React.FC = () => {
     );
   }
 
+  // بررسی ثبت‌نام کاربر در دوره
+  const isEnrolled = courseData.user_progress !== undefined && courseData.user_progress !== null;
+  const coursePrice = parseFloat(courseData.info.price);
+  const isFree = coursePrice === 0;
+
   return (
     <Layout>
       <div className="min-h-screen bg-gray-50">
-        {/* Course Hero Section */}
-        <div className="bg-gradient-to-r from-orange-600 to-red-600 text-white py-16">
-          <div className="trader-container">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold mb-4">{courseData.title}</h1>
-                <p className="text-lg mb-6 text-orange-100">{courseData.description}</p>
-                <div className="flex items-center gap-6 text-sm">
-                  <span>مدرس: {courseData.instructor_name}</span>
-                  <span>دسته‌بندی: {courseData.category_name}</span>
-                </div>
-              </div>
-              <div className="text-center lg:text-right">
-                <img
-                  src={courseData.cover_image_url}
-                  alt={courseData.title}
-                  className="w-full max-w-md mx-auto lg:mx-0 rounded-lg shadow-lg"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        <CourseHero courseData={courseData} />
 
         <div className="trader-container py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
+            {/* Main Content - Left Side */}
             <div className="lg:col-span-2">
-              {/* Course Description */}
-              <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
-                <h2 className="text-2xl font-bold mb-4">درباره دوره</h2>
-                <p className="text-gray-700 leading-relaxed">{courseData.description}</p>
-              </div>
-
-              {/* Course Content */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h2 className="text-2xl font-bold mb-6">محتوای دوره</h2>
+              <Tabs defaultValue="content" className="w-full">
+                <TabsList className="grid w-full grid-cols-4" dir="rtl">
+                  <TabsTrigger value="content">محتوای دوره</TabsTrigger>
+                  <TabsTrigger value="info">اطلاعات دوره</TabsTrigger>
+                  <TabsTrigger value="comments">نظرات</TabsTrigger>
+                  <TabsTrigger value="reviews">بازخوردها</TabsTrigger>
+                </TabsList>
                 
-                <Accordion type="multiple" className="w-full">
-                  {courseData.chapters.map((chapter) => (
-                    <AccordionItem key={chapter.id} value={`chapter-${chapter.id}`}>
-                      <AccordionTrigger className="text-right">
-                        <span className="font-medium">{chapter.title}</span>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="space-y-3 mr-4">
-                          {chapter.lessons.map((lesson) => (
-                            <div key={lesson.id} className="flex items-center justify-between p-3 border rounded-lg">
-                              <div className="flex items-center gap-3">
-                                {courseData.is_enrolled && (
-                                  <Checkbox
-                                    checked={lesson.is_completed}
-                                    onCheckedChange={() => handleToggleLessonComplete(lesson.id)}
-                                  />
-                                )}
-                                <div>
-                                  <h4 className="font-medium">{lesson.title}</h4>
-                                  <span className="text-sm text-gray-500">{lesson.lesson_type}</span>
-                                </div>
-                              </div>
-                              {courseData.is_enrolled && (
-                                <Button variant="ghost" size="sm">
-                                  <Play className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          ))}
+                <TabsContent value="content" className="mt-6">
+                  <CourseContent courseData={courseData} />
+                </TabsContent>
+                
+                <TabsContent value="info" className="mt-6">
+                  <div className="bg-white rounded-lg p-6 shadow-sm">
+                    <h2 className="text-2xl font-bold mb-6 text-right">درباره دوره</h2>
+                    
+                    {/* Course Highlights */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                      <div className="bg-orange-50 rounded-lg p-4 text-center">
+                        <Clock className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+                        <div className="text-lg font-bold text-orange-600">{Math.floor(courseData.info.total_duration / 60)}</div>
+                        <div className="text-sm text-gray-600">دقیقه ویدیو</div>
+                      </div>
+                      
+                      <div className="bg-blue-50 rounded-lg p-4 text-center">
+                        <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                        <div className="text-lg font-bold text-blue-600">{courseData.info.total_students}</div>
+                        <div className="text-sm text-gray-600">دانشجو</div>
+                      </div>
+                      
+                      <div className="bg-green-50 rounded-lg p-4 text-center">
+                        <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                        <div className="text-lg font-bold text-green-600">{courseData.info.total_lessons}</div>
+                        <div className="text-sm text-gray-600">درس</div>
+                      </div>
+                      
+                      <div className="bg-purple-50 rounded-lg p-4 text-center">
+                        <Star className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+                        <div className="text-lg font-bold text-purple-600">{courseData.info.average_rating ? courseData.info.average_rating.toFixed(1) : '0.0'}</div>
+                        <div className="text-sm text-gray-600">امتیاز</div>
+                      </div>
+                    </div>
+
+                    <div className="prose prose-lg max-w-none text-right" dir="rtl">
+                      <p className="text-gray-700 leading-relaxed mb-6">
+                        {courseData.info.description}
+                      </p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center py-3 border-b">
+                            <span className="text-gray-600">مدرس:</span>
+                            <span className="font-medium">{courseData.info.instructor}</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center py-3 border-b">
+                            <span className="text-gray-600">سطح دوره:</span>
+                            <span className="font-medium">
+                              {courseData.info.level === 'beginner' ? 'مقدماتی' : 
+                               courseData.info.level === 'intermediate' ? 'متوسط' : 
+                               courseData.info.level === 'advanced' ? 'پیشرفته' : courseData.info.level}
+                            </span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center py-3 border-b">
+                            <span className="text-gray-600">زبان دوره:</span>
+                            <span className="font-medium">{courseData.info.language === 'fa' ? 'فارسی' : 'انگلیسی'}</span>
+                          </div>
                         </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </div>
+                        
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center py-3 border-b">
+                            <span className="text-gray-600">تعداد فصل:</span>
+                            <span className="font-medium">{courseData.info.total_chapters}</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center py-3 border-b">
+                            <span className="text-gray-600">تعداد درس:</span>
+                            <span className="font-medium">{courseData.info.total_lessons}</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center py-3 border-b">
+                            <span className="text-gray-600">مدت زمان:</span>
+                            <span className="font-medium">{Math.floor(courseData.info.total_duration / 60)} دقیقه</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {courseData.info.tags && courseData.info.tags.length > 0 && (
+                        <div className="mt-8">
+                          <h3 className="text-lg font-semibold mb-4">برچسب‌ها</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {courseData.info.tags.map((tag, index) => (
+                              <span key={index} className="bg-orange-100 text-orange-800 text-sm px-3 py-1 rounded-full">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="comments" className="mt-6">
+                  <div className="bg-white rounded-lg p-6 shadow-sm">
+                    <CommentSection
+                      contentType="course"
+                      contentId={courseData.info.id.toString()}
+                      comments={courseData.comments}
+                    />
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="reviews" className="mt-6">
+                  <div className="bg-white rounded-lg p-6 shadow-sm">
+                    <h2 className="text-2xl font-bold mb-6 text-right">بازخوردهای دانشجویان</h2>
+                    
+                    {courseData.comments && courseData.comments.length > 0 ? (
+                      <div className="space-y-6">
+                        {courseData.comments.map((comment) => (
+                          <div key={comment.id} className="border border-gray-200 rounded-lg p-4">
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="text-right flex items-center">
+                                <img 
+                                  src={comment.user.thumbnail || 'https://api.gport.sbs/media/user.png'} 
+                                  alt={`${comment.user.first_name} ${comment.user.last_name}`}
+                                  className="w-10 h-10 rounded-full ml-3"
+                                />
+                                <span className="font-medium">
+                                  {comment.user.first_name} {comment.user.last_name}
+                                </span>
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {comment.created_at}
+                              </div>
+                            </div>
+                            <p className="text-gray-700 text-right leading-relaxed">{comment.content}</p>
+                            
+                            {comment.replies && comment.replies.length > 0 && (
+                              <div className="mt-4 mr-6 space-y-3">
+                                {comment.replies.map((reply) => (
+                                  <div key={reply.id} className="bg-gray-50 p-3 rounded-lg">
+                                    <div className="flex justify-between items-start mb-2">
+                                      <div className="flex items-center">
+                                        <img 
+                                          src={reply.user.thumbnail || 'https://api.gport.sbs/media/user.png'} 
+                                          alt={`${reply.user.first_name} ${reply.user.last_name}`}
+                                          className="w-8 h-8 rounded-full ml-2"
+                                        />
+                                        <span className="text-sm font-medium">
+                                          {reply.user.first_name} {reply.user.last_name}
+                                        </span>
+                                      </div>
+                                      <span className="text-xs text-gray-500">{reply.created_at}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 text-right">{reply.content}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        هنوز بازخوردی برای این دوره ثبت نشده است
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
 
-            {/* Sidebar */}
+            {/* Course Info Card - Right Side */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg p-6 shadow-sm sticky top-8">
-                {/* Price or Progress */}
-                {courseData.is_enrolled ? (
-                  <div className="mb-6">
-                    <div className="text-center mb-4">
-                      <div className="text-2xl font-bold text-green-600 mb-2">دوره خریداری شده</div>
-                      <div className="text-sm text-gray-600">پیشرفت شما در این دوره</div>
-                    </div>
-                    
-                    <div className="mb-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm">پیشرفت کلی</span>
-                        <span className="text-sm font-medium">{courseData.progress || 0}%</span>
-                      </div>
-                      <Progress value={courseData.progress || 0} className="h-3" />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center mb-6">
-                    <div className="text-3xl font-bold text-orange-600 mb-2">
-                      {courseData.price === 0 ? "رایگان" : `${courseData.price.toLocaleString()} تومان`}
-                    </div>
-                  </div>
-                )}
-
-                {/* Action Button */}
-                <div className="mb-6">
-                  {courseData.is_enrolled ? (
-                    <Button className="w-full py-3 bg-green-600 hover:bg-green-700">
-                      <Play className="h-4 w-4 ml-2" />
-                      ادامه یادگیری
-                    </Button>
-                  ) : (
-                    <Button
-                      className="w-full py-3 bg-orange-600 hover:bg-orange-700"
-                      onClick={handlePurchase}
-                      disabled={isProcessing}
-                    >
-                      {isProcessing ? (
-                        <Loader className="h-4 w-4 animate-spin mx-auto" />
-                      ) : (
-                        <>
-                          {courseData.price === 0 ? "ثبت‌نام رایگان" : "خرید دوره"}
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </div>
-
-                {/* Course Info */}
-                <div className="space-y-4 border-t pt-6">
-                  <h3 className="font-bold text-lg">اطلاعات دوره</h3>
-                  
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">مدرس:</span>
-                      <span className="font-medium">{courseData.instructor_name}</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">دسته‌بندی:</span>
-                      <span className="font-medium">{courseData.category_name}</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">تعداد فصل:</span>
-                      <span className="font-medium">{courseData.chapters.length}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">تعداد درس:</span>
-                      <span className="font-medium">
-                        {courseData.chapters.reduce((total, chapter) => total + chapter.lessons.length, 0)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <CourseInfoCard
+                courseData={courseData}
+                isEnrolled={isEnrolled}
+                isProcessing={isProcessing}
+                isFree={isFree}
+                coursePrice={coursePrice}
+                onPurchase={handlePurchase}
+                onEnroll={handleEnroll}
+              />
             </div>
           </div>
         </div>

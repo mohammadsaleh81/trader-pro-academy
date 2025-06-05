@@ -28,18 +28,17 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
   rating,
   progress,
   isFree = false,
-  is_enrolled = false
+  is_enrolled
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { myCourses, wallet, updateWallet, enrollCourse } = useData();
   const [isProcessing, setIsProcessing] = useState(false);
   
-  // Check if user is enrolled by checking both props and myCourses
-  const isEnrolled = is_enrolled || myCourses.some(c => c.id === id);
+  const isEnrolled = myCourses.some(c => c.id === id);
 
   const handleQuickBuy = React.useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent navigating to course detail
     setIsProcessing(true);
     
     try {
@@ -48,7 +47,7 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
         return;
       }
 
-      if (isFree || isEnrolled) {
+      if (isFree || is_enrolled) {
         navigate(`/learn/${id}`);
         return;
       }
@@ -62,12 +61,21 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
           variant: "destructive",
         });
         
+        // Store course ID in localStorage to complete purchase after recharge
         localStorage.setItem("pendingCourseId", id);
         navigate("/wallet");
         return;
       }
 
       // Process purchase
+      const newTransaction = {
+        id: Date.now().toString(),
+        amount: price,
+        type: "purchase" as const,
+        description: `خرید دوره ${title}`,
+        date: new Date().toLocaleDateString("fa-IR"),
+      };
+
       const updateResult = await updateWallet(wallet.balance - price);
       if (updateResult.success) {
         enrollCourse(id);
@@ -77,12 +85,13 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
           description: `دوره ${title} با موفقیت خریداری شد`,
         });
 
+        // Simulate processing delay
         setTimeout(() => {
           setIsProcessing(false);
           navigate(`/learn/${id}`);
         }, 1000);
       } else {
-        throw new Error(updateResult.error || "خطا در پردازش خرید");
+        throw new Error(updateResult.error);
       }
     } catch (error) {
       console.error('Error processing purchase:', error);
@@ -94,16 +103,18 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
         variant: "destructive",
       });
     }
-  }, [user, isFree, isEnrolled, wallet, price, id, title, navigate, updateWallet, enrollCourse]);
+  }, [user, isFree, is_enrolled, wallet, price, id, title, navigate, updateWallet, enrollCourse]);
 
   const handleImageError = React.useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const target = e.target as HTMLImageElement;
     target.src = "/placeholder-course.jpg";
   }, []);
 
+  console.log(is_enrolled);
+
   return (
     <div className="trader-card h-full flex flex-col min-h-[280px]">
-      <Link to={isEnrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
+      <Link to={is_enrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
         <div className="relative h-40 w-full">
           <img
             src={thumbnail || "/placeholder-course.jpg"}
@@ -125,7 +136,7 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
         </div>
       </Link>
       <div className="p-3 flex-1 flex flex-col">
-        <Link to={isEnrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
+        <Link to={is_enrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
           <h3 className="font-bold text-sm line-clamp-2 mb-1 min-h-[2.5rem]">{title}</h3>
           <p className="text-gray-600 text-xs mb-2">مدرس: {instructor}</p>
         </Link>
@@ -135,19 +146,19 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
               <Star className="h-4 w-4 text-yellow-500 ml-1" />
               <span className="text-xs font-medium">{rating}</span>
             </div>
-            {!isEnrolled && (
+            {!is_enrolled && (
               <p className={`font-bold ${isFree ? "text-green-600" : "text-trader-500"} text-sm`}>
                 {isFree ? "رایگان" : `${price.toLocaleString()} تومان`}
               </p>
             )}
-            {isEnrolled && (
+            {is_enrolled && (
               <p className="font-bold text-green-600 text-sm">
-                ثبت‌نام شده
+                ادامه یادگیری
               </p>
             )}
           </div>
           <Button 
-            variant={isEnrolled ? "outline" : "default"}
+            variant={is_enrolled ? "outline" : "default"}
             className="w-full text-xs py-2 h-8"
             onClick={handleQuickBuy}
             disabled={isProcessing}
@@ -156,8 +167,8 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
               <Loader className="h-4 w-4 animate-spin mx-auto" />
             ) : (
               <>
-                {!isEnrolled && <ShoppingCart className="h-4 w-4 ml-1" />}
-                {isEnrolled ? "ادامه یادگیری" : isFree ? "ثبت‌نام رایگان" : "خرید سریع"}
+                {!is_enrolled && <ShoppingCart className="h-4 w-4 ml-1" />}
+                {is_enrolled ? "ادامه یادگیری" : isFree ? "ثبت‌نام رایگان" : "خرید سریع"}
               </>
             )}
           </Button>

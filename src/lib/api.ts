@@ -91,63 +91,6 @@ export interface Video {
     date: string;
 }
 
-// Course detail types
-export interface CourseDetailResponse {
-    id: number;
-    slug: string;
-    title: string;
-    description: string;
-    instructor_name: string;
-    cover_image_url: string;
-    price: number;
-    category_name: string;
-    is_enrolled: boolean;
-    progress?: number;
-    chapters: Chapter[];
-}
-
-export interface Chapter {
-    id: number;
-    title: string;
-    order: number;
-    lessons: Lesson[];
-}
-
-export interface Lesson {
-    id: number;
-    title: string;
-    lesson_type: string;
-    order: number;
-    is_completed: boolean;
-}
-
-export interface UserCourse {
-    id: number;
-    slug: string;
-    title: string;
-    cover_image_url: string;
-    progress: number;
-}
-
-export interface OrderData {
-    items: Array<{
-        item_id: number;
-        item_type: string;
-        quantity: number;
-        unit_price: number;
-    }>;
-}
-
-export interface PaymentRequest {
-    order_id: number;
-    amount: number;
-}
-
-export interface PaymentVerification {
-    order_id: number;
-    authority: string;
-}
-
 class ApiService {
     private getHeaders(requiresAuth: boolean = false): HeadersInit {
         const headers: HeadersInit = {
@@ -238,34 +181,6 @@ class ApiService {
         return response.json();
     }
 
-    async completeProfile(data: Partial<User>): Promise<User> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COMPLETE_PROFILE}`, {
-            method: 'POST',
-            headers: this.getHeaders(true),
-            body: JSON.stringify(data),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to complete profile');
-        }
-
-        return response.json();
-    }
-
-    async changePassword(passwordData: { old_password: string; new_password: string }): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.CHANGE_PASSWORD}`, {
-            method: 'POST',
-            headers: this.getHeaders(true),
-            body: JSON.stringify(passwordData),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to change password');
-        }
-
-        return response.json();
-    }
-
     async getAvatar(): Promise<AvatarResponse> {
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AVATAR}`, {
             method: 'GET',
@@ -312,198 +227,6 @@ class ApiService {
         return response.json();
     }
 
-    // Course Management
-    async getAllCourses(params?: any): Promise<any> {
-        const queryString = params ? `?${new URLSearchParams(params).toString()}` : '';
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COURSES}${queryString}`, {
-            method: 'GET',
-            headers: this.getHeaders(true),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get courses');
-        }
-
-        return response.json();
-    }
-
-    async getCourseDetail(slug: string): Promise<CourseDetailResponse> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COURSE_DETAIL(slug)}`, {
-            method: 'GET',
-            headers: this.getHeaders(true),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get course details');
-        }
-
-        return response.json();
-    }
-
-    async getCourseCategories(): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COURSE_CATEGORIES}`, {
-            method: 'GET',
-            headers: this.getHeaders(),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get course categories');
-        }
-
-        return response.json();
-    }
-
-    async getMyCourses(): Promise<UserCourse[]> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.MY_COURSES}`, {
-            method: 'GET',
-            headers: this.getHeaders(true),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get my courses');
-        }
-
-        return response.json();
-    }
-
-    async markLessonProgress(lessonId: number): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.LESSON_PROGRESS}`, {
-            method: 'POST',
-            headers: this.getHeaders(true),
-            body: JSON.stringify({ lesson_id: lessonId }),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to mark lesson progress');
-        }
-
-        return response.json();
-    }
-
-    async searchCourses(query: string): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.SEARCH_COURSES}?search=${encodeURIComponent(query)}`, {
-            method: 'GET',
-            headers: this.getHeaders(),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to search courses');
-        }
-
-        return response.json();
-    }
-
-    // Order Management
-    async createOrder(orderData: OrderData): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.CREATE_ORDER}`, {
-            method: 'POST',
-            headers: this.getHeaders(true),
-            body: JSON.stringify(orderData),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to create order');
-        }
-
-        return response.json();
-    }
-
-    async getMyOrders(): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.MY_ORDERS}`, {
-            method: 'GET',
-            headers: this.getHeaders(true),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get my orders');
-        }
-
-        return response.json();
-    }
-
-    async getOrderDetail(orderId: number): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.ORDER_DETAIL(orderId)}`, {
-            method: 'GET',
-            headers: this.getHeaders(true),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get order details');
-        }
-
-        return response.json();
-    }
-
-    // Payment Management
-    async requestPayment(paymentData: PaymentRequest): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.REQUEST_PAYMENT}`, {
-            method: 'POST',
-            headers: this.getHeaders(true),
-            body: JSON.stringify(paymentData),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to request payment');
-        }
-
-        return response.json();
-    }
-
-    async verifyPayment(verificationData: PaymentVerification): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.VERIFY_PAYMENT}`, {
-            method: 'POST',
-            headers: this.getHeaders(true),
-            body: JSON.stringify(verificationData),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to verify payment');
-        }
-
-        return response.json();
-    }
-
-    // Wallet Management
-    async getWalletTransactions(): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.WALLET_TRANSACTIONS}`, {
-            method: 'GET',
-            headers: this.getHeaders(true),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get wallet transactions');
-        }
-
-        return response.json();
-    }
-
-    async getWalletBalance(): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.WALLET_BALANCE}`, {
-            method: 'GET',
-            headers: this.getHeaders(true),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get wallet balance');
-        }
-
-        return response.json();
-    }
-
-    async chargeWallet(chargeData: { amount: number }): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.CHARGE_WALLET}`, {
-            method: 'POST',
-            headers: this.getHeaders(true),
-            body: JSON.stringify(chargeData),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to charge wallet');
-        }
-
-        return response.json();
-    }
-
     login = this.verifyOTP;
 
     logout(): void {
@@ -521,7 +244,7 @@ const convertThumbnailToAbsoluteUrl = (thumbnail: string | null): string | null 
     return `${API_BASE_URL}${thumbnail}`;
 };
 
-// Articles API (keeping existing content endpoints for compatibility)
+// Articles API
 export const articlesApi = {
     getAll: async (): Promise<Article[]> => {
         const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.ARTICLES}`);
@@ -564,7 +287,7 @@ export const articlesApi = {
     }
 };
 
-// Videos API (keeping existing content endpoints for compatibility)
+// Videos API
 export const videosApi = {
     getAll: async (): Promise<Video[]> => {
         const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.VIDEOS}`);
