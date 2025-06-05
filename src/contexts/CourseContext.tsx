@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api from "@/lib/axios";
 import { Course, CourseDetails } from "@/types/course";
@@ -7,7 +8,6 @@ interface CourseContextType {
   myCourses: Course[];
   enrollCourse: (courseId: string) => void;
   fetchCourseDetails: (slug: string) => Promise<CourseDetails | null>;
-  navigateToLearn: (courseId: string) => string;
   isLoading: {
     courses: boolean;
   };
@@ -22,54 +22,11 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     courses: true
   });
 
-  // Helper function to navigate to learn page
-  const navigateToLearn = (courseId: string): string => {
-    return `/learn/${courseId}`;
-  };
-
-  // Fetch course details using slug or ID
+  // Fetch course details
   const fetchCourseDetails = async (slug: string): Promise<CourseDetails | null> => {
     try {
-      console.log('Fetching course details for slug:', slug);
-      
-      // Determine if it's an ID or slug
-      const isNumericId = /^\d+$/.test(slug);
-      const endpoint = isNumericId ? `/crs/courses/${slug}/` : `/crs/courses/slug/${slug}/`;
-      
-      console.log('Using endpoint:', endpoint);
-      
-      const response = await api.get(endpoint);
-      console.log('Course details response:', response.data);
-      
-      // Transform the response to match our CourseDetails interface
-      const courseData = response.data;
-      
-      const transformedData: CourseDetails = {
-        info: {
-          id: courseData.id?.toString() || '0',
-          title: courseData.title || '',
-          description: courseData.description || '',
-          instructor: courseData.instructor || courseData.instructor_name || 'Unknown Instructor',
-          price: parseFloat(courseData.price || '0'),
-          created_at: courseData.created || courseData.created_at || new Date().toISOString(),
-          updated_at: courseData.updated || courseData.updated_at || new Date().toISOString(),
-          status: courseData.status || 'active',
-          level: courseData.level || 'beginner',
-          language: courseData.language || 'fa',
-          tags: courseData.tags || [],
-          total_students: courseData.total_students || 0,
-          total_duration: courseData.total_duration || 0,
-          get_average_rating: courseData.get_average_rating || courseData.rating_avg || 0,
-          total_chapters: courseData.total_chapters || courseData.chapters?.length || 0,
-          total_lessons: courseData.total_lessons || 0,
-          thumbnail: courseData.thumbnail || '',
-        },
-        chapters: courseData.chapters || [],
-        comments: courseData.comments || [],
-        user_progress: courseData.user_progress || null
-      };
-      
-      return transformedData;
+      const response = await api.get(`/crs/courses/${slug}/?include_comments=true&include_chapters=true`);
+      return response.data;
     } catch (error) {
       console.error('Error fetching course details:', error);
       return null;
@@ -106,7 +63,6 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // Transform API data to match our Course type
         const transformedCourses = response.data.map((course: any) => ({
           id: course.id.toString(),
-          slug: course.slug,
           title: course.title,
           instructor: course.instructor_name || "Unknown Instructor",
           thumbnail: course.thumbnail,
@@ -164,7 +120,6 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           console.log('Transforming course:', course);
           return {
             id: course.id.toString(),
-            slug: course.slug,
             title: course.title,
             instructor: course.instructor_name || "مدرس ناشناس",
             thumbnail: course.thumbnail,
@@ -208,7 +163,6 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         myCourses,
         enrollCourse,
         fetchCourseDetails,
-        navigateToLearn,
         isLoading
       }}
     >

@@ -17,7 +17,6 @@ type CourseCardProps = {
   progress?: number;
   isFree?: boolean;
   is_enrolled?: boolean;
-  slug?: string;
 };
 
 const CourseCard: React.FC<CourseCardProps> = React.memo(({
@@ -29,8 +28,7 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
   rating,
   progress,
   isFree = false,
-  is_enrolled,
-  slug
+  is_enrolled
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -38,7 +36,6 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
   const [isProcessing, setIsProcessing] = useState(false);
   
   const isEnrolled = myCourses.some(c => c.id === id);
-  const courseSlug = slug || id; // Fallback to id if slug is not provided
 
   const handleQuickBuy = React.useCallback(async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigating to course detail
@@ -113,9 +110,11 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
     target.src = "/placeholder-course.jpg";
   }, []);
 
+  console.log(is_enrolled);
+
   return (
     <div className="trader-card h-full flex flex-col min-h-[280px]">
-      <Link to={is_enrolled ? `/learn/${id}` : `/courses/${courseSlug}`} className="block">
+      <Link to={is_enrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
         <div className="relative h-40 w-full">
           <img
             src={thumbnail || "/placeholder-course.jpg"}
@@ -137,7 +136,7 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
         </div>
       </Link>
       <div className="p-3 flex-1 flex flex-col">
-        <Link to={is_enrolled ? `/learn/${id}` : `/courses/${courseSlug}`} className="block">
+        <Link to={is_enrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
           <h3 className="font-bold text-sm line-clamp-2 mb-1 min-h-[2.5rem]">{title}</h3>
           <p className="text-gray-600 text-xs mb-2">مدرس: {instructor}</p>
         </Link>
@@ -187,8 +186,7 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
     prevProps.rating === nextProps.rating &&
     prevProps.progress === nextProps.progress &&
     prevProps.isFree === nextProps.isFree &&
-    prevProps.is_enrolled === nextProps.is_enrolled &&
-    prevProps.slug === nextProps.slug
+    prevProps.is_enrolled === nextProps.is_enrolled
   );
 });
 

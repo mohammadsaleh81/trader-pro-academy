@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -6,7 +5,7 @@ import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { CourseDetails } from "@/types/course";
+import { CourseDetails } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import CourseHero from "@/components/course/CourseHero";
 import CourseInfoCard from "@/components/course/CourseInfoCard";
@@ -33,45 +32,16 @@ const CourseDetailPage: React.FC = () => {
 
       setIsLoading(true);
       try {
-        console.log('Loading course details for:', slug);
         const details = await fetchCourseDetails(slug);
-        console.log('Received course details:', details);
-        
         if (details) {
           setCourseData(details);
         } else {
-          // Create fallback course data if API fails
-          const fallbackCourse: CourseDetails = {
-            info: {
-              id: slug,
-              title: "دوره نامشخص",
-              description: "اطلاعات دوره در حال بارگذاری است...",
-              instructor: "مدرس نامشخص",
-              price: 0,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              status: "active",
-              level: "beginner",
-              language: "fa",
-              tags: [],
-              total_students: 0,
-              total_duration: 0,
-              get_average_rating: 0,
-              total_chapters: 0,
-              total_lessons: 0,
-              thumbnail: "https://via.placeholder.com/400x300?text=Course+Image",
-            },
-            chapters: [],
-            comments: [],
-            user_progress: null
-          };
-          setCourseData(fallbackCourse);
-          
           toast({
-            title: "اطلاع",
-            description: "اطلاعات کامل دوره در حال بارگذاری است...",
-            variant: "default",
+            title: "خطا",
+            description: "مشکلی در دریافت اطلاعات دوره وجود دارد.",
+            variant: "destructive",
           });
+          navigate('/courses');
         }
       } catch (error) {
         console.error("Failed to fetch course details", error);
@@ -100,7 +70,7 @@ const CourseDetailPage: React.FC = () => {
     setIsProcessing(true);
 
     try {
-      const coursePrice = parseFloat(courseData.info.price.toString());
+      const coursePrice = parseFloat(courseData.info.price);
       
       if (wallet.balance < coursePrice) {
         const shortfall = coursePrice - wallet.balance;
@@ -118,7 +88,7 @@ const CourseDetailPage: React.FC = () => {
 
       const updateResult = await updateWallet(wallet.balance - coursePrice);
       if (updateResult.success) {
-        enrollCourse(courseData.info.id);
+        enrollCourse(courseData.info.id.toString());
 
         toast({
           title: "خرید موفق",
@@ -152,10 +122,10 @@ const CourseDetailPage: React.FC = () => {
 
     if (!courseData) return;
 
-    const coursePrice = parseFloat(courseData.info.price.toString());
+    const coursePrice = parseFloat(courseData.info.price);
 
     if (coursePrice === 0) {
-      enrollCourse(courseData.info.id);
+      enrollCourse(courseData.info.id.toString());
       navigate("/my-courses");
       return;
     }
@@ -169,14 +139,14 @@ const CourseDetailPage: React.FC = () => {
         variant: "destructive",
       });
       
-      localStorage.setItem("pendingCourseId", courseData.info.id);
+      localStorage.setItem("pendingCourseId", courseData.info.id.toString());
       navigate("/wallet");
       return;
     }
 
     const updateResult = await updateWallet(wallet.balance - coursePrice);
     if (updateResult.success) {
-      enrollCourse(courseData.info.id);
+      enrollCourse(courseData.info.id.toString());
 
       toast({
         title: "خرید موفق",
@@ -228,9 +198,9 @@ const CourseDetailPage: React.FC = () => {
     );
   }
 
-  // Check if user is enrolled
-  const isEnrolled = courseData.user_progress !== null;
-  const coursePrice = parseFloat(courseData.info.price.toString());
+  // بررسی ثبت‌نام کاربر در دوره
+  const isEnrolled = courseData.user_progress !== undefined && courseData.user_progress !== null;
+  const coursePrice = parseFloat(courseData.info.price);
   const isFree = coursePrice === 0;
 
   return (
@@ -280,7 +250,7 @@ const CourseDetailPage: React.FC = () => {
                       
                       <div className="bg-purple-50 rounded-lg p-4 text-center">
                         <Star className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                        <div className="text-lg font-bold text-purple-600">{courseData.info.get_average_rating ? courseData.info.get_average_rating.toFixed(1) : '0.0'}</div>
+                        <div className="text-lg font-bold text-purple-600">{courseData.info.average_rating ? courseData.info.average_rating.toFixed(1) : '0.0'}</div>
                         <div className="text-sm text-gray-600">امتیاز</div>
                       </div>
                     </div>
@@ -350,14 +320,8 @@ const CourseDetailPage: React.FC = () => {
                   <div className="bg-white rounded-lg p-6 shadow-sm">
                     <CommentSection
                       contentType="course"
-                      contentId={courseData.info.id}
-                      comments={courseData.comments ? courseData.comments.map(comment => ({
-                        ...comment,
-                        user: {
-                          ...comment.user,
-                          id: comment.user.id.toString()
-                        }
-                      })) : []}
+                      contentId={courseData.info.id.toString()}
+                      comments={courseData.comments}
                     />
                   </div>
                 </TabsContent>

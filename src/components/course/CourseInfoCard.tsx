@@ -1,10 +1,9 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Loader, Play, Clock, BookOpen, Award } from "lucide-react";
-import { CourseDetails } from "@/types/course";
+import { CourseDetails } from "@/contexts/DataContext";
 
 interface CourseInfoCardProps {
   courseData: CourseDetails;
@@ -34,13 +33,9 @@ const CourseInfoCard: React.FC<CourseInfoCardProps> = ({
         {/* Course Thumbnail */}
         <div className="mb-6">
           <img
-            src={courseData.info.thumbnail || "https://via.placeholder.com/400x300?text=Course+Image"}
+            src={courseData.info.thumbnail}
             alt={courseData.info.title}
             className="w-full h-48 object-cover rounded-lg"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = "https://via.placeholder.com/400x300?text=Course+Image";
-            }}
           />
         </div>
 
@@ -73,14 +68,14 @@ const CourseInfoCard: React.FC<CourseInfoCardProps> = ({
                     strokeWidth="8"
                     fill="transparent"
                     strokeDasharray={`${2 * Math.PI * 40}`}
-                    strokeDashoffset={`${2 * Math.PI * 40 * (1 - (userProgress?.course_progress?.completion_percentage || 0) / 100)}`}
+                    strokeDashoffset={`${2 * Math.PI * 40 * (1 - (userProgress?.course_progress.completion_percentage || 0) / 100)}`}
                     className="text-orange-600"
                     strokeLinecap="round"
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-lg font-bold text-orange-600">
-                    {Math.round(userProgress?.course_progress?.completion_percentage || 0)}%
+                    {Math.round(userProgress?.course_progress.completion_percentage || 0)}%
                   </span>
                 </div>
               </div>
@@ -94,7 +89,7 @@ const CourseInfoCard: React.FC<CourseInfoCardProps> = ({
                   دروس تکمیل شده:
                 </span>
                 <span className="font-medium">
-                  {userProgress?.course_progress?.completed_lessons || 0} از {courseData.info.total_lessons || 0}
+                  {userProgress?.course_progress.completed_lessons || 0} از {courseData.info.total_lessons}
                 </span>
               </div>
               
@@ -104,7 +99,7 @@ const CourseInfoCard: React.FC<CourseInfoCardProps> = ({
                   زمان مشاهده:
                 </span>
                 <span className="font-medium">
-                  {Math.floor((userProgress?.course_progress?.watched_duration || 0) / 60)} از {Math.floor((courseData.info.total_duration || 0) / 60)} دقیقه
+                  {Math.floor((userProgress?.course_progress.watched_duration || 0) / 60)} از {Math.floor(courseData.info.total_duration / 60)} دقیقه
                 </span>
               </div>
 
@@ -127,15 +122,15 @@ const CourseInfoCard: React.FC<CourseInfoCardProps> = ({
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6 text-center">
           <div>
-            <div className="text-2xl font-bold text-orange-600">{courseData.info.total_lessons || 0}</div>
+            <div className="text-2xl font-bold text-orange-600">{courseData.info.total_lessons}</div>
             <div className="text-sm text-gray-600">درس</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-orange-600">{Math.floor((courseData.info.total_duration || 0) / 60)}</div>
+            <div className="text-2xl font-bold text-orange-600">{Math.floor(courseData.info.total_duration / 60)}</div>
             <div className="text-sm text-gray-600">دقیقه</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-orange-600">{courseData.info.total_chapters || 0}</div>
+            <div className="text-2xl font-bold text-orange-600">{courseData.info.total_chapters}</div>
             <div className="text-sm text-gray-600">سرفصل</div>
           </div>
         </div>
@@ -187,7 +182,7 @@ const CourseInfoCard: React.FC<CourseInfoCardProps> = ({
           <div className="space-y-3 text-sm">
             <div className="flex justify-between items-center">
               <span className="text-gray-600">مدرس:</span>
-              <span className="font-medium">{courseData.info.instructor || 'نامشخص'}</span>
+              <span className="font-medium">{courseData.info.instructor}</span>
             </div>
             
             <div className="flex justify-between items-center">
@@ -195,7 +190,7 @@ const CourseInfoCard: React.FC<CourseInfoCardProps> = ({
               <span className="font-medium">
                 {courseData.info.level === 'beginner' ? 'مقدماتی' : 
                  courseData.info.level === 'intermediate' ? 'متوسط' : 
-                 courseData.info.level === 'advanced' ? 'پیشرفته' : courseData.info.level || 'نامشخص'}
+                 courseData.info.level === 'advanced' ? 'پیشرفته' : courseData.info.level}
               </span>
             </div>
             
@@ -206,13 +201,13 @@ const CourseInfoCard: React.FC<CourseInfoCardProps> = ({
             
             <div className="flex justify-between items-center">
               <span className="text-gray-600">تعداد دانشجو:</span>
-              <span className="font-medium">{(courseData.info.total_students || 0).toLocaleString()}</span>
+              <span className="font-medium">{courseData.info.total_students?.toLocaleString() || '0'}</span>
             </div>
 
-            {courseData.info.get_average_rating && courseData.info.get_average_rating > 0 && (
+            {courseData.info.average_rating && courseData.info.average_rating > 0 && (
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">امتیاز:</span>
-                <span className="font-medium">{courseData.info.get_average_rating.toFixed(1)} از 5</span>
+                <span className="font-medium">{courseData.info.average_rating.toFixed(1)} از 5</span>
               </div>
             )}
           </div>
