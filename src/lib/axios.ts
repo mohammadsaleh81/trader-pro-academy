@@ -1,5 +1,6 @@
+
 import axios from 'axios';
-import { TOKEN_STORAGE_KEY, API_BASE_URL } from './config';
+import { TOKEN_STORAGE_KEY, API_BASE_URL, API_ENDPOINTS } from './config';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -42,8 +43,8 @@ api.interceptors.response.use(
         originalRequest._retry = true;
         
         try {
-          // Try to refresh the token
-          const response = await axios.post(`${API_BASE_URL}/auth/token/refresh/`, {
+          // Try to refresh the token using the correct endpoint
+          const response = await axios.post(`${API_BASE_URL}${API_ENDPOINTS.REFRESH_TOKEN}`, {
             refresh: tokens.refresh
           });
           
@@ -61,9 +62,14 @@ api.interceptors.response.use(
           // Retry the original request
           return api(originalRequest);
         } catch (refreshError) {
-          // If refresh token is invalid, clear tokens
+          // If refresh token is invalid, clear tokens and redirect to login
           localStorage.removeItem(TOKEN_STORAGE_KEY);
+          window.location.href = '/login';
         }
+      } else {
+        // No refresh token available, redirect to login
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+        window.location.href = '/login';
       }
     }
     
@@ -71,4 +77,4 @@ api.interceptors.response.use(
   }
 );
 
-export default api; 
+export default api;

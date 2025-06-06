@@ -33,6 +33,131 @@ interface AvatarResponse {
     avatar: string;
 }
 
+// Course interfaces
+export interface Course {
+    id: string;
+    title: string;
+    slug: string;
+    description: string;
+    thumbnail: string | null;
+    price: number;
+    discount_price?: number;
+    instructor_name: string;
+    duration: string;
+    level: string;
+    category: {
+        id: string;
+        name: string;
+        slug: string;
+    };
+    tags: Array<{
+        id: string;
+        name: string;
+        slug: string;
+    }>;
+    chapters: Chapter[];
+    total_lessons: number;
+    total_duration: string;
+    created_at: string;
+    is_enrolled: boolean;
+    progress_percentage: number;
+}
+
+export interface Chapter {
+    id: string;
+    title: string;
+    order: number;
+    lessons: Lesson[];
+}
+
+export interface Lesson {
+    id: string;
+    title: string;
+    description: string;
+    order: number;
+    duration: string;
+    video_url?: string;
+    content?: string;
+    is_completed: boolean;
+    is_locked: boolean;
+}
+
+// Order interfaces
+export interface Order {
+    id: string;
+    course: {
+        id: string;
+        title: string;
+        slug: string;
+        thumbnail: string;
+        price: number;
+    };
+    amount: number;
+    status: string;
+    payment_method: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateOrderRequest {
+    course_id: string;
+    payment_method: 'wallet' | 'gateway';
+}
+
+export interface CreateOrderResponse {
+    order_id: string;
+    payment_url?: string;
+    redirect_url?: string;
+    amount: number;
+    status: string;
+}
+
+// Payment interfaces
+export interface PaymentRequest {
+    order_id: string;
+    amount: number;
+    callback_url: string;
+}
+
+export interface PaymentResponse {
+    payment_url: string;
+    authority: string;
+    status: string;
+}
+
+export interface PaymentVerifyRequest {
+    authority: string;
+    status: string;
+}
+
+export interface PaymentVerifyResponse {
+    status: string;
+    ref_id?: string;
+    order_id: string;
+    amount: number;
+}
+
+// Wallet interfaces
+export interface Wallet {
+    id: string;
+    balance: number;
+    currency: string;
+    updated_at: string;
+}
+
+export interface Transaction {
+    id: string;
+    type: 'deposit' | 'withdraw' | 'purchase';
+    amount: number;
+    description: string;
+    status: string;
+    created_at: string;
+    order?: {
+        id: string;
+        course_title: string;
+    };
+}
+
 // Comment interfaces
 export interface CommentAuthor {
     id: string;
@@ -51,14 +176,12 @@ export interface CommentBase {
     is_approved: boolean;
 }
 
-// Article comment interface
 export interface ArticleComment extends CommentBase {
     article: string;
     parent: string | null;
     replies: ArticleComment[];
 }
 
-// Media comment interface (for videos, podcasts, etc.)
 export interface MediaComment extends CommentBase {
     content_type: string;
     object_id: string;
@@ -67,7 +190,6 @@ export interface MediaComment extends CommentBase {
     replies: MediaComment[];
 }
 
-// Create comment interfaces
 export interface CreateArticleComment {
     content: string;
     parent?: string | null;
@@ -167,6 +289,7 @@ class ApiService {
         localStorage.removeItem(TOKEN_STORAGE_KEY);
     }
 
+    // Auth methods
     async requestOTP(phoneNumber: string): Promise<RequestOTPResponse> {
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.REQUEST_OTP}`, {
             method: 'POST',
@@ -201,6 +324,7 @@ class ApiService {
         return data;
     }
 
+    // Profile methods
     async getProfile(): Promise<User> {
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE}`, {
             method: 'GET',
@@ -246,7 +370,7 @@ class ApiService {
         formData.append('avatar', file);
 
         const headers = this.getHeaders(true);
-        delete headers['Content-Type']; // Let the browser set the correct content type for FormData
+        delete headers['Content-Type'];
 
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AVATAR}`, {
             method: 'POST',
@@ -274,6 +398,154 @@ class ApiService {
         return response.json();
     }
 
+    // Course methods
+    async getCourses(): Promise<Course[]> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COURSES}`, {
+            method: 'GET',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get courses');
+        }
+
+        return response.json();
+    }
+
+    async getCourseBySlug(slug: string): Promise<Course> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COURSE_DETAIL(slug)}`, {
+            method: 'GET',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get course');
+        }
+
+        return response.json();
+    }
+
+    async getMyCourses(): Promise<Course[]> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.MY_COURSES}`, {
+            method: 'GET',
+            headers: this.getHeaders(true),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get my courses');
+        }
+
+        return response.json();
+    }
+
+    async enrollCourse(courseId: string): Promise<void> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COURSE_ENROLL(courseId)}`, {
+            method: 'POST',
+            headers: this.getHeaders(true),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to enroll in course');
+        }
+    }
+
+    // Order methods
+    async createOrder(orderData: CreateOrderRequest): Promise<CreateOrderResponse> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.ORDER_CREATE}`, {
+            method: 'POST',
+            headers: this.getHeaders(true),
+            body: JSON.stringify(orderData),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create order');
+        }
+
+        return response.json();
+    }
+
+    async getMyOrders(): Promise<Order[]> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.MY_ORDERS}`, {
+            method: 'GET',
+            headers: this.getHeaders(true),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get orders');
+        }
+
+        return response.json();
+    }
+
+    async getOrderById(orderId: string): Promise<Order> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.ORDER_DETAIL(orderId)}`, {
+            method: 'GET',
+            headers: this.getHeaders(true),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get order');
+        }
+
+        return response.json();
+    }
+
+    // Payment methods
+    async requestPayment(paymentData: PaymentRequest): Promise<PaymentResponse> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PAYMENT_REQUEST}`, {
+            method: 'POST',
+            headers: this.getHeaders(true),
+            body: JSON.stringify(paymentData),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to request payment');
+        }
+
+        return response.json();
+    }
+
+    async verifyPayment(verifyData: PaymentVerifyRequest): Promise<PaymentVerifyResponse> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PAYMENT_VERIFY}`, {
+            method: 'POST',
+            headers: this.getHeaders(true),
+            body: JSON.stringify(verifyData),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to verify payment');
+        }
+
+        return response.json();
+    }
+
+    // Wallet methods
+    async getWallet(): Promise<Wallet> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.WALLET_BALANCE}`, {
+            method: 'GET',
+            headers: this.getHeaders(true),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get wallet');
+        }
+
+        return response.json();
+    }
+
+    async getTransactions(): Promise<Transaction[]> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.WALLET_TRANSACTIONS}`, {
+            method: 'GET',
+            headers: this.getHeaders(true),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get transactions');
+        }
+
+        return response.json();
+    }
+
     login = this.verifyOTP;
 
     logout(): void {
@@ -281,8 +553,6 @@ class ApiService {
     }
 
     // Comment methods
-    
-    // Article comments
     async getArticleComments(articleId: string): Promise<ArticleComment[]> {
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.ARTICLE_COMMENTS(articleId)}`, {
             method: 'GET',
@@ -310,7 +580,6 @@ class ApiService {
         return response.json();
     }
 
-    // Video comments
     async getVideoComments(videoId: string): Promise<MediaComment[]> {
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.VIDEO_COMMENTS(videoId)}`, {
             method: 'GET',
@@ -338,7 +607,6 @@ class ApiService {
         return response.json();
     }
 
-    // Podcast comments
     async getPodcastComments(podcastId: string): Promise<MediaComment[]> {
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PODCAST_COMMENTS(podcastId)}`, {
             method: 'GET',
@@ -366,7 +634,6 @@ class ApiService {
         return response.json();
     }
 
-    // Generic media comments
     async getMediaComments(contentType: string, objectId: string): Promise<MediaComment[]> {
         const url = `${API_BASE_URL}${API_ENDPOINTS.MEDIA_COMMENTS}?content_type=${contentType}&object_id=${objectId}`;
         const response = await fetch(url, {
@@ -395,7 +662,6 @@ class ApiService {
         return response.json();
     }
 
-    // Update comment
     async updateMediaComment(commentId: string, content: string): Promise<MediaComment> {
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.MEDIA_COMMENT_DETAIL(commentId)}`, {
             method: 'PUT',
@@ -410,7 +676,6 @@ class ApiService {
         return response.json();
     }
 
-    // Delete comment
     async deleteMediaComment(commentId: string): Promise<void> {
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.MEDIA_COMMENT_DETAIL(commentId)}`, {
             method: 'DELETE',
@@ -424,7 +689,6 @@ class ApiService {
 }
 
 export const api = new ApiService();
-export type { User, AuthTokens, RequestOTPResponse, VerifyOTPResponse, AvatarResponse };
 
 // Helper function to convert relative thumbnail paths to absolute URLs
 const convertThumbnailToAbsoluteUrl = (thumbnail: string | null): string | null => {
@@ -588,7 +852,6 @@ export const bookmarksApi = {
         }
     },
     
-    // Helper function to check if an article is bookmarked
     isBookmarked: async (articleId: string): Promise<boolean> => {
         try {
             const bookmarks = await bookmarksApi.getAll();
@@ -599,7 +862,6 @@ export const bookmarksApi = {
         }
     },
     
-    // Helper function to find bookmark by article ID
     findByArticleId: async (articleId: string): Promise<BookmarkResponse | null> => {
         try {
             const bookmarks = await bookmarksApi.getAll();
@@ -701,3 +963,5 @@ function getAccessToken(): string | null {
     }
     return null;
 }
+
+export type { User, AuthTokens, RequestOTPResponse, VerifyOTPResponse, AvatarResponse };
