@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -100,7 +101,7 @@ const ContentDetailPage: React.FC = () => {
     fetchContent();
   }, [id, type, navigate, toast, bookmarks]);
 
-  const handleBookmark = React.useCallback(() => {
+  const handleBookmark = React.useCallback(async () => {
     if (!content || !id || !type) return;
     
     const contentType = type.replace(/s$/, '') as "article" | "video" | "podcast";
@@ -110,7 +111,7 @@ const ContentDetailPage: React.FC = () => {
         bookmark => bookmark.itemId === id && bookmark.itemType === contentType
       );
       if (bookmarkToRemove) {
-        removeBookmark(bookmarkToRemove.id);
+        await removeBookmark(id);
         setIsBookmarked(false);
         toast({
           title: "نشان حذف شد",
@@ -118,11 +119,7 @@ const ContentDetailPage: React.FC = () => {
         });
       }
     } else {
-      addBookmark({
-        itemId: id,
-        itemType: contentType,
-        userId: "user1"
-      });
+      await addBookmark(id);
       setIsBookmarked(true);
       toast({
         title: "به نشان‌ها اضافه شد",

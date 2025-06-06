@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Bookmark, BookmarkCheck, Calendar, Clock, User } from "lucide-react";
@@ -47,22 +48,18 @@ const ContentCard: React.FC<ContentCardProps> = React.memo(({
     b => b.itemId === stringId && b.itemType === type && b.userId === user.id
   ) : null;
   
-  const handleBookmark = React.useCallback((e: React.MouseEvent) => {
+  const handleBookmark = React.useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
     if (!user) return;
     
     if (bookmark) {
-      removeBookmark(bookmark.id);
+      await removeBookmark(stringId);
     } else {
-      addBookmark({
-        itemId: stringId,
-        itemType: type,
-        userId: user.id
-      });
+      await addBookmark(stringId);
     }
-  }, [user, bookmark, removeBookmark, addBookmark, stringId, type]);
+  }, [user, bookmark, removeBookmark, addBookmark, stringId]);
   
   // Mapping for content type labels in Persian
   const getTypeLabel = React.useCallback(() => {
@@ -113,6 +110,12 @@ const ContentCard: React.FC<ContentCardProps> = React.memo(({
     const target = e.target as HTMLImageElement;
     target.src = defaultThumbnail;
   }, []);
+
+  // Generate content URL based on type and id
+  const getContentUrl = React.useCallback(() => {
+    const baseType = type === "webinar" ? "webinar" : type;
+    return `/content/${baseType}/${stringId}`;
+  }, [type, stringId]);
 
   return (
     <Link to={getContentUrl()} className={cn("block", className)}>

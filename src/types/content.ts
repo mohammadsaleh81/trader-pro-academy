@@ -1,4 +1,5 @@
 
+
 import { Article, Video, Podcast as ApiPodcast } from "@/lib/api";
 
 // Content Types
@@ -68,11 +69,11 @@ export type Bookmark = {
   date: string; // derived from created_at
 };
 
-// Comment Type
+// Comment Type - updated to support course content
 export type Comment = {
   id: string;
   itemId: string;
-  itemType: ItemType;
+  itemType: "article" | "podcast" | "video" | "webinar" | "file"; // Note: excluding "course" from comment types
   userId: string;
   userName: string;
   userAvatar?: string;
