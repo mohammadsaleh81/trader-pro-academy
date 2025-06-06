@@ -1,9 +1,7 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { Bookmark, BookmarkCheck, Calendar, Clock, User } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useData } from "@/contexts/DataContext";
+import { Calendar, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DEFAULT_IMAGES } from "@/lib/config";
 
@@ -38,28 +36,8 @@ const ContentCard: React.FC<ContentCardProps> = React.memo(({
   fileType,
   className
 }) => {
-  const { user } = useAuth();
-  const { bookmarks, addBookmark, removeBookmark } = useData();
-  
   // Convert id to string for consistency
   const stringId = String(id);
-  
-  const bookmark = user ? bookmarks.find(
-    b => b.itemId === stringId && b.itemType === type && b.userId === user.id
-  ) : null;
-  
-  const handleBookmark = React.useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!user) return;
-    
-    if (bookmark) {
-      await removeBookmark(stringId);
-    } else {
-      await addBookmark(stringId);
-    }
-  }, [user, bookmark, removeBookmark, addBookmark, stringId]);
   
   // Mapping for content type labels in Persian
   const getTypeLabel = React.useCallback(() => {
@@ -128,21 +106,6 @@ const ContentCard: React.FC<ContentCardProps> = React.memo(({
             onError={handleImageError}
             loading="lazy"
           />
-          <div className="absolute top-2 right-2">
-            {user && (
-              <button
-                onClick={handleBookmark}
-                className="p-1.5 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200"
-                aria-label={bookmark ? "حذف از نشان‌ها" : "اضافه به نشان‌ها"}
-              >
-                {bookmark ? (
-                  <BookmarkCheck className="w-4 h-4 sm:w-5 sm:h-5 text-trader-500" />
-                ) : (
-                  <Bookmark className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                )}
-              </button>
-            )}
-          </div>
           <div className={cn("absolute top-2 left-2 px-2 py-1 text-xs text-white rounded-full", getTypeBgColor())}>
             {getTypeLabel()}
           </div>

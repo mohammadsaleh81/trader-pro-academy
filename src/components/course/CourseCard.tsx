@@ -249,10 +249,7 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
         </Link>
         <div className="mt-auto">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center">
-              <Star className="h-4 w-4 text-yellow-500 ml-1" />
-              <span className="text-xs font-medium">{rating}</span>
-            </div>
+            <div></div>
             {!isEnrolled && (
               <p className={`font-bold ${isFree ? "text-green-600" : "text-trader-500"} text-sm`}>
                 {isFree ? "رایگان" : `${price.toLocaleString()} تومان`}
