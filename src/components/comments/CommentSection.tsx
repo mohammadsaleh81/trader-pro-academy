@@ -35,7 +35,7 @@ export interface Comment {
 }
 
 interface CommentSectionProps {
-  contentType: "article" | "video" | "podcast";
+  contentType: "article" | "video" | "podcast" | "course";
   contentId: string;
   comments?: Comment[];
   onCommentAdd?: (comment: Comment) => void;
