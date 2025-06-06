@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Star, ShoppingCart, Loader, Wallet, CheckCircle } from "lucide-react";
+import { ShoppingCart, Loader, Wallet, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ProgressBar from "@/components/ui/progress-bar";
@@ -216,16 +216,17 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
   console.log(is_enrolled);
 
   return (
-    <div className="trader-card h-full flex flex-col min-h-[280px]">
+    <div className="bg-card text-card-foreground rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 h-full flex flex-col min-h-[280px] group hover:scale-[1.02] hover:-translate-y-1 border border-border">
       <Link to={isEnrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
-        <div className="relative h-40 w-full">
+        <div className="relative h-40 w-full overflow-hidden rounded-t-lg">
           <img
             src={thumbnail || "/placeholder-course.jpg"}
             alt={title}
-            className="w-full h-full object-cover rounded-t-xl"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             onError={handleImageError}
             loading="lazy"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           {isEnrolled && progress !== undefined && (
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent py-2 px-3">
               <ProgressBar 
@@ -244,14 +245,14 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
       </Link>
       <div className="p-3 flex-1 flex flex-col">
         <Link to={isEnrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
-          <h3 className="font-bold text-sm line-clamp-2 mb-1 min-h-[2.5rem]">{title}</h3>
-          <p className="text-gray-600 text-xs mb-2">مدرس: {instructor}</p>
+          <h3 className="font-bold text-sm line-clamp-2 mb-1 min-h-[2.5rem] group-hover:text-primary transition-colors duration-300">{title}</h3>
+          <p className="text-muted-foreground text-xs mb-2 group-hover:text-foreground/80 transition-colors duration-300">مدرس: {instructor}</p>
         </Link>
         <div className="mt-auto">
           <div className="flex items-center justify-between mb-3">
             <div></div>
             {!isEnrolled && (
-              <p className={`font-bold ${isFree ? "text-green-600" : "text-trader-500"} text-sm`}>
+              <p className={`font-bold ${isFree ? "text-green-600" : "text-trader-500"} text-sm transition-colors duration-300`}>
                 {isFree ? "رایگان" : `${price.toLocaleString()} تومان`}
               </p>
             )}
@@ -263,7 +264,7 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
           </div>
           <Button 
             variant={isEnrolled ? "outline" : "default"}
-            className={`w-full text-xs py-2 h-8 ${isEnrolled ? 'border-green-500 text-green-600 hover:bg-green-50' : ''}`}
+            className={`w-full text-xs py-2 h-8 transition-all duration-300 hover:scale-105 ${isEnrolled ? 'border-green-500 text-green-600 hover:bg-green-50' : ''}`}
             onClick={handleQuickBuy}
             disabled={isProcessing}
           >
@@ -287,7 +288,7 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
           </DialogHeader>
           <div className="py-4">
             {/* Course Info */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <div className="bg-muted rounded-lg p-4 mb-6">
               <div className="flex items-center">
                 <img
                   src={thumbnail || "/placeholder-course.jpg"}
@@ -296,33 +297,33 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
                 />
                 <div>
                   <h3 className="font-bold text-lg">{title}</h3>
-                  <p className="text-gray-600 text-sm">مدرس: {instructor}</p>
+                  <p className="text-muted-foreground text-sm">مدرس: {instructor}</p>
                 </div>
               </div>
             </div>
 
             {/* Purchase Details */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <div className="flex items-center">
                   <ShoppingCart className="h-5 w-5 text-blue-600 ml-2" />
-                  <span className="text-blue-800">مبلغ دوره:</span>
+                  <span className="text-blue-800 dark:text-blue-400">مبلغ دوره:</span>
                 </div>
                 <span className="font-bold text-blue-600">{formatCurrencyWithUnit(price)}</span>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
                 <div className="flex items-center">
                   <Wallet className="h-5 w-5 text-green-600 ml-2" />
-                  <span className="text-green-800">موجودی فعلی شما:</span>
+                  <span className="text-green-800 dark:text-green-400">موجودی فعلی شما:</span>
                 </div>
                 <span className="font-bold text-green-600">{formatCurrencyWithUnit(wallet?.balance || 0)}</span>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg">
                 <div className="flex items-center">
                   <CheckCircle className="h-5 w-5 text-orange-600 ml-2" />
-                  <span className="text-orange-800">موجودی پس از خرید:</span>
+                  <span className="text-orange-800 dark:text-orange-400">موجودی پس از خرید:</span>
                 </div>
                 <span className="font-bold text-orange-600">
                   {formatCurrencyWithUnit((wallet?.balance || 0) - price)}
@@ -331,8 +332,8 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
             </div>
 
             {/* Confirmation Message */}
-            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-yellow-800 text-center">
+            <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <p className="text-yellow-800 dark:text-yellow-400 text-center">
                 مبلغ <span className="font-bold">{formatCurrencyWithUnit(price)}</span> از کیف پول شما 
                 برای خرید دوره <span className="font-bold">"{title}"</span> کم می‌شود.
               </p>

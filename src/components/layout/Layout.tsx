@@ -48,25 +48,21 @@ const Layout: React.FC<LayoutProps> = ({
     }
   }, [initialLoading]);
 
-  // Add touch optimizations
+  // Enhanced touch optimizations
   useEffect(() => {
-    // Increase active/focus states for touch devices
     if (isMobile) {
       document.documentElement.classList.add('touch-device');
       
-      // Add touch-specific classes without using preventDefault
       const interactiveElements = document.querySelectorAll('button, a, input, select, textarea');
       interactiveElements.forEach(el => {
         el.classList.add('touch-target');
         
-        // Use non-passive listener only where absolutely necessary
-        // and don't call preventDefault for general touches
         el.addEventListener('touchstart', () => {
           el.classList.add('touch-active');
         }, { passive: true });
         
         el.addEventListener('touchend', () => {
-          el.classList.remove('touch-active');
+          setTimeout(() => el.classList.remove('touch-active'), 150);
         }, { passive: true });
       });
     }
@@ -74,7 +70,6 @@ const Layout: React.FC<LayoutProps> = ({
     return () => {
       document.documentElement.classList.remove('touch-device');
       
-      // Clean up if component unmounts
       const interactiveElements = document.querySelectorAll('.touch-target');
       interactiveElements.forEach(el => {
         el.classList.remove('touch-target', 'touch-active');
@@ -101,13 +96,13 @@ const Layout: React.FC<LayoutProps> = ({
 
   return (
     <ErrorBoundary>
-      <div className={`flex flex-col min-h-screen bg-gray-50 ${browserInfo.isSafari ? 'safari-flex-fix' : ''}`} dir="rtl">
+      <div className={`flex flex-col min-h-screen bg-background transition-colors duration-300 ${browserInfo.isSafari ? 'safari-flex-fix' : ''}`} dir="rtl">
         <Header />
-        <main className={`flex-1 pb-20 px-4 sm:px-6 ${!fullWidth && "max-w-7xl mx-auto w-full"}`}>
+        <main className={`flex-1 pb-20 px-4 sm:px-6 transition-all duration-300 ${!fullWidth && "max-w-7xl mx-auto w-full"}`}>
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center h-[50vh]">
-              <Loader className="h-12 w-12 text-trader-500 animate-spin mb-4" />
-              <p className="text-lg font-medium text-gray-600">در حال بارگیری...</p>
+            <div className="flex flex-col items-center justify-center h-[50vh] animate-fade-in">
+              <Loader className="h-12 w-12 text-primary animate-spin mb-4" />
+              <p className="text-lg font-medium text-muted-foreground">در حال بارگیری...</p>
             </div>
           ) : (
             <div className={mounted ? "page-transition" : ""}>

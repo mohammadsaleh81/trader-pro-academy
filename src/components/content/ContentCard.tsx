@@ -96,40 +96,41 @@ const ContentCard: React.FC<ContentCardProps> = React.memo(({
   }, [type, stringId]);
 
   return (
-    <Link to={getContentUrl()} className={cn("block", className)}>
-      <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 h-full min-h-[260px] sm:min-h-[320px] flex flex-col">
-        <div className="relative">
+    <Link to={getContentUrl()} className={cn("block group", className)}>
+      <div className="bg-card text-card-foreground rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 h-full min-h-[260px] sm:min-h-[320px] flex flex-col group-hover:scale-[1.02] group-hover:-translate-y-1 border border-border">
+        <div className="relative overflow-hidden rounded-t-lg">
           <img
             src={thumbnail || defaultThumbnail}
             alt={title}
-            className="w-full h-32 sm:h-44 object-cover rounded-t-lg"
+            className="w-full h-32 sm:h-44 object-cover transition-transform duration-500 group-hover:scale-110"
             onError={handleImageError}
             loading="lazy"
           />
-          <div className={cn("absolute top-2 left-2 px-2 py-1 text-xs text-white rounded-full", getTypeBgColor())}>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className={cn("absolute top-2 left-2 px-2 py-1 text-xs text-white rounded-full backdrop-blur-sm transition-transform duration-300 group-hover:scale-110", getTypeBgColor())}>
             {getTypeLabel()}
           </div>
         </div>
         <div className="p-3 sm:p-4 flex-1 flex flex-col">
-          <h3 className="text-sm sm:text-base font-semibold mb-2 line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem]">{title}</h3>
+          <h3 className="text-sm sm:text-base font-semibold mb-2 line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem] group-hover:text-primary transition-colors duration-300">{title}</h3>
           {description && (
-            <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2 flex-1">{description}</p>
+            <p className="text-muted-foreground text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2 flex-1 group-hover:text-foreground/80 transition-colors duration-300">{description}</p>
           )}
-          <div className="flex items-center text-xs sm:text-sm text-gray-500 gap-2 sm:gap-4 mt-auto">
+          <div className="flex items-center text-xs sm:text-sm text-muted-foreground gap-2 sm:gap-4 mt-auto">
             {author && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 group-hover:text-foreground transition-colors duration-300">
                 <User className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="truncate text-xs">{author}</span>
               </div>
             )}
             {date && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 group-hover:text-foreground transition-colors duration-300">
                 <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="text-xs">{formatDateOnly(date)}</span>
               </div>
             )}
             {duration && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 group-hover:text-foreground transition-colors duration-300">
                 <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="text-xs">{duration}</span>
               </div>
