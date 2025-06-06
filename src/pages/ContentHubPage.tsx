@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import ContentListWithLinks from "@/components/content/ContentListWithLinks";
@@ -70,9 +71,13 @@ const ContentHubPage: React.FC = () => {
   };
 
   const isCurrentTabLoading = () => {
+    if (typeof isLoading === 'boolean') {
+      return isLoading;
+    }
+    
     switch (activeTab) {
-      case "articles": return isLoading.articles;
-      case "videos": return isLoading.videos;
+      case "articles": return isLoading?.articles || false;
+      case "videos": return isLoading?.videos || false;
       default: return false;
     }
   };

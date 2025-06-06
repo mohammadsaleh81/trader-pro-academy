@@ -118,7 +118,11 @@ const ContentDetailPage: React.FC = () => {
         });
       }
     } else {
-      addBookmark(id, contentType, "user1");
+      addBookmark({
+        itemId: id,
+        itemType: contentType,
+        userId: "user1"
+      });
       setIsBookmarked(true);
       toast({
         title: "به نشان‌ها اضافه شد",
@@ -172,8 +176,6 @@ const ContentDetailPage: React.FC = () => {
               
               <div className="flex justify-end mb-6">
                 <ContentActions 
-                  isBookmarked={isBookmarked}
-                  onBookmark={handleBookmark}
                   title={content.title}
                 />
               </div>

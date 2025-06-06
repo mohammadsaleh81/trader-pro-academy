@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Bookmark, BookmarkCheck, Calendar, Clock, User } from "lucide-react";
@@ -57,7 +56,11 @@ const ContentCard: React.FC<ContentCardProps> = React.memo(({
     if (bookmark) {
       removeBookmark(bookmark.id);
     } else {
-      addBookmark(stringId, type, user.id);
+      addBookmark({
+        itemId: stringId,
+        itemType: type,
+        userId: user.id
+      });
     }
   }, [user, bookmark, removeBookmark, addBookmark, stringId, type]);
   

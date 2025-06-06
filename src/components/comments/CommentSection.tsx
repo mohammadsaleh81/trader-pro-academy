@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +17,8 @@ export interface Comment {
     first_name: string;
     last_name: string;
     thumbnail?: string;
+    username?: string;
+    email?: string;
   };
   author?: {
     id: string;
@@ -23,6 +26,7 @@ export interface Comment {
     last_name: string;
     username?: string;
     email?: string;
+    thumbnail?: string;
   };
   content: string;
   created_at: string;
@@ -275,7 +279,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   const getUserName = (comment: Comment) => {
     const author = comment.author || comment.user;
     if (!author) return 'کاربر ناشناس';
-    return `${author.first_name || ''} ${author.last_name || ''}`.trim() || author.username || author.email || 'کاربر';
+    const fullName = `${author.first_name || ''} ${author.last_name || ''}`.trim();
+    return fullName || author.username || author.email || 'کاربر';
   };
 
   const getUserThumbnail = (comment: Comment) => {
