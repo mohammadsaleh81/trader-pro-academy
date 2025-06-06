@@ -73,7 +73,7 @@ export type Bookmark = {
 export type Comment = {
   id: string;
   itemId: string;
-  itemType: "article" | "podcast" | "video" | "webinar" | "file"; // Note: excluding "course" from comment types
+  itemType: "article" | "podcast" | "video" | "webinar" | "file" | "course"; // Now including "course"
   userId: string;
   userName: string;
   userAvatar?: string;
