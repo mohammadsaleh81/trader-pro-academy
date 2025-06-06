@@ -32,7 +32,7 @@ const ContentHubPage: React.FC = () => {
   };
 
   const [activeTab, setActiveTab] = useState<ContentTab>(getInitialTab());
-  const { articles, podcasts, videos, webinars, files, isLoading } = useData();
+  const { articles, podcasts, videos, webinars, files, loadingStates } = useData();
   const [key, setKey] = useState(0);
 
   useEffect(() => {
@@ -71,13 +71,13 @@ const ContentHubPage: React.FC = () => {
   };
 
   const isCurrentTabLoading = () => {
-    if (typeof isLoading === 'boolean') {
-      return isLoading;
+    if (!loadingStates) {
+      return false;
     }
     
     switch (activeTab) {
-      case "articles": return isLoading?.articles || false;
-      case "videos": return isLoading?.videos || false;
+      case "articles": return loadingStates.articles || false;
+      case "videos": return loadingStates.videos || false;
       default: return false;
     }
   };

@@ -176,6 +176,7 @@ const ContentDetailPage: React.FC = () => {
               
               <div className="flex justify-end mb-6">
                 <ContentActions 
+                  articleId={id!}
                   title={content.title}
                 />
               </div>

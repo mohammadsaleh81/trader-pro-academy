@@ -1,3 +1,4 @@
+
 import { Article, Video, Podcast as ApiPodcast } from "@/lib/api";
 
 // Content Types
@@ -40,7 +41,7 @@ export type File = {
   tags: string[];
 };
 
-// Item Types for bookmarks
+// Item Types for bookmarks - updated to include course
 export type ItemType = "article" | "podcast" | "video" | "webinar" | "file" | "course";
 
 // Updated Bookmark Type to match API response

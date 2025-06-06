@@ -64,17 +64,6 @@ const ContentCard: React.FC<ContentCardProps> = React.memo(({
     }
   }, [user, bookmark, removeBookmark, addBookmark, stringId, type]);
   
-  const getContentUrl = React.useCallback(() => {
-    switch (type) {
-      case "article": return `/articles/${stringId}`;
-      case "podcast": return `/podcasts/${stringId}`;
-      case "video": return `/videos/${stringId}`;
-      case "webinar": return `/webinars/${stringId}`;
-      case "file": return `/files/${stringId}`;
-      default: return "#";
-    }
-  }, [type, stringId]);
-
   // Mapping for content type labels in Persian
   const getTypeLabel = React.useCallback(() => {
     switch (type) {

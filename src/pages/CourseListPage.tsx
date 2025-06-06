@@ -17,7 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
 const CourseListPage = () => {
-  const { courses, isLoading } = useData();
+  const { courses, loadingStates } = useData();
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -36,7 +36,7 @@ const CourseListPage = () => {
 
   // Filter courses based on search term and filters
   useEffect(() => {
-    if (isLoading.courses) {
+    if (loadingStates?.courses) {
       setFilteredCourses([]);
       return;
     }
@@ -75,7 +75,7 @@ const CourseListPage = () => {
     }
     
     setFilteredCourses(result);
-  }, [searchTerm, courses, selectedCategories, selectedLevels, priceRange, isLoading.courses]);
+  }, [searchTerm, courses, selectedCategories, selectedLevels, priceRange, loadingStates?.courses]);
 
   const toggleCategory = (category: string) => {
     setSelectedCategories(prev =>
@@ -125,14 +125,14 @@ const CourseListPage = () => {
                 className="pr-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                disabled={isLoading.courses}
+                disabled={loadingStates?.courses}
               />
             </div>
             
             <div className="flex gap-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="flex gap-2" disabled={isLoading.courses}>
+                  <Button variant="outline" className="flex gap-2" disabled={loadingStates?.courses}>
                     <Filter className="h-4 w-4" />
                     فیلترها
                     <ChevronDown className="h-4 w-4" />
@@ -244,7 +244,7 @@ const CourseListPage = () => {
           </div>
           
           {/* Selected Filters */}
-          {!isLoading.courses && (selectedCategories.length > 0 || selectedLevels.length > 0 || priceRange !== "all") && (
+          {!loadingStates?.courses && (selectedCategories.length > 0 || selectedLevels.length > 0 || priceRange !== "all") && (
             <div className="flex flex-wrap gap-2 mt-4">
               {selectedCategories.map((category) => (
                 <div
@@ -295,7 +295,7 @@ const CourseListPage = () => {
         
         {/* Courses Grid */}
         <div className="mb-8">
-          {isLoading.courses ? (
+          {loadingStates?.courses ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {Array.from({ length: 12 }).map((_, index) => (
                 <CourseCardSkeleton key={`skeleton-${index}`} />
