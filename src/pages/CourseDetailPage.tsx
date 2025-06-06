@@ -13,12 +13,14 @@ import { useCourse } from "@/contexts/CourseContext";
 import CourseHero from "@/components/course/CourseHero";
 import CourseInfoCard from "@/components/course/CourseInfoCard";
 import CourseContent from "@/components/course/CourseContent";
+import CourseMobileActions from "@/components/course/CourseMobileActions";
 import CommentSection from "@/components/comments/CommentSection";
 import { CheckCircle, Clock, Users, Star, Wallet, ShoppingCart } from "lucide-react";
 import api from "@/lib/axios";
 import { clearPendingCourse } from '@/lib/cache';
 import { debugPurchase } from '@/lib/purchase-debug';
 import { DEFAULT_IMAGES } from '@/lib/config';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const CourseDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -32,6 +34,7 @@ const CourseDetailPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPurchaseConfirm, setShowPurchaseConfirm] = useState(false);
+  const isMobile = useIsMobile();
 
   // Helper function for formatting currency
   const formatCurrency = (amount: number): string => {
@@ -121,7 +124,6 @@ const CourseDetailPage: React.FC = () => {
         return;
       }
 
-      // Call the backend enrollment API
       const enrollmentData = { course_id: parseInt(courseData.info.id) };
       debugPurchase.trackApiCall(`/crs/courses/${slug}/enroll/`, 'POST', enrollmentData);
       
@@ -130,11 +132,9 @@ const CourseDetailPage: React.FC = () => {
       debugPurchase.trackApiResponse(`/crs/courses/${slug}/enroll/`, enrollResponse.status, enrollResponse.data);
 
       if (enrollResponse.status === 201) {
-        // Clear pending course data since purchase is successful
         clearPendingCourse();
         debugPurchase.success('Purchase completed successfully');
         
-        // Update local state
         enrollCourse(courseData.info.id.toString());
 
         toast({
@@ -142,13 +142,11 @@ const CourseDetailPage: React.FC = () => {
           description: `دوره ${courseData.info.title} با موفقیت خریداری شد`,
         });
 
-        // Refresh course details to get updated enrollment status
         const updatedDetails = await refreshCourseDetails(slug);
         if (updatedDetails) {
           setCourseData(updatedDetails);
         }
 
-        // Refresh wallet to show updated balance
         refetchWallet();
 
         setIsProcessing(false);
@@ -158,7 +156,6 @@ const CourseDetailPage: React.FC = () => {
       console.error('Error processing purchase:', error);
       setIsProcessing(false);
       
-      // Handle specific enrollment errors
       if (error.response?.status === 400) {
         const errorData = error.response.data;
         let errorMsg = "خطا در پردازش خرید";
@@ -218,7 +215,6 @@ const CourseDetailPage: React.FC = () => {
 
     const coursePrice = parseFloat(courseData.info.price);
     
-    // Check wallet balance first
     if (wallet && wallet.balance < coursePrice) {
       const shortfall = coursePrice - wallet.balance;
       
@@ -233,7 +229,6 @@ const CourseDetailPage: React.FC = () => {
       return;
     }
 
-    // Show confirmation dialog
     setShowPurchaseConfirm(true);
   };
 
@@ -248,7 +243,6 @@ const CourseDetailPage: React.FC = () => {
     const coursePrice = parseFloat(courseData.info.price);
 
     if (coursePrice === 0) {
-      // Free course enrollment
       setIsProcessing(true);
       try {
         const enrollResponse = await api.post(`/crs/courses/${slug}/enroll/`, {
@@ -256,7 +250,6 @@ const CourseDetailPage: React.FC = () => {
         });
 
         if (enrollResponse.status === 201) {
-          // Clear pending course data since enrollment is successful
           clearPendingCourse();
           
           enrollCourse(courseData.info.id.toString());
@@ -266,7 +259,6 @@ const CourseDetailPage: React.FC = () => {
             description: `شما با موفقیت در دوره ${courseData.info.title} ثبت‌نام شدید`,
           });
 
-          // Refresh course details to get updated enrollment status
           const updatedDetails = await refreshCourseDetails(slug);
           if (updatedDetails) {
             setCourseData(updatedDetails);
@@ -313,7 +305,6 @@ const CourseDetailPage: React.FC = () => {
       return;
     }
 
-    // Paid course - redirect to purchase flow
     handlePurchase();
   };
 
@@ -322,15 +313,17 @@ const CourseDetailPage: React.FC = () => {
       <Layout>
         <div className="min-h-screen bg-gray-50">
           <div className="animate-pulse">
-            <div className="h-80 bg-gray-200 mb-8"></div>
+            <div className={`${isMobile ? 'h-48' : 'h-80'} bg-gray-200 mb-8`}></div>
             <div className="trader-container">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
+              <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'} gap-8`}>
+                <div className={isMobile ? '' : 'lg:col-span-2'}>
                   <div className="h-96 bg-gray-200 rounded-lg"></div>
                 </div>
-                <div className="lg:col-span-1">
-                  <div className="h-96 bg-gray-200 rounded-lg"></div>
-                </div>
+                {!isMobile && (
+                  <div className="lg:col-span-1">
+                    <div className="h-96 bg-gray-200 rounded-lg"></div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -352,114 +345,125 @@ const CourseDetailPage: React.FC = () => {
     );
   }
 
-  // بررسی ثبت‌نام کاربر در دوره
   const isEnrolled = courseData.info.is_enrolled || (courseData.user_progress !== undefined && courseData.user_progress !== null);
   const coursePrice = parseFloat(courseData.info.price);
   const isFree = coursePrice === 0;
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-50">
+      <div className={`min-h-screen bg-gray-50 ${isMobile ? 'pb-20' : ''}`}>
         <CourseHero courseData={courseData} />
 
-        <div className="trader-container py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content - Left Side */}
-            <div className="lg:col-span-2">
+        <div className={`trader-container ${isMobile ? 'py-4 px-3' : 'py-8'}`}>
+          <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'} gap-8`}>
+            {/* Main Content */}
+            <div className={isMobile ? '' : 'lg:col-span-2'}>
               <Tabs defaultValue="content" className="w-full">
-                <TabsList className="grid w-full grid-cols-4" dir="rtl">
-                  <TabsTrigger value="content">محتوای دوره</TabsTrigger>
-                  <TabsTrigger value="info">اطلاعات دوره</TabsTrigger>
-                  <TabsTrigger value="comments">نظرات</TabsTrigger>
-                  <TabsTrigger value="reviews">بازخوردها</TabsTrigger>
+                <TabsList className={`grid w-full grid-cols-4 ${isMobile ? 'text-xs' : ''}`} dir="rtl">
+                  <TabsTrigger value="content" className={isMobile ? 'text-xs px-2' : ''}>محتوا</TabsTrigger>
+                  <TabsTrigger value="info" className={isMobile ? 'text-xs px-2' : ''}>اطلاعات</TabsTrigger>
+                  <TabsTrigger value="comments" className={isMobile ? 'text-xs px-2' : ''}>نظرات</TabsTrigger>
+                  <TabsTrigger value="reviews" className={isMobile ? 'text-xs px-2' : ''}>بازخورد</TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="content" className="mt-6">
+                <TabsContent value="content" className={`${isMobile ? 'mt-3' : 'mt-6'}`}>
                   <CourseContent courseData={courseData} />
                 </TabsContent>
                 
-                <TabsContent value="info" className="mt-6">
-                  <div className="bg-white rounded-lg p-6 shadow-sm">
-                    <h2 className="text-2xl font-bold mb-6 text-right">درباره دوره</h2>
+                <TabsContent value="info" className={`${isMobile ? 'mt-3' : 'mt-6'}`}>
+                  <div className={`bg-white rounded-lg shadow-sm ${isMobile ? 'p-3' : 'p-6'}`}>
+                    <h2 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold mb-6 text-right`}>درباره دوره</h2>
                     
                     {/* Course Highlights */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                      <div className="bg-orange-50 rounded-lg p-4 text-center">
-                        <Clock className="h-8 w-8 text-orange-600 mx-auto mb-2" />
-                        <div className="text-lg font-bold text-orange-600">{Math.floor(courseData.info.total_duration / 60)}</div>
-                        <div className="text-sm text-gray-600">دقیقه ویدیو</div>
+                    <div className={`grid ${isMobile ? 'grid-cols-2 gap-2 mb-4' : 'grid-cols-2 md:grid-cols-4 gap-4 mb-8'}`}>
+                      <div className={`bg-orange-50 rounded-lg ${isMobile ? 'p-2' : 'p-4'} text-center`}>
+                        <Clock className={`${isMobile ? 'h-5 w-5' : 'h-8 w-8'} text-orange-600 mx-auto mb-2`} />
+                        <div className={`${isMobile ? 'text-sm' : 'text-lg'} font-bold text-orange-600`}>
+                          {Math.floor(courseData.info.total_duration / 60)}
+                        </div>
+                        <div className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>دقیقه ویدیو</div>
                       </div>
                       
-                      <div className="bg-blue-50 rounded-lg p-4 text-center">
-                        <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                        <div className="text-lg font-bold text-blue-600">{courseData.info.total_students}</div>
-                        <div className="text-sm text-gray-600">دانشجو</div>
+                      <div className={`bg-blue-50 rounded-lg ${isMobile ? 'p-2' : 'p-4'} text-center`}>
+                        <Users className={`${isMobile ? 'h-5 w-5' : 'h-8 w-8'} text-blue-600 mx-auto mb-2`} />
+                        <div className={`${isMobile ? 'text-sm' : 'text-lg'} font-bold text-blue-600`}>
+                          {courseData.info.total_students}
+                        </div>
+                        <div className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>دانشجو</div>
                       </div>
                       
-                      <div className="bg-green-50 rounded-lg p-4 text-center">
-                        <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                        <div className="text-lg font-bold text-green-600">{courseData.info.total_lessons}</div>
-                        <div className="text-sm text-gray-600">درس</div>
+                      <div className={`bg-green-50 rounded-lg ${isMobile ? 'p-2' : 'p-4'} text-center`}>
+                        <CheckCircle className={`${isMobile ? 'h-5 w-5' : 'h-8 w-8'} text-green-600 mx-auto mb-2`} />
+                        <div className={`${isMobile ? 'text-sm' : 'text-lg'} font-bold text-green-600`}>
+                          {courseData.info.total_lessons}
+                        </div>
+                        <div className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>درس</div>
                       </div>
                       
-                      <div className="bg-purple-50 rounded-lg p-4 text-center">
-                        <Star className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                        <div className="text-lg font-bold text-purple-600">{courseData.info.average_rating ? courseData.info.average_rating.toFixed(1) : '0.0'}</div>
-                        <div className="text-sm text-gray-600">امتیاز</div>
+                      <div className={`bg-purple-50 rounded-lg ${isMobile ? 'p-2' : 'p-4'} text-center`}>
+                        <Star className={`${isMobile ? 'h-5 w-5' : 'h-8 w-8'} text-purple-600 mx-auto mb-2`} />
+                        <div className={`${isMobile ? 'text-sm' : 'text-lg'} font-bold text-purple-600`}>
+                          {courseData.info.average_rating ? courseData.info.average_rating.toFixed(1) : '0.0'}
+                        </div>
+                        <div className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>امتیاز</div>
                       </div>
                     </div>
 
-                    <div className="prose prose-lg max-w-none text-right" dir="rtl">
-                      <p className="text-gray-700 leading-relaxed mb-6">
+                    <div className={`prose ${isMobile ? 'prose-sm' : 'prose-lg'} max-w-none text-right`} dir="rtl">
+                      <p className={`text-gray-700 leading-relaxed ${isMobile ? 'mb-4 text-sm' : 'mb-6'}`}>
                         {courseData.info.description}
                       </p>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                      <div className={`grid grid-cols-1 ${isMobile ? 'gap-3 mt-4' : 'md:grid-cols-2 gap-6 mt-8'}`}>
                         <div className="space-y-4">
-                          <div className="flex justify-between items-center py-3 border-b">
-                            <span className="text-gray-600">مدرس:</span>
-                            <span className="font-medium">{courseData.info.instructor}</span>
+                          <div className={`flex justify-between items-center ${isMobile ? 'py-2' : 'py-3'} border-b`}>
+                            <span className={`text-gray-600 ${isMobile ? 'text-sm' : ''}`}>مدرس:</span>
+                            <span className={`font-medium ${isMobile ? 'text-sm' : ''}`}>{courseData.info.instructor}</span>
                           </div>
                           
-                          <div className="flex justify-between items-center py-3 border-b">
-                            <span className="text-gray-600">سطح دوره:</span>
-                            <span className="font-medium">
+                          <div className={`flex justify-between items-center ${isMobile ? 'py-2' : 'py-3'} border-b`}>
+                            <span className={`text-gray-600 ${isMobile ? 'text-sm' : ''}`}>سطح دوره:</span>
+                            <span className={`font-medium ${isMobile ? 'text-sm' : ''}`}>
                               {courseData.info.level === 'beginner' ? 'مقدماتی' : 
                                courseData.info.level === 'intermediate' ? 'متوسط' : 
                                courseData.info.level === 'advanced' ? 'پیشرفته' : courseData.info.level}
                             </span>
                           </div>
                           
-                          <div className="flex justify-between items-center py-3 border-b">
-                            <span className="text-gray-600">زبان دوره:</span>
-                            <span className="font-medium">{courseData.info.language === 'fa' ? 'فارسی' : 'انگلیسی'}</span>
+                          <div className={`flex justify-between items-center ${isMobile ? 'py-2' : 'py-3'} border-b`}>
+                            <span className={`text-gray-600 ${isMobile ? 'text-sm' : ''}`}>زبان دوره:</span>
+                            <span className={`font-medium ${isMobile ? 'text-sm' : ''}`}>
+                              {courseData.info.language === 'fa' ? 'فارسی' : 'انگلیسی'}
+                            </span>
                           </div>
                         </div>
                         
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center py-3 border-b">
-                            <span className="text-gray-600">تعداد فصل:</span>
-                            <span className="font-medium">{courseData.info.total_chapters}</span>
+                        {!isMobile && (
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center py-3 border-b">
+                              <span className="text-gray-600">تعداد فصل:</span>
+                              <span className="font-medium">{courseData.info.total_chapters}</span>
+                            </div>
+                            
+                            <div className="flex justify-between items-center py-3 border-b">
+                              <span className="text-gray-600">تعداد درس:</span>
+                              <span className="font-medium">{courseData.info.total_lessons}</span>
+                            </div>
+                            
+                            <div className="flex justify-between items-center py-3 border-b">
+                              <span className="text-gray-600">مدت زمان:</span>
+                              <span className="font-medium">{Math.floor(courseData.info.total_duration / 60)} دقیقه</span>
+                            </div>
                           </div>
-                          
-                          <div className="flex justify-between items-center py-3 border-b">
-                            <span className="text-gray-600">تعداد درس:</span>
-                            <span className="font-medium">{courseData.info.total_lessons}</span>
-                          </div>
-                          
-                          <div className="flex justify-between items-center py-3 border-b">
-                            <span className="text-gray-600">مدت زمان:</span>
-                            <span className="font-medium">{Math.floor(courseData.info.total_duration / 60)} دقیقه</span>
-                          </div>
-                        </div>
+                        )}
                       </div>
                       
                       {courseData.info.tags && courseData.info.tags.length > 0 && (
-                        <div className="mt-8">
-                          <h3 className="text-lg font-semibold mb-4">برچسب‌ها</h3>
+                        <div className={isMobile ? 'mt-4' : 'mt-8'}>
+                          <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold mb-4`}>برچسب‌ها</h3>
                           <div className="flex flex-wrap gap-2">
                             {courseData.info.tags.map((tag, index) => (
-                              <span key={index} className="bg-orange-100 text-orange-800 text-sm px-3 py-1 rounded-full">
+                              <span key={index} className={`bg-orange-100 text-orange-800 ${isMobile ? 'text-xs px-2 py-1' : 'text-sm px-3 py-1'} rounded-full`}>
                                 {tag}
                               </span>
                             ))}
@@ -470,8 +474,8 @@ const CourseDetailPage: React.FC = () => {
                   </div>
                 </TabsContent>
                 
-                <TabsContent value="comments" className="mt-6">
-                  <div className="bg-white rounded-lg p-6 shadow-sm">
+                <TabsContent value="comments" className={`${isMobile ? 'mt-3' : 'mt-6'}`}>
+                  <div className={`bg-white rounded-lg shadow-sm ${isMobile ? 'p-3' : 'p-6'}`}>
                     <CommentSection
                       contentType="course"
                       contentId={courseData.info.id.toString()}
@@ -480,49 +484,55 @@ const CourseDetailPage: React.FC = () => {
                   </div>
                 </TabsContent>
                 
-                <TabsContent value="reviews" className="mt-6">
-                  <div className="bg-white rounded-lg p-6 shadow-sm">
-                    <h2 className="text-2xl font-bold mb-6 text-right">بازخوردهای دانشجویان</h2>
+                <TabsContent value="reviews" className={`${isMobile ? 'mt-3' : 'mt-6'}`}>
+                  <div className={`bg-white rounded-lg shadow-sm ${isMobile ? 'p-3' : 'p-6'}`}>
+                    <h2 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold mb-6 text-right`}>بازخوردهای دانشجویان</h2>
                     
                     {courseData.comments && courseData.comments.length > 0 ? (
                       <div className="space-y-6">
                         {courseData.comments.map((comment) => (
                           <div key={comment.id} className="border border-gray-200 rounded-lg p-4">
-                            <div className="flex justify-between items-start mb-3">
+                            <div className={`flex justify-between items-start ${isMobile ? 'mb-2' : 'mb-3'}`}>
                               <div className="text-right flex items-center">
                                 <img 
                                   src={comment.user.thumbnail || DEFAULT_IMAGES.USER_AVATAR} 
                                   alt={`${comment.user.first_name} ${comment.user.last_name}`}
-                                  className="w-10 h-10 rounded-full ml-3"
+                                  className={`${isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full ml-3`}
                                 />
-                                <span className="font-medium">
+                                <span className={`font-medium ${isMobile ? 'text-sm' : ''}`}>
                                   {comment.user.first_name} {comment.user.last_name}
                                 </span>
                               </div>
-                              <div className="text-sm text-gray-500">
+                              <div className={`text-gray-500 ${isMobile ? 'text-xs' : 'text-sm'}`}>
                                 {comment.created_at}
                               </div>
                             </div>
-                            <p className="text-gray-700 text-right leading-relaxed">{comment.content}</p>
+                            <p className={`text-gray-700 text-right leading-relaxed ${isMobile ? 'text-sm' : ''}`}>
+                              {comment.content}
+                            </p>
                             
                             {comment.replies && comment.replies.length > 0 && (
-                              <div className="mt-4 mr-6 space-y-3">
+                              <div className={`${isMobile ? 'mt-2 mr-4' : 'mt-4 mr-6'} space-y-3`}>
                                 {comment.replies.map((reply) => (
-                                  <div key={reply.id} className="bg-gray-50 p-3 rounded-lg">
-                                    <div className="flex justify-between items-start mb-2">
+                                  <div key={reply.id} className={`bg-gray-50 rounded-lg ${isMobile ? 'p-2' : 'p-3'}`}>
+                                    <div className={`flex justify-between items-start ${isMobile ? 'mb-1' : 'mb-2'}`}>
                                       <div className="flex items-center">
                                         <img 
                                           src={reply.user.thumbnail || DEFAULT_IMAGES.USER_AVATAR} 
                                           alt={`${reply.user.first_name} ${reply.user.last_name}`}
-                                          className="w-8 h-8 rounded-full ml-2"
+                                          className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} rounded-full ml-2`}
                                         />
-                                        <span className="text-sm font-medium">
+                                        <span className={`font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>
                                           {reply.user.first_name} {reply.user.last_name}
                                         </span>
                                       </div>
-                                      <span className="text-xs text-gray-500">{reply.created_at}</span>
+                                      <span className={`text-gray-500 ${isMobile ? 'text-xs' : 'text-xs'}`}>
+                                        {reply.created_at}
+                                      </span>
                                     </div>
-                                    <p className="text-sm text-gray-700 text-right">{reply.content}</p>
+                                    <p className={`text-gray-700 text-right ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                                      {reply.content}
+                                    </p>
                                   </div>
                                 ))}
                               </div>
@@ -531,7 +541,7 @@ const CourseDetailPage: React.FC = () => {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-gray-500">
+                      <div className={`text-center py-8 text-gray-500 ${isMobile ? 'text-sm' : ''}`}>
                         هنوز بازخوردی برای این دوره ثبت نشده است
                       </div>
                     )}
@@ -540,87 +550,107 @@ const CourseDetailPage: React.FC = () => {
               </Tabs>
             </div>
 
-            {/* Course Info Card - Right Side */}
-            <div className="lg:col-span-1">
-              <CourseInfoCard
-                courseData={courseData}
-                isEnrolled={isEnrolled}
-                isProcessing={isProcessing}
-                isFree={isFree}
-                coursePrice={coursePrice}
-                onPurchase={handlePurchase}
-                onEnroll={handleEnroll}
-              />
-            </div>
+            {/* Course Info Card - Desktop Only */}
+            {!isMobile && (
+              <div className="lg:col-span-1">
+                <CourseInfoCard
+                  courseData={courseData}
+                  isEnrolled={isEnrolled}
+                  isProcessing={isProcessing}
+                  isFree={isFree}
+                  coursePrice={coursePrice}
+                  onPurchase={handlePurchase}
+                  onEnroll={handleEnroll}
+                />
+              </div>
+            )}
           </div>
-                </div>
+        </div>
+
+        {/* Mobile Actions - Mobile Only */}
+        <CourseMobileActions
+          courseData={courseData}
+          isEnrolled={isEnrolled}
+          isProcessing={isProcessing}
+          isFree={isFree}
+          coursePrice={coursePrice}
+          onPurchase={handlePurchase}
+          onEnroll={handleEnroll}
+        />
       </div>
 
       {/* Purchase Confirmation Dialog */}
       <Dialog open={showPurchaseConfirm} onOpenChange={setShowPurchaseConfirm}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className={`${isMobile ? 'sm:max-w-[90vw] mx-4' : 'sm:max-w-[500px]'}`}>
           <DialogHeader>
             <DialogTitle className="text-center">تأیید خرید دوره</DialogTitle>
           </DialogHeader>
           <div className="py-4">
             {/* Course Info */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <div className={`bg-gray-50 rounded-lg ${isMobile ? 'p-3 mb-4' : 'p-4 mb-6'}`}>
               <div className="flex items-center">
                 <img
                   src={courseData?.info.thumbnail}
                   alt={courseData?.info.title}
-                  className="w-16 h-16 object-cover rounded-lg ml-4"
+                  className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} object-cover rounded-lg ml-4`}
                 />
                 <div>
-                  <h3 className="font-bold text-lg">{courseData?.info.title}</h3>
-                  <p className="text-gray-600 text-sm">مدرس: {courseData?.info.instructor}</p>
+                  <h3 className={`font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>{courseData?.info.title}</h3>
+                  <p className={`text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                    مدرس: {courseData?.info.instructor}
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Purchase Details */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className={`flex items-center justify-between ${isMobile ? 'p-2' : 'p-3'} bg-blue-50 border border-blue-200 rounded-lg`}>
                 <div className="flex items-center">
-                  <ShoppingCart className="h-5 w-5 text-blue-600 ml-2" />
-                  <span className="text-blue-800">مبلغ دوره:</span>
+                  <ShoppingCart className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-blue-600 ml-2`} />
+                  <span className={`text-blue-800 ${isMobile ? 'text-sm' : ''}`}>مبلغ دوره:</span>
                 </div>
-                <span className="font-bold text-blue-600">{formatCurrencyWithUnit(coursePrice)}</span>
+                <span className={`font-bold text-blue-600 ${isMobile ? 'text-sm' : ''}`}>
+                  {formatCurrencyWithUnit(coursePrice)}
+                </span>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className={`flex items-center justify-between ${isMobile ? 'p-2' : 'p-3'} bg-green-50 border border-green-200 rounded-lg`}>
                 <div className="flex items-center">
-                  <Wallet className="h-5 w-5 text-green-600 ml-2" />
-                  <span className="text-green-800">موجودی فعلی شما:</span>
+                  <Wallet className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-green-600 ml-2`} />
+                  <span className={`text-green-800 ${isMobile ? 'text-sm' : ''}`}>موجودی فعلی شما:</span>
                 </div>
-                <span className="font-bold text-green-600">{formatCurrencyWithUnit(wallet?.balance || 0)}</span>
+                <span className={`font-bold text-green-600 ${isMobile ? 'text-sm' : ''}`}>
+                  {formatCurrencyWithUnit(wallet?.balance || 0)}
+                </span>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className={`flex items-center justify-between ${isMobile ? 'p-2' : 'p-3'} bg-orange-50 border border-orange-200 rounded-lg`}>
                 <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-orange-600 ml-2" />
-                  <span className="text-orange-800">موجودی پس از خرید:</span>
+                  <CheckCircle className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-orange-600 ml-2`} />
+                  <span className={`text-orange-800 ${isMobile ? 'text-sm' : ''}`}>موجودی پس از خرید:</span>
                 </div>
-                <span className="font-bold text-orange-600">
+                <span className={`font-bold text-orange-600 ${isMobile ? 'text-sm' : ''}`}>
                   {formatCurrencyWithUnit((wallet?.balance || 0) - coursePrice)}
                 </span>
               </div>
             </div>
 
             {/* Confirmation Message */}
-            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-yellow-800 text-center">
+            <div className={`${isMobile ? 'mt-4 p-3' : 'mt-6 p-4'} bg-yellow-50 border border-yellow-200 rounded-lg`}>
+              <p className={`text-yellow-800 text-center ${isMobile ? 'text-sm' : ''}`}>
                 مبلغ <span className="font-bold">{formatCurrencyWithUnit(coursePrice)}</span> از کیف پول شما 
                 برای خرید دوره <span className="font-bold">"{courseData?.info.title}"</span> کم می‌شود.
               </p>
             </div>
           </div>
           
-          <DialogFooter className="flex justify-between sm:justify-between gap-2">
+          <DialogFooter className={`flex justify-between sm:justify-between ${isMobile ? 'gap-1' : 'gap-2'}`}>
             <Button 
               type="button" 
               variant="outline" 
               onClick={() => setShowPurchaseConfirm(false)}
+              className={isMobile ? 'text-sm' : ''}
             >
               انصراف
             </Button>
@@ -628,7 +658,7 @@ const CourseDetailPage: React.FC = () => {
               type="submit" 
               onClick={handlePurchaseConfirm}
               disabled={isProcessing}
-              className="bg-green-600 hover:bg-green-700"
+              className={`bg-green-600 hover:bg-green-700 ${isMobile ? 'text-sm' : ''}`}
             >
               {isProcessing ? "در حال پردازش..." : "تأیید و خرید"}
             </Button>

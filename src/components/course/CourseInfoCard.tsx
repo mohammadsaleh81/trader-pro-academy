@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -5,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart, Loader, Play, Clock, BookOpen, Award } from "lucide-react";
 import { CourseDetails } from "@/contexts/DataContext";
 import ProgressCircle from "@/components/ui/progress-circle";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CourseInfoCardProps {
   courseData: CourseDetails;
@@ -27,6 +29,12 @@ const CourseInfoCard: React.FC<CourseInfoCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const userProgress = courseData.user_progress;
+  const isMobile = useIsMobile();
+
+  // On mobile, this component is hidden in favor of CourseMobileActions
+  if (isMobile) {
+    return null;
+  }
 
   return (
     <Card className="sticky top-8">
