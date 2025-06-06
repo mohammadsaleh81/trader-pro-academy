@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
-import { api } from '@/lib/api';
 import { TOKEN_STORAGE_KEY, API_BASE_URL, API_ENDPOINTS } from '@/lib/config';
+import { useIsMobile } from '@/hooks/use-mobile';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -93,6 +93,7 @@ const LearnPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   
   const [learnData, setLearnData] = useState<LearnPageData | null>(null);
   const [currentLesson, setCurrentLesson] = useState<CourseLesson | null>(null);
@@ -102,12 +103,17 @@ const LearnPage: React.FC = () => {
   const [duration, setDuration] = useState(0);
 
   useEffect(() => {
+    console.log('LearnPage: courseId from params:', courseId);
+    console.log('LearnPage: user:', user ? 'authenticated' : 'not authenticated');
+    
     if (!user) {
+      console.log('LearnPage: No user, redirecting to login');
       navigate('/login');
       return;
     }
 
     if (!courseId) {
+      console.log('LearnPage: No courseId, redirecting to courses');
       navigate('/courses');
       return;
     }
@@ -117,13 +123,18 @@ const LearnPage: React.FC = () => {
 
   const fetchLearnData = async () => {
     setIsLoading(true);
+    console.log('LearnPage: Fetching learn data for course:', courseId);
+    
     try {
       const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COURSE_LEARN(courseId!)}`, {
         headers: getAuthHeaders(),
       });
 
+      console.log('LearnPage: API response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('LearnPage: Successfully fetched learn data:', data);
         setLearnData(data);
         
         // Set current lesson to next lesson or first lesson
@@ -133,6 +144,7 @@ const LearnPage: React.FC = () => {
           setCurrentLesson(data.chapters[0].lessons[0]);
         }
       } else if (response.status === 403) {
+        console.log('LearnPage: Access forbidden, redirecting to course detail');
         toast({
           title: "خطا در دسترسی",
           description: "برای دسترسی به این دوره باید در آن ثبت‌نام کرده باشید.",
@@ -140,6 +152,7 @@ const LearnPage: React.FC = () => {
         });
         navigate(`/courses/${courseId}`);
       } else if (response.status === 401) {
+        console.log('LearnPage: Unauthorized, redirecting to login');
         toast({
           title: "خطا در احراز هویت",
           description: "لطفا مجددا وارد شوید.",
@@ -147,10 +160,10 @@ const LearnPage: React.FC = () => {
         });
         navigate('/login');
       } else {
-        throw new Error('Failed to fetch learn data');
+        throw new Error(`HTTP ${response.status}: Failed to fetch learn data`);
       }
     } catch (error) {
-      console.error('Error fetching learn data:', error);
+      console.error('LearnPage: Error fetching learn data:', error);
       toast({
         title: "خطا",
         description: "مشکلی در دریافت اطلاعات دوره وجود دارد.",
@@ -238,16 +251,16 @@ const LearnPage: React.FC = () => {
       <Layout>
         <div className="min-h-screen bg-gray-50">
           <div className="container mx-auto px-4 py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-1 lg:grid-cols-4 gap-6'}`}>
               {/* Video Player Skeleton */}
-              <div className="lg:col-span-3">
+              <div className={isMobile ? 'order-1' : 'lg:col-span-3'}>
                 <Skeleton className="aspect-video w-full mb-4" />
                 <Skeleton className="h-8 w-3/4 mb-2" />
                 <Skeleton className="h-4 w-1/2" />
               </div>
               
               {/* Sidebar Skeleton */}
-              <div className="lg:col-span-1">
+              <div className={isMobile ? 'order-2' : 'lg:col-span-1'}>
                 <Skeleton className="h-96 w-full" />
               </div>
             </div>
@@ -262,8 +275,8 @@ const LearnPage: React.FC = () => {
       <Layout>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <Card>
-            <CardContent className="p-8 text-center">
-              <h2 className="text-xl font-bold mb-4">دوره یافت نشد</h2>
+            <CardContent className={`${isMobile ? 'p-4' : 'p-8'} text-center`}>
+              <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold mb-4`}>دوره یافت نشد</h2>
               <Button onClick={() => navigate('/courses')}>
                 بازگشت به لیست دوره‌ها
               </Button>
@@ -277,32 +290,32 @@ const LearnPage: React.FC = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className={`container mx-auto ${isMobile ? 'px-2 py-4' : 'px-4 py-8'}`}>
+          <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-1 lg:grid-cols-4 gap-6'}`}>
             {/* Main Video Area */}
-            <div className="lg:col-span-3">
+            <div className={isMobile ? 'order-1' : 'lg:col-span-3'}>
               {/* Video Player */}
-              <Card className="mb-6">
+              <Card className={isMobile ? 'mb-4' : 'mb-6'}>
                 <CardContent className="p-0">
                   <div className="aspect-video bg-black rounded-lg overflow-hidden">
                     {currentLesson?.video_url ? (
                       <div className="w-full h-full flex items-center justify-center text-white">
                         <div className="text-center">
-                          <Play className="h-16 w-16 mx-auto mb-4 opacity-70" />
-                          <p className="text-lg">{currentLesson.title}</p>
-                          <p className="text-sm opacity-70 mt-2">
+                          <Play className={`${isMobile ? 'h-12 w-12' : 'h-16 w-16'} mx-auto mb-4 opacity-70`} />
+                          <p className={`${isMobile ? 'text-base' : 'text-lg'}`}>{currentLesson.title}</p>
+                          <p className={`${isMobile ? 'text-xs' : 'text-sm'} opacity-70 mt-2`}>
                             ویدیو پلیر در حال توسعه...
                           </p>
-                          <div className="mt-4 flex gap-2 justify-center">
-                            <Button variant="secondary" size="sm">
+                          <div className={`mt-4 flex gap-2 justify-center ${isMobile ? 'flex-wrap' : ''}`}>
+                            <Button variant="secondary" size={isMobile ? "sm" : "sm"}>
                               <Play className="h-4 w-4 ml-1" />
                               پخش
                             </Button>
-                            <Button variant="secondary" size="sm">
+                            <Button variant="secondary" size={isMobile ? "sm" : "sm"}>
                               <Volume2 className="h-4 w-4 ml-1" />
                               صدا
                             </Button>
-                            <Button variant="secondary" size="sm">
+                            <Button variant="secondary" size={isMobile ? "sm" : "sm"}>
                               <Maximize className="h-4 w-4 ml-1" />
                               تمام صفحه
                             </Button>
@@ -319,13 +332,13 @@ const LearnPage: React.FC = () => {
               </Card>
 
               {/* Video Controls */}
-              <Card className="mb-6">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h1 className="text-xl font-bold" dir="rtl">
+              <Card className={isMobile ? 'mb-4' : 'mb-6'}>
+                <CardContent className={isMobile ? 'p-3' : 'p-4'}>
+                  <div className={`${isMobile ? 'mb-3' : 'flex items-center justify-between mb-4'}`}>
+                    <h1 className={`${isMobile ? 'text-lg mb-3' : 'text-xl'} font-bold`} dir="rtl">
                       {currentLesson?.title}
                     </h1>
-                    <div className="flex gap-2">
+                    <div className={`flex gap-2 ${isMobile ? 'flex-wrap' : ''}`}>
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -348,7 +361,7 @@ const LearnPage: React.FC = () => {
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="mb-4">
+                  <div className={isMobile ? 'mb-3' : 'mb-4'}>
                     <div className="flex justify-between text-sm text-gray-600 mb-1">
                       <span>پیشرفت درس</span>
                       <span>
@@ -369,7 +382,7 @@ const LearnPage: React.FC = () => {
 
                   {/* Lesson Info */}
                   <div className="text-sm text-gray-600" dir="rtl">
-                    <div className="flex items-center gap-4">
+                    <div className={`flex items-center gap-4 ${isMobile ? 'flex-wrap' : ''}`}>
                       <span className="flex items-center">
                         <Clock className="h-4 w-4 ml-1" />
                         {currentLesson?.duration} دقیقه
@@ -384,25 +397,27 @@ const LearnPage: React.FC = () => {
               </Card>
 
               {/* Lesson Description */}
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-bold mb-4" dir="rtl">توضیحات درس</h3>
-                  <div className="prose prose-sm max-w-none" dir="rtl">
-                    <p>{currentLesson?.content || 'توضیحی برای این درس ارائه نشده است.'}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              {!isMobile && (
+                <Card>
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-bold mb-4" dir="rtl">توضیحات درس</h3>
+                    <div className="prose prose-sm max-w-none" dir="rtl">
+                      <p>{currentLesson?.content || 'توضیحی برای این درس ارائه نشده است.'}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Sidebar */}
-            <div className="lg:col-span-1">
+            <div className={isMobile ? 'order-2' : 'lg:col-span-1'}>
               {/* Course Progress */}
-              <Card className="mb-6">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-bold mb-4" dir="rtl">پیشرفت دوره</h3>
+              <Card className={isMobile ? 'mb-4' : 'mb-6'}>
+                <CardContent className={isMobile ? 'p-4' : 'p-6'}>
+                  <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold mb-4`} dir="rtl">پیشرفت دوره</h3>
                   
                   <div className="text-center mb-4">
-                    <div className="text-3xl font-bold text-orange-600">
+                    <div className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-orange-600`}>
                       {Math.round(learnData.user_progress.completion_percentage)}%
                     </div>
                     <div className="text-sm text-gray-600">تکمیل شده</div>
@@ -410,7 +425,7 @@ const LearnPage: React.FC = () => {
 
                   <Progress value={learnData.user_progress.completion_percentage} className="mb-4" />
 
-                  <div className="space-y-2 text-sm">
+                  <div className={`space-y-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>
                     <div className="flex justify-between">
                       <span>دروس تکمیل شده:</span>
                       <span>{learnData.user_progress.completed_lessons} از {learnData.user_progress.total_lessons}</span>
@@ -425,13 +440,13 @@ const LearnPage: React.FC = () => {
 
               {/* Course Content */}
               <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-bold mb-4" dir="rtl">محتوای دوره</h3>
+                <CardContent className={isMobile ? 'p-4' : 'p-6'}>
+                  <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold mb-4`} dir="rtl">محتوای دوره</h3>
                   
                   <div className="space-y-4">
                     {learnData.chapters.map((chapter) => (
                       <div key={chapter.id} className="border rounded-lg p-3">
-                        <h4 className="font-semibold mb-2" dir="rtl">{chapter.title}</h4>
+                        <h4 className={`${isMobile ? 'text-sm' : 'font-semibold'} mb-2`} dir="rtl">{chapter.title}</h4>
                         
                         <div className="space-y-2">
                           {chapter.lessons.map((lesson) => (
@@ -453,7 +468,7 @@ const LearnPage: React.FC = () => {
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium truncate" dir="rtl">
+                                  <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium truncate`} dir="rtl">
                                     {lesson.title}
                                   </p>
                                   <p className="text-xs text-gray-500">
@@ -475,6 +490,18 @@ const LearnPage: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Mobile Lesson Description */}
+              {isMobile && currentLesson?.content && (
+                <Card className="mt-4">
+                  <CardContent className="p-4">
+                    <h3 className="text-base font-bold mb-3" dir="rtl">توضیحات درس</h3>
+                    <div className="prose prose-sm max-w-none text-sm" dir="rtl">
+                      <p>{currentLesson.content}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>
@@ -483,4 +510,4 @@ const LearnPage: React.FC = () => {
   );
 };
 
-export default LearnPage; 
+export default LearnPage;

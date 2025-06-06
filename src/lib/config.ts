@@ -1,4 +1,3 @@
-
 // export const API_BASE_URL = 'http://91.99.49.130:8000';
 export const API_BASE_URL = 'https://api.gport.sbs';
 
@@ -41,11 +40,11 @@ export const API_ENDPOINTS = {
     // Course endpoints
     COURSES: '/courses/',
     COURSE_DETAIL: (slug: string) => `/courses/${slug}/`,
-    COURSE_LEARN: (courseId: string) => `/courses/${courseId}/learn/`,
+    COURSE_LEARN: (courseId: string) => `/crs/courses/${courseId}/learn/`,
     COURSE_ENROLL: (courseId: string) => `/courses/${courseId}/enroll/`,
     MY_COURSES: '/courses/my-courses/',
-    LESSON_PROGRESS: (courseId: string, lessonId: string) => `/courses/${courseId}/lessons/${lessonId}/progress/`,
-    LESSON_COMPLETE: (courseId: string, lessonId: string) => `/courses/${courseId}/lessons/${lessonId}/complete/`,
+    LESSON_PROGRESS: (courseId: string, lessonId: string) => `/crs/courses/${courseId}/lessons/${lessonId}/progress/`,
+    LESSON_COMPLETE: (courseId: string, lessonId: string) => `/crs/courses/${courseId}/lessons/${lessonId}/complete/`,
     
     // Order endpoints
     ORDERS: '/orders/',
