@@ -1,27 +1,46 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
+import { useWallet } from "@/contexts/WalletContext";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { CourseDetails } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCourse } from "@/contexts/CourseContext";
 import CourseHero from "@/components/course/CourseHero";
 import CourseInfoCard from "@/components/course/CourseInfoCard";
 import CourseContent from "@/components/course/CourseContent";
 import CommentSection from "@/components/comments/CommentSection";
-import { CheckCircle, Clock, Users, Star } from "lucide-react";
+import { CheckCircle, Clock, Users, Star, Wallet, ShoppingCart } from "lucide-react";
+import api from "@/lib/axios";
+import { clearPendingCourse } from '@/lib/cache';
+import { debugPurchase } from '@/lib/purchase-debug';
+import { DEFAULT_IMAGES } from '@/lib/config';
 
 const CourseDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { wallet, updateWallet, enrollCourse, fetchCourseDetails, myCourses } = useData();
+  const { wallet } = useData();
+  const { refetchWallet } = useWallet();
+  const { enrollCourse, fetchCourseDetails, refreshCourseDetails } = useCourse();
   const [courseData, setCourseData] = useState<CourseDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showPurchaseConfirm, setShowPurchaseConfirm] = useState(false);
+
+  // Helper function for formatting currency
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('fa-IR').format(amount);
+  };
+
+  const formatCurrencyWithUnit = (amount: number): string => {
+    return `${formatCurrency(amount)} تومان`;
+  };
 
   useEffect(() => {
     const loadCourseDetails = async () => {
@@ -59,21 +78,36 @@ const CourseDetailPage: React.FC = () => {
     loadCourseDetails();
   }, [slug, navigate, toast, fetchCourseDetails]);
 
-  const handlePurchase = async () => {
+  const handlePurchaseConfirm = async () => {
+    setShowPurchaseConfirm(false);
+    
+    debugPurchase.log('Starting confirmed purchase process', { courseId: courseData?.info.id, slug });
+    
     if (!user) {
+      debugPurchase.warn('User not authenticated, redirecting to login');
       navigate("/login");
       return;
     }
 
-    if (!courseData || !wallet) return;
+    if (!courseData || !slug) {
+      debugPurchase.error('Missing course data or slug');
+      return;
+    }
 
     setIsProcessing(true);
 
     try {
       const coursePrice = parseFloat(courseData.info.price);
+      debugPurchase.trackWalletBalance(wallet, coursePrice);
       
-      if (wallet.balance < coursePrice) {
+      if (wallet && wallet.balance < coursePrice) {
         const shortfall = coursePrice - wallet.balance;
+        
+        debugPurchase.warn('Insufficient wallet balance', { 
+          balance: wallet.balance, 
+          required: coursePrice, 
+          shortfall 
+        });
         
         toast({
           title: "موجودی ناکافی",
@@ -82,12 +116,25 @@ const CourseDetailPage: React.FC = () => {
         });
         
         localStorage.setItem("pendingCourseId", courseData.info.id.toString());
+        debugPurchase.log('Saved pending course ID', courseData.info.id.toString());
         navigate("/wallet");
         return;
       }
 
-      const updateResult = await updateWallet(wallet.balance - coursePrice);
-      if (updateResult.success) {
+      // Call the backend enrollment API
+      const enrollmentData = { course_id: parseInt(courseData.info.id) };
+      debugPurchase.trackApiCall(`/crs/courses/${slug}/enroll/`, 'POST', enrollmentData);
+      
+      const enrollResponse = await api.post(`/crs/courses/${slug}/enroll/`, enrollmentData);
+      
+      debugPurchase.trackApiResponse(`/crs/courses/${slug}/enroll/`, enrollResponse.status, enrollResponse.data);
+
+      if (enrollResponse.status === 201) {
+        // Clear pending course data since purchase is successful
+        clearPendingCourse();
+        debugPurchase.success('Purchase completed successfully');
+        
+        // Update local state
         enrollCourse(courseData.info.id.toString());
 
         toast({
@@ -95,43 +142,85 @@ const CourseDetailPage: React.FC = () => {
           description: `دوره ${courseData.info.title} با موفقیت خریداری شد`,
         });
 
-        setTimeout(() => {
-          setIsProcessing(false);
-          navigate("/my-courses");
-        }, 1000);
-      } else {
-        throw new Error(updateResult.error);
+        // Refresh course details to get updated enrollment status
+        const updatedDetails = await refreshCourseDetails(slug);
+        if (updatedDetails) {
+          setCourseData(updatedDetails);
+        }
+
+        // Refresh wallet to show updated balance
+        refetchWallet();
+
+        setIsProcessing(false);
       }
-    } catch (error) {
+    } catch (error: any) {
+      debugPurchase.error('Purchase failed', error);
       console.error('Error processing purchase:', error);
       setIsProcessing(false);
       
-      toast({
-        title: "خطا",
-        description: "خطا در پردازش خرید. لطفاً دوباره تلاش کنید.",
-        variant: "destructive",
-      });
+      // Handle specific enrollment errors
+      if (error.response?.status === 400) {
+        const errorData = error.response.data;
+        let errorMsg = "خطا در پردازش خرید";
+        
+        if (errorData?.course_id?.[0]) {
+          errorMsg = errorData.course_id[0];
+        } else if (errorData?.non_field_errors?.[0]) {
+          errorMsg = errorData.non_field_errors[0];
+        } else if (errorData?.detail) {
+          errorMsg = errorData.detail;
+        } else if (errorData?.message) {
+          errorMsg = errorData.message;
+        }
+        
+        toast({
+          title: "خطا در ثبت‌نام",
+          description: errorMsg,
+          variant: "destructive",
+        });
+      } else if (error.response?.status === 402) {
+        toast({
+          title: "موجودی ناکافی",
+          description: "موجودی کیف پول شما برای خرید این دوره کافی نیست",
+          variant: "destructive",
+        });
+        localStorage.setItem("pendingCourseId", courseData.info.id.toString());
+        navigate("/wallet");
+      } else if (error.response?.status === 409) {
+        toast({
+          title: "خطا",
+          description: "شما قبلاً در این دوره ثبت‌نام کرده‌اید",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "خطا",
+          description: "خطا در پردازش خرید. لطفاً دوباره تلاش کنید.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
-  const handleEnroll = async () => {
+  const handlePurchase = async () => {
+    debugPurchase.log('Purchase button clicked', { courseId: courseData?.info.id, slug });
+    
     if (!user) {
+      debugPurchase.warn('User not authenticated, redirecting to login');
       navigate("/login");
       return;
     }
 
-    if (!courseData) return;
-
-    const coursePrice = parseFloat(courseData.info.price);
-
-    if (coursePrice === 0) {
-      enrollCourse(courseData.info.id.toString());
-      navigate("/my-courses");
+    if (!courseData || !slug) {
+      debugPurchase.error('Missing course data or slug');
       return;
     }
 
-    if (!wallet || wallet.balance < coursePrice) {
-      const shortfall = coursePrice - (wallet?.balance || 0);
+    const coursePrice = parseFloat(courseData.info.price);
+    
+    // Check wallet balance first
+    if (wallet && wallet.balance < coursePrice) {
+      const shortfall = coursePrice - wallet.balance;
       
       toast({
         title: "موجودی ناکافی",
@@ -144,23 +233,88 @@ const CourseDetailPage: React.FC = () => {
       return;
     }
 
-    const updateResult = await updateWallet(wallet.balance - coursePrice);
-    if (updateResult.success) {
-      enrollCourse(courseData.info.id.toString());
+    // Show confirmation dialog
+    setShowPurchaseConfirm(true);
+  };
 
-      toast({
-        title: "خرید موفق",
-        description: `دوره ${courseData.info.title} با موفقیت خریداری شد`,
-      });
-
-      navigate("/my-courses");
-    } else {
-      toast({
-        title: "خطا",
-        description: "خطا در پردازش خرید. لطفاً دوباره تلاش کنید.",
-        variant: "destructive",
-      });
+  const handleEnroll = async () => {
+    if (!user) {
+      navigate("/login");
+      return;
     }
+
+    if (!courseData || !slug) return;
+
+    const coursePrice = parseFloat(courseData.info.price);
+
+    if (coursePrice === 0) {
+      // Free course enrollment
+      setIsProcessing(true);
+      try {
+        const enrollResponse = await api.post(`/crs/courses/${slug}/enroll/`, {
+          course_id: parseInt(courseData.info.id)
+        });
+
+        if (enrollResponse.status === 201) {
+          // Clear pending course data since enrollment is successful
+          clearPendingCourse();
+          
+          enrollCourse(courseData.info.id.toString());
+          
+          toast({
+            title: "ثبت‌نام موفق",
+            description: `شما با موفقیت در دوره ${courseData.info.title} ثبت‌نام شدید`,
+          });
+
+          // Refresh course details to get updated enrollment status
+          const updatedDetails = await refreshCourseDetails(slug);
+          if (updatedDetails) {
+            setCourseData(updatedDetails);
+          }
+        }
+      } catch (error: any) {
+        console.error('Error processing free enrollment:', error);
+        
+        if (error.response?.status === 400) {
+          const errorData = error.response.data;
+          let errorMsg = "خطا در ثبت‌نام";
+          
+          if (errorData?.course_id?.[0]) {
+            errorMsg = errorData.course_id[0];
+          } else if (errorData?.non_field_errors?.[0]) {
+            errorMsg = errorData.non_field_errors[0];
+          } else if (errorData?.detail) {
+            errorMsg = errorData.detail;
+          } else if (errorData?.message) {
+            errorMsg = errorData.message;
+          }
+          
+          toast({
+            title: "خطا در ثبت‌نام",
+            description: errorMsg,
+            variant: "destructive",
+          });
+        } else if (error.response?.status === 409) {
+          toast({
+            title: "خطا",
+            description: "شما قبلاً در این دوره ثبت‌نام کرده‌اید",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "خطا",
+            description: "خطا در پردازش ثبت‌نام. لطفاً دوباره تلاش کنید.",
+            variant: "destructive",
+          });
+        }
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    // Paid course - redirect to purchase flow
+    handlePurchase();
   };
 
   if (isLoading) {
@@ -199,7 +353,7 @@ const CourseDetailPage: React.FC = () => {
   }
 
   // بررسی ثبت‌نام کاربر در دوره
-  const isEnrolled = courseData.user_progress !== undefined && courseData.user_progress !== null;
+  const isEnrolled = courseData.info.is_enrolled || (courseData.user_progress !== undefined && courseData.user_progress !== null);
   const coursePrice = parseFloat(courseData.info.price);
   const isFree = coursePrice === 0;
 
@@ -337,7 +491,7 @@ const CourseDetailPage: React.FC = () => {
                             <div className="flex justify-between items-start mb-3">
                               <div className="text-right flex items-center">
                                 <img 
-                                  src={comment.user.thumbnail || 'https://api.gport.sbs/media/user.png'} 
+                                  src={comment.user.thumbnail || DEFAULT_IMAGES.USER_AVATAR} 
                                   alt={`${comment.user.first_name} ${comment.user.last_name}`}
                                   className="w-10 h-10 rounded-full ml-3"
                                 />
@@ -358,7 +512,7 @@ const CourseDetailPage: React.FC = () => {
                                     <div className="flex justify-between items-start mb-2">
                                       <div className="flex items-center">
                                         <img 
-                                          src={reply.user.thumbnail || 'https://api.gport.sbs/media/user.png'} 
+                                          src={reply.user.thumbnail || DEFAULT_IMAGES.USER_AVATAR} 
                                           alt={`${reply.user.first_name} ${reply.user.last_name}`}
                                           className="w-8 h-8 rounded-full ml-2"
                                         />
@@ -399,8 +553,88 @@ const CourseDetailPage: React.FC = () => {
               />
             </div>
           </div>
-        </div>
+                </div>
       </div>
+
+      {/* Purchase Confirmation Dialog */}
+      <Dialog open={showPurchaseConfirm} onOpenChange={setShowPurchaseConfirm}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-center">تأیید خرید دوره</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {/* Course Info */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <div className="flex items-center">
+                <img
+                  src={courseData?.info.thumbnail}
+                  alt={courseData?.info.title}
+                  className="w-16 h-16 object-cover rounded-lg ml-4"
+                />
+                <div>
+                  <h3 className="font-bold text-lg">{courseData?.info.title}</h3>
+                  <p className="text-gray-600 text-sm">مدرس: {courseData?.info.instructor}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Purchase Details */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center">
+                  <ShoppingCart className="h-5 w-5 text-blue-600 ml-2" />
+                  <span className="text-blue-800">مبلغ دوره:</span>
+                </div>
+                <span className="font-bold text-blue-600">{formatCurrencyWithUnit(coursePrice)}</span>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center">
+                  <Wallet className="h-5 w-5 text-green-600 ml-2" />
+                  <span className="text-green-800">موجودی فعلی شما:</span>
+                </div>
+                <span className="font-bold text-green-600">{formatCurrencyWithUnit(wallet?.balance || 0)}</span>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-orange-600 ml-2" />
+                  <span className="text-orange-800">موجودی پس از خرید:</span>
+                </div>
+                <span className="font-bold text-orange-600">
+                  {formatCurrencyWithUnit((wallet?.balance || 0) - coursePrice)}
+                </span>
+              </div>
+            </div>
+
+            {/* Confirmation Message */}
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800 text-center">
+                مبلغ <span className="font-bold">{formatCurrencyWithUnit(coursePrice)}</span> از کیف پول شما 
+                برای خرید دوره <span className="font-bold">"{courseData?.info.title}"</span> کم می‌شود.
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex justify-between sm:justify-between gap-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setShowPurchaseConfirm(false)}
+            >
+              انصراف
+            </Button>
+            <Button 
+              type="submit" 
+              onClick={handlePurchaseConfirm}
+              disabled={isProcessing}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isProcessing ? "در حال پردازش..." : "تأیید و خرید"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };

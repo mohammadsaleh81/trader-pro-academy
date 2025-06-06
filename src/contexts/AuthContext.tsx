@@ -1,7 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { api, User as ApiUser } from '../lib/api';
 import { TOKEN_STORAGE_KEY } from '../lib/config';
+import { clearAllCache } from '../lib/cache';
 
 // Define user type - using the same structure as API but with our naming
 export type User = {
@@ -201,9 +201,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
+    console.log('AuthContext: Starting logout process');
+    
+    // Clear API state
     api.logout();
+    
+    // Reset all local state
     setUser(null);
     setPhoneNumber("");
+    setError(null);
+    setDevOTP(null);
+    
+    // Clear all cache and localStorage
+    clearAllCache();
+    
+    // Dispatch custom event to notify other contexts
+    window.dispatchEvent(new CustomEvent('auth:logout'));
+    
+    // Force reload to clear any remaining cached state
+    setTimeout(() => {
+      window.location.replace('/');
+    }, 100);
   };
 
   return (

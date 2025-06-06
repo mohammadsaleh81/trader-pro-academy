@@ -71,3 +71,15 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+
+
+چک کن تا مشکلات مربوط به cors رو نداشته باشیم
+فرانت من رو این آدرس ها بالا میاد معمولا:
+@http://91.99.49.130:8081/
+@http://91.99.49.130:8080/
+@https://academy.gport.sbs/
+
+بکند من هم روی :
+@https://api.gport.sbs/
+@http://91.99.49.130:8000/ 

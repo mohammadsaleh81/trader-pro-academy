@@ -1,7 +1,5 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useData } from "@/contexts/DataContext";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,10 +16,8 @@ const ArticleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { bookmarks, addBookmark, removeBookmark } = useData();
   
   const [article, setArticle] = useState<Article | null>(null);
-  const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -41,12 +37,6 @@ const ArticleDetailPage: React.FC = () => {
         }
 
         setArticle(data);
-        
-        // Check if the item is bookmarked
-        const bookmarked = bookmarks.some(
-          bookmark => bookmark.itemId === id && bookmark.itemType === "article"
-        );
-        setIsBookmarked(bookmarked);
       } catch (error) {
         console.error('Error fetching article:', error);
         toast({
@@ -61,32 +51,7 @@ const ArticleDetailPage: React.FC = () => {
     };
 
     fetchArticle();
-  }, [id, navigate, toast, bookmarks]);
-
-  const handleBookmark = React.useCallback(() => {
-    if (!article || !id) return;
-    
-    if (isBookmarked) {
-      const bookmarkToRemove = bookmarks.find(
-        bookmark => bookmark.itemId === id && bookmark.itemType === "article"
-      );
-      if (bookmarkToRemove) {
-        removeBookmark(bookmarkToRemove.id);
-        setIsBookmarked(false);
-        toast({
-          title: "نشان حذف شد",
-          description: "این مقاله از نشان‌های شما حذف شد",
-        });
-      }
-    } else {
-      addBookmark(id, "article", "user1");
-      setIsBookmarked(true);
-      toast({
-        title: "به نشان‌ها اضافه شد",
-        description: "این مقاله به نشان‌های شما اضافه شد",
-      });
-    }
-  }, [article, id, isBookmarked, bookmarks, removeBookmark, addBookmark, toast]);
+  }, [id, navigate, toast]);
 
   if (isLoading) {
     return (
@@ -142,8 +107,7 @@ const ArticleDetailPage: React.FC = () => {
 
               <div className="flex justify-end mb-6">
                 <ContentActions 
-                  isBookmarked={isBookmarked}
-                  onBookmark={handleBookmark}
+                  articleId={article.id}
                   title={article.title}
                 />
               </div>

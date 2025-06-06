@@ -1,4 +1,3 @@
-
 // Course Types
 export type CourseLesson = {
   id: string;
@@ -110,6 +109,7 @@ export type CourseDetails = {
     language: string;
     level: "beginner" | "intermediate" | "advanced" | string;
     is_enrolled?: boolean;
+    progress_percentage?: number;
   };
   chapters: CourseChapter[];
   comments: CourseComment[];

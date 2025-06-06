@@ -1,5 +1,4 @@
-
-import { Article, Video } from "@/lib/api";
+import { Article, Video, Podcast as ApiPodcast } from "@/lib/api";
 
 // Content Types
 export type Podcast = {
@@ -44,13 +43,28 @@ export type File = {
 // Item Types for bookmarks
 export type ItemType = "article" | "podcast" | "video" | "webinar" | "file" | "course";
 
-// Bookmark Type
+// Updated Bookmark Type to match API response
 export type Bookmark = {
   id: string;
-  itemId: string;
-  itemType: ItemType;
-  userId: string;
-  date: string;
+  user: {
+    id: string;
+    username?: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  article: {
+    id: string;
+    title: string;
+    slug: string;
+    thumbnail?: string;
+  };
+  created_at: string;
+  // Computed properties for backward compatibility
+  itemId: string; // derived from article.id
+  itemType: ItemType; // always "article" for now
+  userId: string; // derived from user.id
+  date: string; // derived from created_at
 };
 
 // Comment Type
@@ -67,4 +81,4 @@ export type Comment = {
 };
 
 // Export types using proper export type syntax
-export type { Article, Video };
+export type { Article, Video, ApiPodcast };

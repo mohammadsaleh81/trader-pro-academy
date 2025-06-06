@@ -11,25 +11,49 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { clearPendingCourse } from "@/lib/cache";
+import api from "@/lib/axios";
 
 const depositSchema = z.object({
   amount: z
     .number()
-    .min(10000, "حداقل مبلغ شارژ ۱۰,۰۰۰ تومان است")
-    .max(100000000, "حداکثر مبلغ شارژ ۱۰۰,۰۰۰,۰۰۰ تومان است"),
+    .min(10000, "حداقل مبلغ شارژ ۱۰ هزار تومان است")
+    .max(100000000, "حداکثر مبلغ شارژ ۱۰۰ میلیون تومان است"),
 });
 
 type DepositFormValues = z.infer<typeof depositSchema>;
 
+// Helper functions for formatting Iranian currency
+const formatCurrency = (amount: number | string): string => {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return new Intl.NumberFormat('fa-IR').format(num);
+};
+
+const formatCurrencyWithUnit = (amount: number | string): string => {
+  return `${formatCurrency(amount)} تومان`;
+};
+
+const formatLargeNumber = (amount: number | string): string => {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  
+  if (num >= 1000000000) {
+    return `${formatCurrency(Math.round(num / 1000000000))} میلیارد تومان`;
+  } else if (num >= 1000000) {
+    return `${formatCurrency(Math.round(num / 1000000))} میلیون تومان`;
+  } else if (num >= 1000) {
+    return `${formatCurrency(Math.round(num / 1000))} هزار تومان`;
+  }
+  return formatCurrencyWithUnit(num);
+};
+
 const WalletPage: React.FC = () => {
   const navigate = useNavigate();
-  const { wallet, updateWallet, courses, enrollCourse, isLoading: dataLoading } = useData();
-  const { user } = useAuth();
+  const { wallet, updateWallet, courses, enrollCourse, loadingStates, errors, refetchWallet } = useData();
+  const { user, isLoading: authLoading } = useAuth();
   const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isPurchasing, setIsPurchasing] = useState(false);
   const [pendingCourse, setPendingCourse] = useState<{id: string, price: number, title: string} | null>(null);
-  const [walletError, setWalletError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   const depositForm = useForm<DepositFormValues>({
     resolver: zodResolver(depositSchema),
@@ -58,16 +82,7 @@ const WalletPage: React.FC = () => {
         }
       }
     }
-  }, [courses, wallet]);
-
-  // Handle wallet loading errors
-  useEffect(() => {
-    if (dataLoading) {
-      setWalletError("خطا در بارگذاری اطلاعات کیف پول. لطفاً صفحه را رفرش کنید.");
-    } else {
-      setWalletError(null);
-    }
-  }, [dataLoading]);
+  }, [courses, wallet?.balance, user?.id]); // Only essential dependencies
 
   const handleDeposit = async (values: DepositFormValues) => {
     if (!wallet || !user) return;
@@ -75,39 +90,37 @@ const WalletPage: React.FC = () => {
     setIsProcessing(true);
     
     try {
-      const result = await updateWallet(values.amount);
+      // Call the payment gateway instead of direct deposit
+      const response = await api.post('/wallet/deposit-gateway/', {
+        amount: values.amount
+      });
       
-      if (result.success && result.new_balance !== undefined) {
+      const result = response.data;
+      
+      if (result.success && result.payment_url) {
         toast({
-          title: "شارژ موفق",
-          description: `مبلغ ${values.amount.toLocaleString()} تومان با موفقیت به کیف پول شما اضافه شد`,
+          title: "انتقال به درگاه پرداخت",
+          description: "در حال انتقال به درگاه پرداخت...",
         });
         
-        // Check if there's a pending course purchase
-        if (pendingCourse && result.new_balance >= pendingCourse.price) {
-          toast({
-            title: "خرید دوره",
-            description: "در حال پردازش خرید دوره...",
-          });
-          
-          // Redirect to course page to complete the purchase
-          navigate(`/courses/${pendingCourse.id}`);
-        }
+        // Store the deposit amount for later reference
+        localStorage.setItem('deposit_amount', values.amount.toString());
         
-        setIsDepositDialogOpen(false);
-        depositForm.reset();
+        // Redirect to payment gateway
+        window.location.href = result.payment_url;
       } else {
         toast({
-          title: "خطا در پرداخت",
-          description: result.error || "متأسفانه پرداخت با مشکل مواجه شد. لطفاً دوباره تلاش کنید",
+          title: "خطا در ایجاد درگاه پرداخت",
+          description: result.error || "متأسفانه اتصال به درگاه پرداخت با مشکل مواجه شد",
           variant: "destructive",
         });
       }
-    } catch (error) {
-      console.error("Wallet deposit error:", error);
+    } catch (error: any) {
+      console.error("Payment gateway error:", error);
+      const errorMessage = error.response?.data?.error || "متأسفانه اتصال به درگاه پرداخت با مشکل مواجه شد";
       toast({
-        title: "خطا در پرداخت",
-        description: "متأسفانه پرداخت با مشکل مواجه شد. لطفاً دوباره تلاش کنید",
+        title: "خطا در اتصال به درگاه",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -116,7 +129,7 @@ const WalletPage: React.FC = () => {
   };
 
   const handleRetry = () => {
-    window.location.reload();
+    refetchWallet();
   };
 
   const formatDate = (dateString: string) => {
@@ -152,6 +165,86 @@ const WalletPage: React.FC = () => {
     }
   };
 
+  // Complete pending course purchase
+  const handleCompletePurchase = async () => {
+    if (!pendingCourse || !wallet) return;
+    
+    if (wallet.balance < pendingCourse.price) {
+      toast({
+        title: "موجودی ناکافی",
+        description: "موجودی کیف پول شما برای خرید این دوره کافی نیست",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsPurchasing(true);
+
+    try {
+      const enrollResponse = await api.post(`/crs/courses/${pendingCourse.id}/enroll/`, {
+        course_id: parseInt(pendingCourse.id)
+      });
+
+      if (enrollResponse.status === 201) {
+        clearPendingCourse();
+        setPendingCourse(null);
+        
+        toast({
+          title: "خرید موفق",
+          description: `دوره "${pendingCourse.title}" با موفقیت خریداری شد`,
+        });
+
+        // Refresh wallet and navigate to course
+        refetchWallet();
+        navigate(`/learn/${pendingCourse.id}`);
+      }
+    } catch (error: any) {
+      console.error('Error completing purchase:', error);
+      
+      let errorMessage = "خطا در خرید دوره";
+      if (error.response?.status === 400) {
+        const errorData = error.response.data;
+        if (errorData?.course_id?.[0]) {
+          errorMessage = errorData.course_id[0];
+        } else if (errorData?.non_field_errors?.[0]) {
+          errorMessage = errorData.non_field_errors[0];
+        } else if (errorData?.detail) {
+          errorMessage = errorData.detail;
+        }
+      } else if (error.response?.status === 409) {
+        errorMessage = "شما قبلاً در این دوره ثبت‌نام کرده‌اید";
+        clearPendingCourse();
+        setPendingCourse(null);
+      } else if (error.response?.status === 402) {
+        errorMessage = "موجودی کیف پول شما برای خرید این دوره کافی نیست";
+      }
+
+      toast({
+        title: "خطا در خرید",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
+
+  // Show loading if auth is still loading
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="trader-container py-12 text-center">
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-trader-500 mb-4"></div>
+            <h2 className="text-xl font-bold mb-2">در حال بررسی احراز هویت...</h2>
+            <p className="text-gray-600">لطفاً صبر کنید</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Check authentication first
   if (!user) {
     return (
       <Layout>
@@ -165,28 +258,57 @@ const WalletPage: React.FC = () => {
     );
   }
 
-  if (dataLoading) {
+  // Show loading if wallet is loading
+  if (loadingStates.wallet) {
     return (
       <Layout>
         <div className="trader-container py-12 text-center">
           <div className="flex flex-col items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-trader-500 mb-4"></div>
-            <h2 className="text-xl font-bold mb-2">در حال بارگذاری...</h2>
+            <h2 className="text-xl font-bold mb-2">در حال بارگذاری کیف پول...</h2>
             <p className="text-gray-600">لطفاً صبر کنید</p>
+            {errors?.wallet && (
+              <p className="text-amber-600 text-sm mt-2">
+                در حال تلاش مجدد...
+              </p>
+            )}
           </div>
         </div>
       </Layout>
     );
   }
 
-  if (walletError || !wallet) {
+  // Show error if there's a wallet error
+  if (errors?.wallet) {
     return (
       <Layout>
         <div className="trader-container py-12 text-center">
           <div className="flex flex-col items-center">
             <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
             <h2 className="text-xl font-bold mb-4 text-red-600">
-              {walletError || "خطا در بارگذاری اطلاعات کیف پول"}
+              {errors.wallet}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              در صورت تداوم مشکل، لطفاً با پشتیبانی تماس بگیرید
+            </p>
+            <Button onClick={handleRetry} className="bg-trader-500 hover:bg-trader-600">
+              تلاش مجدد
+            </Button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show error if wallet is null but no specific error
+  if (!wallet) {
+    return (
+      <Layout>
+        <div className="trader-container py-12 text-center">
+          <div className="flex flex-col items-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+            <h2 className="text-xl font-bold mb-4 text-red-600">
+              خطا در بارگذاری اطلاعات کیف پول
             </h2>
             <p className="text-gray-600 mb-6">
               در صورت تداوم مشکل، لطفاً با پشتیبانی تماس بگیرید
@@ -210,32 +332,48 @@ const WalletPage: React.FC = () => {
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
             <div className="flex items-center">
               <ShoppingCart className="h-6 w-6 text-amber-500 ml-3" />
-              <div>
+              <div className="flex-1">
                 <h3 className="font-bold">خرید در انتظار: {pendingCourse.title}</h3>
                 <p className="text-sm mt-1">
-                  قیمت دوره: <span className="font-bold">{pendingCourse.price.toLocaleString()} تومان</span> | 
-                  موجودی فعلی: <span className="font-bold">{wallet.balance.toLocaleString()} تومان</span>
+                  قیمت دوره: <span className="font-bold">{formatCurrencyWithUnit(pendingCourse.price)}</span> | 
+                  موجودی فعلی: <span className="font-bold">{formatCurrencyWithUnit(wallet.balance)}</span>
                 </p>
-                {wallet.balance < pendingCourse.price && (
+                {wallet.balance < pendingCourse.price ? (
                   <p className="text-sm text-red-600 mt-1">
-                    نیاز به شارژ: <span className="font-bold">{(pendingCourse.price - wallet.balance).toLocaleString()} تومان</span>
+                    نیاز به شارژ: <span className="font-bold">{formatCurrencyWithUnit(pendingCourse.price - wallet.balance)}</span>
+                  </p>
+                ) : (
+                  <p className="text-sm text-green-600 mt-1">
+                    ✅ موجودی شما برای خرید این دوره کافی است
                   </p>
                 )}
               </div>
-              <div className="mr-auto">
+              <div className="mr-auto flex gap-2">
                 <Button 
                   onClick={() => navigate(`/courses/${pendingCourse.id}`)}
                   variant="outline"
-                  className="ml-2"
+                  size="sm"
                 >
                   بازگشت به دوره
                 </Button>
-                <Button 
-                  onClick={() => setIsDepositDialogOpen(true)}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  شارژ کیف پول
-                </Button>
+                {wallet.balance >= pendingCourse.price ? (
+                  <Button 
+                    onClick={handleCompletePurchase}
+                    disabled={isPurchasing}
+                    className="bg-green-600 hover:bg-green-700"
+                    size="sm"
+                  >
+                    {isPurchasing ? "در حال خرید..." : "تکمیل خرید"}
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={() => setIsDepositDialogOpen(true)}
+                    className="bg-green-600 hover:bg-green-700"
+                    size="sm"
+                  >
+                    شارژ کیف پول
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -244,7 +382,15 @@ const WalletPage: React.FC = () => {
         {/* Wallet Balance */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <p className="text-gray-500 mb-1">موجودی فعلی</p>
-          <h2 className="text-3xl font-bold">{wallet.balance.toLocaleString()} تومان</h2>
+          <div className="flex flex-col">
+            <h2 className="text-3xl font-bold text-trader-600 mb-1">{formatCurrency(wallet.balance)}</h2>
+            <p className="text-lg text-gray-600">تومان</p>
+            {wallet.balance >= 1000000 && (
+              <p className="text-sm text-gray-500 mt-1">
+                ({formatLargeNumber(wallet.balance)})
+              </p>
+            )}
+          </div>
           
           <div className="flex mt-6 gap-3">
             <button 
@@ -280,10 +426,10 @@ const WalletPage: React.FC = () => {
                   <div className="text-left">
                     <p className={`font-bold ${getTransactionColor(transaction.transaction_type)}`}>
                       {transaction.transaction_type === "purchase" ? "-" : "+"}
-                      {parseFloat(transaction.amount).toLocaleString()} تومان
+                      {formatCurrencyWithUnit(transaction.amount)}
                     </p>
                     <p className="text-sm text-gray-500">
-                      مانده: {parseFloat(transaction.balance_after).toLocaleString()} تومان
+                      مانده: {formatCurrencyWithUnit(transaction.balance_after)}
                     </p>
                   </div>
                 </div>
@@ -312,21 +458,81 @@ const WalletPage: React.FC = () => {
                     <FormItem>
                       <FormLabel>مبلغ (تومان)</FormLabel>
                       <FormControl>
-                        <input
-                          type="number"
-                          className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trader-500"
-                          placeholder="مبلغ مورد نظر را وارد کنید"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="10000"
+                            step="10000"
+                            className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trader-500"
+                            placeholder="مبلغ مورد نظر را وارد کنید (حداقل ۱۰ هزار تومان)"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </div>
                       </FormControl>
+                      
+                      {/* Quick amount buttons */}
+                      <div className="grid grid-cols-3 gap-2 mt-2">
+                        <button
+                          type="button"
+                          onClick={() => field.onChange(50000)}
+                          className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100 transition-colors"
+                        >
+                          ۵۰ هزار
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => field.onChange(100000)}
+                          className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100 transition-colors"
+                        >
+                          ۱۰۰ هزار
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => field.onChange(500000)}
+                          className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100 transition-colors"
+                        >
+                          ۵۰۰ هزار
+                        </button>
+                      </div>
+                      
+                      {/* Amount adjustment buttons */}
+                      <div className="flex items-center justify-center gap-4 mt-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newAmount = Math.max(10000, (field.value || 0) - 10000);
+                            field.onChange(newAmount);
+                          }}
+                          className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                        <span className="text-sm text-gray-600 px-2">+ / - ۱۰ هزار تومان</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newAmount = (field.value || 0) + 10000;
+                            field.onChange(newAmount);
+                          }}
+                          className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      {field.value > 0 && (
+                        <p className="text-sm text-blue-600 mt-2">
+                          مبلغ وارد شده: {formatCurrencyWithUnit(field.value)}
+                        </p>
+                      )}
                       {pendingCourse && wallet.balance < pendingCourse.price && (
                         <p className="text-sm text-green-600">
-                          حداقل مبلغ پیشنهادی: {(pendingCourse.price - wallet.balance).toLocaleString()} تومان
+                          حداقل مبلغ پیشنهادی: {formatCurrencyWithUnit(pendingCourse.price - wallet.balance)}
                           جهت خرید دوره
                         </p>
                       )}
-                      <p className="text-sm text-gray-500">موجودی فعلی: {wallet.balance.toLocaleString()} تومان</p>
+                      <p className="text-sm text-gray-500">موجودی فعلی: {formatCurrencyWithUnit(wallet.balance)}</p>
                       <FormMessage />
                     </FormItem>
                   )}

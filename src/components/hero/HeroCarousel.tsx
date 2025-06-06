@@ -6,6 +6,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useData } from "@/contexts/DataContext";
 import { Link } from "react-router-dom";
 import type { CarouselApi } from "@/components/ui/carousel";
+import { DEFAULT_IMAGES } from "@/lib/config";
 
 const HeroCarousel: React.FC = () => {
   const [isRtl, setIsRtl] = useState(false);
@@ -73,12 +74,12 @@ const HeroCarousel: React.FC = () => {
           >
             <div className="relative h-[180px] md:h-[240px] lg:h-[300px] w-full">
               <img
-                src={course.thumbnail || "https://placehold.co/600x400/e2e8f0/64748b?text=No+Image"}
+                src={course.thumbnail || DEFAULT_IMAGES.PLACEHOLDER_CONTENT}
                 alt={course.title}
                 className="w-full h-full object-cover brightness-[0.7]"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = "https://placehold.co/600x400/e2e8f0/64748b?text=No+Image";
+                  target.src = DEFAULT_IMAGES.PLACEHOLDER_CONTENT;
                 }}
               />
               <div className={`absolute inset-0 bg-gradient-to-${isRtl ? 'r' : 'l'} from-trader-500/50 to-blue-900/60 flex items-center ${isRtl ? 'justify-start' : 'justify-end'}`}>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -11,6 +10,7 @@ import HomePage from "./pages/HomePage";
 import ContentHubPage from "./pages/ContentHubPage";
 import ContentDetailPage from "./pages/ContentDetailPage";
 import ArticleDetailPage from "./pages/ArticleDetailPage";
+import PodcastDetailPage from "./pages/PodcastDetailPage";
 import MyCoursesPage from "./pages/MyCoursesPage";
 import BookmarksPage from "./pages/BookmarksPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -23,7 +23,11 @@ import ContactUsPage from "./pages/ContactUsPage";
 import AboutUsPage from "./pages/AboutUsPage";
 import OrdersPage from "./pages/OrdersPage";
 import EditProfilePage from "./pages/EditProfilePage";
+import LearnPage from "./pages/LearnPage";
 import NotFound from "./pages/NotFound";
+import PaymentVerifyPage from "./pages/PaymentVerifyPage";
+import CommentTestPage from "./pages/CommentTestPage";
+import BookmarkTestPage from "./pages/BookmarkTestPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 
@@ -88,8 +92,18 @@ const App: React.FC = () => {
                 {/* Article routes */}
                 <Route path="/articles/:id" element={<ArticleDetailPage />} />
                 
+                {/* Podcast routes */}
+                <Route path="/podcasts/:id" element={<PodcastDetailPage />} />
+                
                 <Route path="/courses" element={<CourseListPage />} />
                 <Route path="/courses/:slug" element={<CourseDetailPage />} />
+                
+                {/* Test Routes */}
+                <Route path="/test/comments" element={<CommentTestPage />} />
+                <Route path="/test/bookmarks" element={<BookmarkTestPage />} />
+                
+                {/* Payment Verification - Semi-Protected Route */}
+                <Route path="/payment-verify" element={<PaymentVerifyPage />} />
 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
@@ -98,6 +112,9 @@ const App: React.FC = () => {
                   <Route path="/bookmarks" element={<BookmarksPage />} />
                   <Route path="/wallet" element={<WalletPage />} />
                   <Route path="/orders" element={<OrdersPage />} />
+                  
+                  {/* Learn Page - Protected Route */}
+                  <Route path="/learn/:courseId" element={<LearnPage />} />
                   
                   {/* Profile Routes */}
                   <Route path="/profile">

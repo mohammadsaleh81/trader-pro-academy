@@ -1,23 +1,21 @@
-
 import React, { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Bookmark } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useData } from "@/contexts/DataContext";
-import CourseCard from "@/components/course/CourseCard";
+import { useContent } from "@/contexts/ContentContext";
 import ContentCard from "@/components/content/ContentCard";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 // Define the bookmark category types
-type BookmarkCategory = "courses" | "articles" | "podcasts" | "videos" | "webinars" | "files";
+type BookmarkCategory = "articles";
 
 const BookmarksPage: React.FC = () => {
   const { user } = useAuth();
-  const { bookmarks, courses, articles, podcasts, videos, webinars, files } = useData();
+  const { bookmarks, articles, isLoading } = useContent();
   
-  const [activeCategory, setActiveCategory] = useState<BookmarkCategory>("courses");
+  const [activeCategory, setActiveCategory] = useState<BookmarkCategory>("articles");
   
   // Redirect to login if not authenticated
   if (!user) {
@@ -25,37 +23,34 @@ const BookmarksPage: React.FC = () => {
     return null;
   }
   
-  // Filter bookmarks for the current user
-  const userBookmarks = bookmarks.filter(b => b.userId === user.id);
-  
-  // Get content based on bookmark category and type
-  const getContentByCategory = () => {
-    const bookmarksByType = userBookmarks.filter(b => {
-      switch (activeCategory) {
-        case "courses": return b.itemType === "course";
-        case "articles": return b.itemType === "article";
-        case "podcasts": return b.itemType === "podcast";
-        case "videos": return b.itemType === "video";
-        case "webinars": return b.itemType === "webinar";
-        case "files": return b.itemType === "file";
-        default: return false;
-      }
-    });
-    
-    const itemIds = bookmarksByType.map(b => b.itemId);
-    
-    switch (activeCategory) {
-      case "courses": return courses.filter(c => itemIds.includes(c.id));
-      case "articles": return articles.filter(a => itemIds.includes(a.id));
-      case "podcasts": return podcasts.filter(p => itemIds.includes(p.id));
-      case "videos": return videos.filter(v => itemIds.includes(v.id));
-      case "webinars": return webinars.filter(w => itemIds.includes(w.id));
-      case "files": return files.filter(f => itemIds.includes(f.id));
-      default: return [];
-    }
+  // Get bookmarked articles
+  const getBookmarkedArticles = () => {
+    const bookmarkedArticleIds = bookmarks.map(b => b.article.id);
+    return articles.filter(article => bookmarkedArticleIds.includes(article.id));
   };
   
-  const content = getContentByCategory();
+  const bookmarkedArticles = getBookmarkedArticles();
+  
+  if (isLoading.bookmarks || isLoading.articles) {
+    return (
+      <Layout>
+        <div className="trader-container py-6">
+          <div className="flex items-center gap-2 mb-6">
+            <Bookmark className="h-5 w-5 text-trader-500" />
+            <h1 className="text-2xl font-bold">نشان‌های من</h1>
+          </div>
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-32 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
   
   return (
     <Layout>
@@ -69,51 +64,21 @@ const BookmarksPage: React.FC = () => {
         <div className="mb-6 border-b border-gray-200 overflow-x-auto pb-1">
           <div className="flex gap-4">
             <button
-              onClick={() => setActiveCategory("courses")}
-              className={`py-2 px-1 font-medium text-sm whitespace-nowrap ${activeCategory === "courses" ? "text-trader-500 border-b-2 border-trader-500" : "text-gray-600"}`}
-            >
-              دوره‌ها
-            </button>
-            <button
               onClick={() => setActiveCategory("articles")}
               className={`py-2 px-1 font-medium text-sm whitespace-nowrap ${activeCategory === "articles" ? "text-trader-500 border-b-2 border-trader-500" : "text-gray-600"}`}
             >
-              مقالات
-            </button>
-            <button
-              onClick={() => setActiveCategory("podcasts")}
-              className={`py-2 px-1 font-medium text-sm whitespace-nowrap ${activeCategory === "podcasts" ? "text-trader-500 border-b-2 border-trader-500" : "text-gray-600"}`}
-            >
-              پادکست‌ها
-            </button>
-            <button
-              onClick={() => setActiveCategory("videos")}
-              className={`py-2 px-1 font-medium text-sm whitespace-nowrap ${activeCategory === "videos" ? "text-trader-500 border-b-2 border-trader-500" : "text-gray-600"}`}
-            >
-              ویدیوها
-            </button>
-            <button
-              onClick={() => setActiveCategory("webinars")}
-              className={`py-2 px-1 font-medium text-sm whitespace-nowrap ${activeCategory === "webinars" ? "text-trader-500 border-b-2 border-trader-500" : "text-gray-600"}`}
-            >
-              وبینارها
-            </button>
-            <button
-              onClick={() => setActiveCategory("files")}
-              className={`py-2 px-1 font-medium text-sm whitespace-nowrap ${activeCategory === "files" ? "text-trader-500 border-b-2 border-trader-500" : "text-gray-600"}`}
-            >
-              فایل‌ها
+              مقالات ({bookmarks.length})
             </button>
           </div>
         </div>
         
         {/* Content Section */}
         <div>
-          {content.length === 0 ? (
+          {bookmarkedArticles.length === 0 ? (
             <EmptyState
               icon={<Bookmark className="h-16 w-16" />}
-              title="هنوز نشانی ذخیره نکرده‌اید"
-              description="آیتم‌های مورد علاقه خود را ذخیره کنید تا بعداً به آن‌ها دسترسی داشته باشید"
+              title="هنوز مقاله‌ای نشان نکرده‌اید"
+              description="مقالات مورد علاقه خود را نشان کنید تا بعداً به آن‌ها دسترسی داشته باشید"
               action={
                 <Button asChild className="mt-4 bg-trader-500 hover:bg-trader-600">
                   <Link to="/content">مشاهده محتوا</Link>
@@ -121,54 +86,20 @@ const BookmarksPage: React.FC = () => {
               }
             />
           ) : (
-            <>
-              {activeCategory === "courses" ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {content.map((course) => (
-                    <CourseCard
-                      key={course.id}
-                      id={course.id}
-                      title={course.title}
-                      instructor={course.instructor}
-                      thumbnail={course.thumbnail}
-                      price={course.price}
-                      rating={course.rating}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  {content.map((item: any) => {
-                    let type: "article" | "podcast" | "video" | "webinar" | "file";
-                    
-                    switch (activeCategory) {
-                      case "articles": type = "article"; break;
-                      case "podcasts": type = "podcast"; break;
-                      case "videos": type = "video"; break;
-                      case "webinars": type = "webinar"; break;
-                      case "files": type = "file"; break;
-                      default: type = "article";
-                    }
-                    
-                    return (
-                      <ContentCard
-                        key={item.id}
-                        id={item.id}
-                        title={item.title}
-                        description={item.description}
-                        thumbnail={item.thumbnail}
-                        type={type}
-                        date={item.date}
-                        author={item.author}
-                        duration={item.duration}
-                        fileSize={item.fileSize}
-                        fileType={item.fileType}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            </>
+            <div className="flex flex-col gap-4">
+              {bookmarkedArticles.map((article) => (
+                <ContentCard
+                  key={article.id}
+                  id={article.id}
+                  title={article.title}
+                  description={article.description}
+                  thumbnail={article.thumbnail}
+                  type="article"
+                  date={article.date}
+                  author={article.author}
+                />
+              ))}
+            </div>
           )}
         </div>
       </div>

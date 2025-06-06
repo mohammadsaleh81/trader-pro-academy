@@ -1,4 +1,3 @@
-
 import React from "react";
 import { CourseProvider, useCourse } from "./CourseContext";
 import { ContentProvider, useContent } from "./ContentContext";
@@ -23,6 +22,12 @@ export const useData = () => {
   const contentContext = useContent();
   const walletContext = useWallet();
 
+  // Calculate loading state more intelligently
+  const isAnyLoading = courseContext.isLoading.courses || 
+                      contentContext.isLoading.articles || 
+                      contentContext.isLoading.videos || 
+                      walletContext.isLoading;
+
   return {
     // Course data
     courses: courseContext.courses,
@@ -45,12 +50,21 @@ export const useData = () => {
     // Wallet data
     wallet: walletContext.wallet,
     updateWallet: walletContext.updateWallet,
+    refetchWallet: walletContext.refetchWallet,
     
-    // Loading states
-    isLoading: {
+    // Combined loading state (for backwards compatibility)
+    isLoading: isAnyLoading,
+    
+    // Individual loading states and errors
+    loadingStates: {
       courses: courseContext.isLoading.courses,
       articles: contentContext.isLoading.articles,
-      videos: contentContext.isLoading.videos
+      videos: contentContext.isLoading.videos,
+      wallet: walletContext.isLoading
+    },
+    
+    errors: {
+      wallet: walletContext.error
     }
   };
 };

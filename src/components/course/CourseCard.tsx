@@ -1,11 +1,15 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Star, ShoppingCart, Loader } from "lucide-react";
+import { Star, ShoppingCart, Loader, Wallet, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import ProgressBar from "@/components/ui/progress-bar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
+import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "@/hooks/use-toast";
+import { clearPendingCourse } from "@/lib/cache";
+import api from "@/lib/axios";
 
 type CourseCardProps = {
   id: string;
@@ -32,10 +36,90 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { myCourses, wallet, updateWallet, enrollCourse } = useData();
+  const { myCourses, wallet, enrollCourse } = useData();
+  const { refetchWallet } = useWallet();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showPurchaseConfirm, setShowPurchaseConfirm] = useState(false);
   
-  const isEnrolled = myCourses.some(c => c.id === id);
+  const isEnrolled = is_enrolled || false;
+
+  // Helper function for formatting currency
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('fa-IR').format(amount);
+  };
+
+  const formatCurrencyWithUnit = (amount: number): string => {
+    return `${formatCurrency(amount)} تومان`;
+  };
+
+  const handlePurchaseConfirm = async () => {
+    setShowPurchaseConfirm(false);
+    setIsProcessing(true);
+
+    try {
+      const enrollResponse = await api.post(`/crs/courses/${id}/enroll/`, {
+        course_id: parseInt(id)
+      });
+
+      if (enrollResponse.status === 201) {
+        clearPendingCourse();
+        enrollCourse(id);
+
+        toast({
+          title: "خرید موفق",
+          description: `دوره ${title} با موفقیت خریداری شد`,
+        });
+
+        // Refresh wallet to show updated balance
+        refetchWallet();
+
+        navigate(`/learn/${id}`);
+      }
+    } catch (error: any) {
+      console.error('Error processing purchase:', error);
+      
+      if (error.response?.status === 400) {
+        const errorData = error.response.data;
+        let errorMsg = "خطا در پردازش خرید";
+        
+        if (errorData?.course_id?.[0]) {
+          errorMsg = errorData.course_id[0];
+        } else if (errorData?.non_field_errors?.[0]) {
+          errorMsg = errorData.non_field_errors[0];
+        } else if (errorData?.detail) {
+          errorMsg = errorData.detail;
+        }
+        
+        toast({
+          title: "خطا در خرید",
+          description: errorMsg,
+          variant: "destructive",
+        });
+      } else if (error.response?.status === 402) {
+        toast({
+          title: "موجودی ناکافی",
+          description: "موجودی کیف پول شما برای خرید این دوره کافی نیست",
+          variant: "destructive",
+        });
+        localStorage.setItem("pendingCourseId", id);
+        navigate("/wallet");
+      } else if (error.response?.status === 409) {
+        toast({
+          title: "خطا",
+          description: "شما قبلاً در این دوره ثبت‌نام کرده‌اید",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "خطا",
+          description: "خطا در پردازش خرید. لطفاً دوباره تلاش کنید.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleQuickBuy = React.useCallback(async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigating to course detail
@@ -47,11 +131,52 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
         return;
       }
 
-      if (isFree || is_enrolled) {
+      if (isEnrolled) {
         navigate(`/learn/${id}`);
         return;
       }
 
+      // For free courses, just enroll directly
+      if (isFree || price === 0) {
+        try {
+          const enrollResponse = await api.post(`/crs/courses/${id}/enroll/`, {
+            course_id: parseInt(id)
+          });
+
+          if (enrollResponse.status === 201) {
+            clearPendingCourse();
+            enrollCourse(id);
+            
+            toast({
+              title: "ثبت‌نام موفق",
+              description: `شما با موفقیت در دوره ${title} ثبت‌نام شدید`,
+            });
+
+            navigate(`/learn/${id}`);
+          }
+        } catch (error: any) {
+          console.error('Error processing free enrollment:', error);
+          
+          if (error.response?.status === 400 || error.response?.status === 409) {
+            toast({
+              title: "خطا",
+              description: "شما قبلاً در این دوره ثبت‌نام کرده‌اید",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "خطا",
+              description: "خطا در پردازش ثبت‌نام. لطفاً دوباره تلاش کنید.",
+              variant: "destructive",
+            });
+          }
+        } finally {
+          setIsProcessing(false);
+        }
+        return;
+      }
+
+      // For paid courses, check wallet balance
       if (!wallet || wallet.balance < price) {
         const shortfall = price - (wallet?.balance || 0);
         
@@ -67,43 +192,21 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
         return;
       }
 
-      // Process purchase
-      const newTransaction = {
-        id: Date.now().toString(),
-        amount: price,
-        type: "purchase" as const,
-        description: `خرید دوره ${title}`,
-        date: new Date().toLocaleDateString("fa-IR"),
-      };
-
-      const updateResult = await updateWallet(wallet.balance - price);
-      if (updateResult.success) {
-        enrollCourse(id);
-
-        toast({
-          title: "خرید موفق",
-          description: `دوره ${title} با موفقیت خریداری شد`,
-        });
-
-        // Simulate processing delay
-        setTimeout(() => {
-          setIsProcessing(false);
-          navigate(`/learn/${id}`);
-        }, 1000);
-      } else {
-        throw new Error(updateResult.error);
-      }
-    } catch (error) {
-      console.error('Error processing purchase:', error);
+      // Show confirmation dialog
       setIsProcessing(false);
+      setShowPurchaseConfirm(true);
+
+    } catch (error) {
+      console.error('Error in handleQuickBuy:', error);
       
       toast({
         title: "خطا",
-        description: "خطا در پردازش خرید. لطفاً دوباره تلاش کنید.",
+        description: "خطا در پردازش درخواست. لطفاً دوباره تلاش کنید.",
         variant: "destructive",
       });
+      setIsProcessing(false);
     }
-  }, [user, isFree, is_enrolled, wallet, price, id, title, navigate, updateWallet, enrollCourse]);
+  }, [user, isFree, isEnrolled, wallet, price, id, title, navigate, enrollCourse]);
 
   const handleImageError = React.useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const target = e.target as HTMLImageElement;
@@ -114,7 +217,7 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
 
   return (
     <div className="trader-card h-full flex flex-col min-h-[280px]">
-      <Link to={is_enrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
+      <Link to={isEnrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
         <div className="relative h-40 w-full">
           <img
             src={thumbnail || "/placeholder-course.jpg"}
@@ -123,12 +226,16 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
             onError={handleImageError}
             loading="lazy"
           />
-          {progress !== undefined && (
-            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 py-1 px-2">
-              <div className="progress-bar">
-                <div className="progress-value" style={{ width: `${progress}%` }}></div>
-              </div>
-              <p className="text-white text-xs mt-1 text-center">
+          {isEnrolled && progress !== undefined && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent py-2 px-3">
+              <ProgressBar 
+                percentage={progress}
+                height="sm"
+                color="bg-orange-500"
+                backgroundColor="bg-white/30"
+                className="mb-1"
+              />
+              <p className="text-white text-xs text-center font-medium">
                 {progress}% تکمیل شده
               </p>
             </div>
@@ -136,7 +243,7 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
         </div>
       </Link>
       <div className="p-3 flex-1 flex flex-col">
-        <Link to={is_enrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
+        <Link to={isEnrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
           <h3 className="font-bold text-sm line-clamp-2 mb-1 min-h-[2.5rem]">{title}</h3>
           <p className="text-gray-600 text-xs mb-2">مدرس: {instructor}</p>
         </Link>
@@ -146,20 +253,20 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
               <Star className="h-4 w-4 text-yellow-500 ml-1" />
               <span className="text-xs font-medium">{rating}</span>
             </div>
-            {!is_enrolled && (
+            {!isEnrolled && (
               <p className={`font-bold ${isFree ? "text-green-600" : "text-trader-500"} text-sm`}>
                 {isFree ? "رایگان" : `${price.toLocaleString()} تومان`}
               </p>
             )}
-            {is_enrolled && (
+            {isEnrolled && (
               <p className="font-bold text-green-600 text-sm">
                 ادامه یادگیری
               </p>
             )}
           </div>
           <Button 
-            variant={is_enrolled ? "outline" : "default"}
-            className="w-full text-xs py-2 h-8"
+            variant={isEnrolled ? "outline" : "default"}
+            className={`w-full text-xs py-2 h-8 ${isEnrolled ? 'border-green-500 text-green-600 hover:bg-green-50' : ''}`}
             onClick={handleQuickBuy}
             disabled={isProcessing}
           >
@@ -167,13 +274,93 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
               <Loader className="h-4 w-4 animate-spin mx-auto" />
             ) : (
               <>
-                {!is_enrolled && <ShoppingCart className="h-4 w-4 ml-1" />}
-                {is_enrolled ? "ادامه یادگیری" : isFree ? "ثبت‌نام رایگان" : "خرید سریع"}
+                {!isEnrolled && <ShoppingCart className="h-4 w-4 ml-1" />}
+                {isEnrolled ? "ادامه یادگیری" : isFree ? "ثبت‌نام رایگان" : "خرید سریع"}
               </>
             )}
           </Button>
         </div>
       </div>
+
+      {/* Purchase Confirmation Dialog */}
+      <Dialog open={showPurchaseConfirm} onOpenChange={setShowPurchaseConfirm}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle className="text-center">تأیید خرید دوره</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {/* Course Info */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <div className="flex items-center">
+                <img
+                  src={thumbnail || "/placeholder-course.jpg"}
+                  alt={title}
+                  className="w-16 h-16 object-cover rounded-lg ml-4"
+                />
+                <div>
+                  <h3 className="font-bold text-lg">{title}</h3>
+                  <p className="text-gray-600 text-sm">مدرس: {instructor}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Purchase Details */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center">
+                  <ShoppingCart className="h-5 w-5 text-blue-600 ml-2" />
+                  <span className="text-blue-800">مبلغ دوره:</span>
+                </div>
+                <span className="font-bold text-blue-600">{formatCurrencyWithUnit(price)}</span>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center">
+                  <Wallet className="h-5 w-5 text-green-600 ml-2" />
+                  <span className="text-green-800">موجودی فعلی شما:</span>
+                </div>
+                <span className="font-bold text-green-600">{formatCurrencyWithUnit(wallet?.balance || 0)}</span>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-orange-600 ml-2" />
+                  <span className="text-orange-800">موجودی پس از خرید:</span>
+                </div>
+                <span className="font-bold text-orange-600">
+                  {formatCurrencyWithUnit((wallet?.balance || 0) - price)}
+                </span>
+              </div>
+            </div>
+
+            {/* Confirmation Message */}
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800 text-center">
+                مبلغ <span className="font-bold">{formatCurrencyWithUnit(price)}</span> از کیف پول شما 
+                برای خرید دوره <span className="font-bold">"{title}"</span> کم می‌شود.
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex justify-between sm:justify-between gap-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setShowPurchaseConfirm(false)}
+            >
+              انصراف
+            </Button>
+            <Button 
+              type="submit" 
+              onClick={handlePurchaseConfirm}
+              disabled={isProcessing}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isProcessing ? "در حال پردازش..." : "تأیید و خرید"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }, (prevProps, nextProps) => {

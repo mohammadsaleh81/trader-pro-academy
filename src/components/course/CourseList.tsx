@@ -1,8 +1,7 @@
-
 import React from "react";
 import CourseCard from "./CourseCard";
 import CourseCardSkeleton from "./CourseCardSkeleton";
-import { Course } from "@/contexts/DataContext";
+import { Course } from "@/types/course";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 
@@ -41,7 +40,7 @@ const CourseList: React.FC<CourseListProps> = ({
           ? Array.from({ length: skeletonCount }).map((_, index) => (
               <CourseCardSkeleton key={`skeleton-${index}`} />
             ))
-          : courses.map((course, index) => (
+          : courses.map((course) => (
               <CourseCard
                 key={course.id}
                 id={course.id}
@@ -50,9 +49,10 @@ const CourseList: React.FC<CourseListProps> = ({
                 thumbnail={course.thumbnail}
                 price={course.price}
                 rating={course.rating}
-                isFree={index % 3 === 0} // Just for demo purposes to show some free courses
-                progress={showProgress && course.completedLessons !== undefined 
-                  ? Math.round((course.completedLessons / course.totalLessons) * 100) 
+                isFree={course.price === 0}
+                is_enrolled={course.is_enrolled}
+                progress={showProgress && course.progress_percentage !== undefined 
+                  ? Math.round(course.progress_percentage) 
                   : undefined}
               />
             ))

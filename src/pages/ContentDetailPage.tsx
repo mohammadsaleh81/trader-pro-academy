@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -6,7 +5,7 @@ import Layout from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Article, Video, articlesApi, videosApi } from "@/lib/api";
+import { Article, Video, Podcast, articlesApi, videosApi, podcastsApi } from "@/lib/api";
 import { sanitizeHtml } from "@/lib/sanitize";
 import ContentDetailHeader from "@/components/content/ContentDetailHeader";
 import ContentActions from "@/components/content/ContentActions";
@@ -16,7 +15,7 @@ import RelatedContent from "@/components/content/RelatedContent";
 import CommentSection from "@/components/comments/CommentSection";
 import ErrorBoundary from "@/components/error/ErrorBoundary";
 
-type ContentType = Article | Video;
+type ContentType = Article | Video | Podcast;
 
 const ContentDetailPage: React.FC = () => {
   const { id, type } = useParams<{ id: string; type: string }>();
@@ -56,6 +55,10 @@ const ContentDetailPage: React.FC = () => {
           case "video":
             console.log('ContentDetailPage: Fetching video with ID:', id);
             data = await videosApi.getById(id);
+            break;
+          case "podcast":
+            console.log('ContentDetailPage: Fetching podcast with ID:', id);
+            data = await podcastsApi.getById(id);
             break;
           default:
             console.error('ContentDetailPage: Unknown content type:', contentType);
@@ -100,7 +103,7 @@ const ContentDetailPage: React.FC = () => {
   const handleBookmark = React.useCallback(() => {
     if (!content || !id || !type) return;
     
-    const contentType = type.replace(/s$/, '') as "article" | "video";
+    const contentType = type.replace(/s$/, '') as "article" | "video" | "podcast";
     
     if (isBookmarked) {
       const bookmarkToRemove = bookmarks.find(
@@ -201,7 +204,7 @@ const ContentDetailPage: React.FC = () => {
 
               <div className="mt-12 pt-8 border-t border-gray-200">
                 <CommentSection
-                  contentType={type?.replace(/s$/, '') as "article" | "video"}
+                  contentType={type?.replace(/s$/, '') as "article" | "video" | "podcast"}
                   contentId={id!}
                 />
               </div>

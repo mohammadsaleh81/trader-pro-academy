@@ -5,10 +5,11 @@ import { Bookmark, BookmarkCheck, Calendar, Clock, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
 import { cn } from "@/lib/utils";
+import { DEFAULT_IMAGES } from "@/lib/config";
 
 type ContentType = "article" | "podcast" | "video" | "webinar" | "file";
 
-const defaultThumbnail = "https://placehold.co/600x400/e2e8f0/64748b?text=No+Image";
+const defaultThumbnail = DEFAULT_IMAGES.PLACEHOLDER_CONTENT;
 
 interface ContentCardProps {
   id: string | number;

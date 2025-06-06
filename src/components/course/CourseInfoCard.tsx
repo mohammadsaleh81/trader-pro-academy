@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Loader, Play, Clock, BookOpen, Award } from "lucide-react";
 import { CourseDetails } from "@/contexts/DataContext";
+import ProgressCircle from "@/components/ui/progress-circle";
 
 interface CourseInfoCardProps {
   courseData: CourseDetails;
@@ -49,36 +50,11 @@ const CourseInfoCard: React.FC<CourseInfoCardProps> = ({
             
             {/* Progress Circle */}
             <div className="flex justify-center mb-4">
-              <div className="relative w-24 h-24">
-                <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    stroke="currentColor"
-                    strokeWidth="8"
-                    fill="transparent"
-                    className="text-gray-200"
-                  />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    stroke="currentColor"
-                    strokeWidth="8"
-                    fill="transparent"
-                    strokeDasharray={`${2 * Math.PI * 40}`}
-                    strokeDashoffset={`${2 * Math.PI * 40 * (1 - (userProgress?.course_progress.completion_percentage || 0) / 100)}`}
-                    className="text-orange-600"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-lg font-bold text-orange-600">
-                    {Math.round(userProgress?.course_progress.completion_percentage || 0)}%
-                  </span>
-                </div>
-              </div>
+              <ProgressCircle 
+                percentage={userProgress?.course_progress.completion_percentage || 0}
+                size="lg"
+                color="text-orange-600"
+              />
             </div>
 
             {/* Progress Details */}

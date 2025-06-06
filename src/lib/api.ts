@@ -33,6 +33,53 @@ interface AvatarResponse {
     avatar: string;
 }
 
+// Comment interfaces
+export interface CommentAuthor {
+    id: string;
+    username?: string;
+    email?: string;
+    first_name: string;
+    last_name: string;
+}
+
+export interface CommentBase {
+    id: string;
+    author: CommentAuthor;
+    content: string;
+    created_at: string;
+    updated_at: string;
+    is_approved: boolean;
+}
+
+// Article comment interface
+export interface ArticleComment extends CommentBase {
+    article: string;
+    parent: string | null;
+    replies: ArticleComment[];
+}
+
+// Media comment interface (for videos, podcasts, etc.)
+export interface MediaComment extends CommentBase {
+    content_type: string;
+    object_id: string;
+    content_object_name: string;
+    parent: string | null;
+    replies: MediaComment[];
+}
+
+// Create comment interfaces
+export interface CreateArticleComment {
+    content: string;
+    parent?: string | null;
+}
+
+export interface CreateMediaComment {
+    content_type: string;
+    object_id: string;
+    content: string;
+    parent?: string | null;
+}
+
 // Article types
 export interface Article {
     id: string;
@@ -232,6 +279,148 @@ class ApiService {
     logout(): void {
         this.clearStoredTokens();
     }
+
+    // Comment methods
+    
+    // Article comments
+    async getArticleComments(articleId: string): Promise<ArticleComment[]> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.ARTICLE_COMMENTS(articleId)}`, {
+            method: 'GET',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get article comments');
+        }
+
+        return response.json();
+    }
+
+    async createArticleComment(articleId: string, commentData: CreateArticleComment): Promise<ArticleComment> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.ARTICLE_COMMENTS(articleId)}`, {
+            method: 'POST',
+            headers: this.getHeaders(true),
+            body: JSON.stringify(commentData),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create article comment');
+        }
+
+        return response.json();
+    }
+
+    // Video comments
+    async getVideoComments(videoId: string): Promise<MediaComment[]> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.VIDEO_COMMENTS(videoId)}`, {
+            method: 'GET',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get video comments');
+        }
+
+        return response.json();
+    }
+
+    async createVideoComment(videoId: string, commentData: CreateArticleComment): Promise<MediaComment> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.VIDEO_COMMENTS(videoId)}`, {
+            method: 'POST',
+            headers: this.getHeaders(true),
+            body: JSON.stringify(commentData),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create video comment');
+        }
+
+        return response.json();
+    }
+
+    // Podcast comments
+    async getPodcastComments(podcastId: string): Promise<MediaComment[]> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PODCAST_COMMENTS(podcastId)}`, {
+            method: 'GET',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get podcast comments');
+        }
+
+        return response.json();
+    }
+
+    async createPodcastComment(podcastId: string, commentData: CreateArticleComment): Promise<MediaComment> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PODCAST_COMMENTS(podcastId)}`, {
+            method: 'POST',
+            headers: this.getHeaders(true),
+            body: JSON.stringify(commentData),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create podcast comment');
+        }
+
+        return response.json();
+    }
+
+    // Generic media comments
+    async getMediaComments(contentType: string, objectId: string): Promise<MediaComment[]> {
+        const url = `${API_BASE_URL}${API_ENDPOINTS.MEDIA_COMMENTS}?content_type=${contentType}&object_id=${objectId}`;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get media comments');
+        }
+
+        return response.json();
+    }
+
+    async createMediaComment(commentData: CreateMediaComment): Promise<MediaComment> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.MEDIA_COMMENTS}`, {
+            method: 'POST',
+            headers: this.getHeaders(true),
+            body: JSON.stringify(commentData),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create media comment');
+        }
+
+        return response.json();
+    }
+
+    // Update comment
+    async updateMediaComment(commentId: string, content: string): Promise<MediaComment> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.MEDIA_COMMENT_DETAIL(commentId)}`, {
+            method: 'PUT',
+            headers: this.getHeaders(true),
+            body: JSON.stringify({ content }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update comment');
+        }
+
+        return response.json();
+    }
+
+    // Delete comment
+    async deleteMediaComment(commentId: string): Promise<void> {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.MEDIA_COMMENT_DETAIL(commentId)}`, {
+            method: 'DELETE',
+            headers: this.getHeaders(true),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete comment');
+        }
+    }
 }
 
 export const api = new ApiService();
@@ -331,3 +520,184 @@ export const videosApi = {
         };
     }
 };
+
+// Bookmarks API
+export interface BookmarkResponse {
+    id: number;
+    user: {
+        id: string;
+        username?: string;
+        first_name: string;
+        last_name: string;
+        email: string;
+    };
+    article: {
+        id: string;
+        title: string;
+        slug: string;
+        thumbnail?: string;
+    };
+    created_at: string;
+}
+
+export const bookmarksApi = {
+    getAll: async (): Promise<BookmarkResponse[]> => {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.BOOKMARKS}`, {
+            headers: {
+                'Authorization': `Bearer ${getAccessToken()}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch bookmarks');
+        }
+        
+        return response.json();
+    },
+    
+    create: async (articleId: string): Promise<BookmarkResponse> => {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.BOOKMARKS}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${getAccessToken()}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ article: parseInt(articleId) }),
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.non_field_errors?.[0] || 'Failed to create bookmark');
+        }
+        
+        return response.json();
+    },
+    
+    delete: async (bookmarkId: string): Promise<void> => {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.BOOKMARK_DETAIL(parseInt(bookmarkId))}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${getAccessToken()}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to delete bookmark');
+        }
+    },
+    
+    // Helper function to check if an article is bookmarked
+    isBookmarked: async (articleId: string): Promise<boolean> => {
+        try {
+            const bookmarks = await bookmarksApi.getAll();
+            return bookmarks.some(bookmark => bookmark.article.id === articleId);
+        } catch (error) {
+            console.error('Error checking bookmark status:', error);
+            return false;
+        }
+    },
+    
+    // Helper function to find bookmark by article ID
+    findByArticleId: async (articleId: string): Promise<BookmarkResponse | null> => {
+        try {
+            const bookmarks = await bookmarksApi.getAll();
+            return bookmarks.find(bookmark => bookmark.article.id === articleId) || null;
+        } catch (error) {
+            console.error('Error finding bookmark:', error);
+            return null;
+        }
+    }
+};
+
+// Podcasts API
+export interface Podcast {
+    id: string;
+    title: string;
+    slug: string;
+    description: string;
+    thumbnail: string | null;
+    audio_file: string;
+    duration: string;
+    episode_number?: number;
+    season_number?: number;
+    transcript?: string;
+    author: string;
+    category: {
+        id: string;
+        name: string;
+        slug: string;
+        description: string;
+    };
+    tags: Array<{
+        id: string;
+        name: string;
+        slug: string;
+    }>;
+    status: string;
+    featured: boolean;
+    created_at: string;
+    updated_at: string;
+    published_at: string | null;
+    view_count: number;
+    date: string;
+}
+
+export const podcastsApi = {
+    getAll: async (): Promise<Podcast[]> => {
+        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.PODCASTS}`);
+        return response.data.map((podcast: any) => ({
+            ...podcast,
+            id: podcast.id.toString(),
+            author: typeof podcast.author === 'object' 
+                ? `${podcast.author.first_name} ${podcast.author.last_name}`.trim() || podcast.author.username || podcast.author.email
+                : podcast.author || "نویسنده",
+            category: {
+                ...podcast.category,
+                id: podcast.category.id.toString()
+            },
+            tags: podcast.tags.map((tag: any) => ({
+                ...tag,
+                id: tag.id.toString()
+            })),
+            thumbnail: convertThumbnailToAbsoluteUrl(podcast.thumbnail),
+            date: podcast.published_at || podcast.created_at
+        }));
+    },
+    
+    getById: async (id: string): Promise<Podcast> => {
+        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.PODCAST_DETAIL(parseInt(id))}`);
+        return {
+            ...response.data,
+            id: response.data.id.toString(),
+            author: typeof response.data.author === 'object' 
+                ? `${response.data.author.first_name} ${response.data.author.last_name}`.trim() || response.data.author.username || response.data.author.email
+                : response.data.author || "نویسنده",
+            category: {
+                ...response.data.category,
+                id: response.data.category.id.toString()
+            },
+            tags: response.data.tags.map((tag: any) => ({
+                ...tag,
+                id: tag.id.toString()
+            })),
+            thumbnail: convertThumbnailToAbsoluteUrl(response.data.thumbnail),
+            date: response.data.published_at || response.data.created_at
+        };
+    }
+};
+
+// Helper function to get access token
+function getAccessToken(): string | null {
+    const tokens = localStorage.getItem('auth_tokens');
+    if (tokens) {
+        try {
+            const parsed = JSON.parse(tokens);
+            return parsed.access;
+        } catch {
+            return null;
+        }
+    }
+    return null;
+}
