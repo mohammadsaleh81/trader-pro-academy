@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
-import { useData } from "@/contexts/DataContext";
+import { useCourse } from "@/contexts/CourseContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { BookOpen } from "lucide-react";
@@ -9,21 +9,17 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 
 const MyCoursesPage: React.FC = () => {
-  const { myCourses } = useData();
+  const { myCourses, isLoading } = useCourse();
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
+  const [localLoading, setLocalLoading] = useState(true);
 
   useEffect(() => {
     console.log("MyCoursesPage - myCourses data:", myCourses);
     console.log("MyCoursesPage - myCourses length:", myCourses.length);
     
-    // Simulate data loading
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [myCourses]);
+    // Set local loading based on CourseContext loading state
+    setLocalLoading(isLoading.myCourses);
+  }, [myCourses, isLoading]);
 
   if (!user) {
     return (
@@ -38,14 +34,14 @@ const MyCoursesPage: React.FC = () => {
     );
   }
 
-  console.log("MyCoursesPage render - isLoading:", isLoading, "myCourses:", myCourses);
+  console.log("MyCoursesPage render - localLoading:", localLoading, "myCourses:", myCourses);
 
   return (
     <Layout>
       <div className="trader-container py-6">
         <h1 className="text-2xl font-bold mb-6 fade-in">دوره‌های من</h1>
         
-        {isLoading ? (
+        {localLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, index) => (
               <div key={`skeleton-${index}`} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">

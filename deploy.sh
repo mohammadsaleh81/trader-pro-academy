@@ -1,38 +1,21 @@
 #!/bin/bash
 
-# Frontend deployment script for academy.gport.sbs
-echo "🚀 Starting frontend deployment..."
+set -e
 
-# Build the project
-echo "📦 Building frontend..."
+echo "🚀 شروع فرآیند بیلد و استقرار..."
+
+echo "1/4 - در حال بیلد کردن پروژه..."
 npm run build
 
-if [ $? -ne 0 ]; then
-    echo "❌ Build failed!"
-    exit 1
-fi
+echo "2/4 - در حال حذف پوشه dist قدیمی از مسیر والد..."
+rm -rf ../dist
 
-# Copy files to nginx directory
-echo "📂 Copying files to /var/www/academy/..."
-sudo rm -rf /var/www/academy/dist
-sudo cp -r dist /var/www/academy/
+echo "3/4 - در حال کپی کردن dist از سرور به مسیر والد..."
+cp -r /var/www/academy/dist/ ../
 
-# Set proper permissions
-echo "🔐 Setting permissions..."
-sudo chown -R www-data:www-data /var/www/academy
+echo "4/4 - در حال استقرار بیلد جدید در سرور..."
+cp -r dist/ /var/www/academy/
 
-# Test nginx configuration
-echo "🧪 Testing nginx configuration..."
-sudo nginx -t
 
-if [ $? -ne 0 ]; then
-    echo "❌ Nginx configuration test failed!"
-    exit 1
-fi
-
-# Reload nginx
-echo "🔄 Reloading nginx..."
-sudo systemctl reload nginx
-
-echo "✅ Frontend deployment completed successfully!"
-echo "🌐 Website is available at: https://academy.gport.sbs" 
+systemctl restart nginx
+echo "✅ فرآیند با موفقیت انجام شد."

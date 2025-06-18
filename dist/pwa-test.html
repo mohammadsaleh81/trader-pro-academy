@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست PWA - مسترتریدر آکادمی</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status-icon {
+            font-size: 20px;
+            margin: 0 10px 0 0;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        .test-result {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .install-button {
+            background: #2196F3;
+        }
+        .install-button:hover {
+            background: #1976D2;
+        }
+        .console-log {
+            background: #1e1e1e;
+            color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        h1, h2 {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 تست PWA - مسترتریدر آکادمی</h1>
+    
+    <div class="test-card">
+        <h2>وضعیت اجزای PWA</h2>
+        <div id="pwa-status"></div>
+    </div>
+    
+    <div class="test-card">
+        <h2>کنترل نصب</h2>
+        <button id="install-btn" class="install-button" disabled>نصب PWA</button>
+        <button onclick="refreshTests()">بروزرسانی تست‌ها</button>
+        <button onclick="clearStorage()">پاک کردن Storage</button>
+        <div id="install-status" style="margin-top: 10px;"></div>
+    </div>
+    
+    <div class="test-card">
+        <h2>اطلاعات دستگاه</h2>
+        <div id="device-info"></div>
+    </div>
+    
+    <div class="test-card">
+        <h2>Console Log</h2>
+        <div id="console" class="console-log"></div>
+        <button onclick="clearConsole()">پاک کردن Log</button>
+    </div>
+
+    <script>
+        let deferredPrompt;
+        let consoleElement;
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#ff6b6b' : type === 'success' ? '#51cf66' : '#74c0fc';
+            consoleElement.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            consoleElement.scrollTop = consoleElement.scrollHeight;
+            console.log(message);
+        }
+        
+        function clearConsole() {
+            consoleElement.innerHTML = '';
+        }
+        
+        function getStatusIcon(isOk) {
+            return isOk ? '<span class="status-icon success">✅</span>' : '<span class="status-icon error">❌</span>';
+        }
+        
+        async function checkPWAStatus() {
+            const status = {
+                serviceWorker: 'serviceWorker' in navigator,
+                manifest: !!document.querySelector('link[rel="manifest"]'),
+                https: location.protocol === 'https:' || location.hostname === 'localhost',
+                beforeInstallPrompt: !!deferredPrompt,
+                isStandalone: window.matchMedia('(display-mode: standalone)').matches,
+                isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
+                isAndroid: /Android/.test(navigator.userAgent),
+                onLine: navigator.onLine
+            };
+            
+            // Check manifest accessibility
+            try {
+                const manifestResponse = await fetch('/manifest.json');
+                status.manifestAccessible = manifestResponse.ok;
+            } catch (error) {
+                status.manifestAccessible = false;
+                log(`خطا در دسترسی به manifest: ${error.message}`, 'error');
+            }
+            
+            // Check service worker registrations
+            if (status.serviceWorker) {
+                try {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    status.swRegistered = registrations.length > 0;
+                    status.swActive = registrations.some(reg => reg.active);
+                } catch (error) {
+                    status.swRegistered = false;
+                    status.swActive = false;
+                    log(`خطا در چک کردن Service Worker: ${error.message}`, 'error');
+                }
+            }
+            
+            return status;
+        }
+        
+        function displayPWAStatus(status) {
+            const statusHtml = `
+                <div class="test-result">${getStatusIcon(status.serviceWorker)}Service Worker پشتیبانی می‌شود</div>
+                <div class="test-result">${getStatusIcon(status.swRegistered)}Service Worker ثبت شده</div>
+                <div class="test-result">${getStatusIcon(status.swActive)}Service Worker فعال است</div>
+                <div class="test-result">${getStatusIcon(status.manifest)}Manifest موجود است</div>
+                <div class="test-result">${getStatusIcon(status.manifestAccessible)}Manifest قابل دسترس است</div>
+                <div class="test-result">${getStatusIcon(status.https)}HTTPS فعال است</div>
+                <div class="test-result">${getStatusIcon(status.beforeInstallPrompt)}beforeinstallprompt آماده است</div>
+                <div class="test-result">${getStatusIcon(!status.isStandalone)}در حالت مرورگر است (نه standalone)</div>
+                <div class="test-result">${getStatusIcon(status.onLine)}آنلاین است</div>
+            `;
+            document.getElementById('pwa-status').innerHTML = statusHtml;
+        }
+        
+        function displayDeviceInfo() {
+            const userAgent = navigator.userAgent;
+            const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+            const isAndroid = /Android/.test(userAgent);
+            const isMobile = /Mobi|Android/i.test(userAgent);
+            
+            const deviceHtml = `
+                <div class="test-result">${getStatusIcon(isIOS)}iOS: ${isIOS}</div>
+                <div class="test-result">${getStatusIcon(isAndroid)}Android: ${isAndroid}</div>
+                <div class="test-result">${getStatusIcon(isMobile)}Mobile: ${isMobile}</div>
+                <div class="test-result">Platform: ${navigator.platform}</div>
+                <div class="test-result">Language: ${navigator.language}</div>
+                <div class="test-result">User Agent: ${userAgent.substring(0, 100)}...</div>
+            `;
+            document.getElementById('device-info').innerHTML = deviceHtml;
+        }
+        
+        async function refreshTests() {
+            log('بروزرسانی تست‌ها...', 'info');
+            const status = await checkPWAStatus();
+            displayPWAStatus(status);
+            displayDeviceInfo();
+            
+            // Update install button
+            const installBtn = document.getElementById('install-btn');
+            if (deferredPrompt && !status.isStandalone) {
+                installBtn.disabled = false;
+                installBtn.textContent = 'نصب PWA (آماده)';
+                document.getElementById('install-status').innerHTML = '✅ آماده برای نصب';
+            } else if (status.isStandalone) {
+                installBtn.disabled = true;
+                installBtn.textContent = 'PWA نصب شده';
+                document.getElementById('install-status').innerHTML = '✅ PWA نصب شده است';
+            } else {
+                installBtn.disabled = true;
+                installBtn.textContent = 'PWA آماده نیست';
+                document.getElementById('install-status').innerHTML = '⏳ منتظر آماده شدن PWA...';
+            }
+            
+            log('تست‌ها بروزرسانی شدند', 'success');
+        }
+        
+        function clearStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            log('تمام Storage پاک شد', 'success');
+        }
+        
+        // Event listeners
+        window.addEventListener('beforeinstallprompt', (e) => {
+            log('🎯 رویداد beforeinstallprompt دریافت شد!', 'success');
+            e.preventDefault();
+            deferredPrompt = e;
+            refreshTests();
+        });
+        
+        window.addEventListener('appinstalled', () => {
+            log('🎉 PWA با موفقیت نصب شد!', 'success');
+            deferredPrompt = null;
+            refreshTests();
+        });
+        
+        document.getElementById('install-btn').addEventListener('click', async () => {
+            if (!deferredPrompt) {
+                log('دکمه نصب در دسترس نیست', 'error');
+                return;
+            }
+            
+            try {
+                log('نمایش پنجره نصب...', 'info');
+                await deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                log(`نتیجه انتخاب کاربر: ${outcome}`, outcome === 'accepted' ? 'success' : 'warning');
+                deferredPrompt = null;
+                refreshTests();
+            } catch (error) {
+                log(`خطا در نصب: ${error.message}`, 'error');
+            }
+        });
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            consoleElement = document.getElementById('console');
+            log('صفحه تست PWA بارگذاری شد', 'info');
+            refreshTests();
+        });
+    </script>
+</body>
+</html> 

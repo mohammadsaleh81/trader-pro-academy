@@ -38,6 +38,7 @@ export type CourseComment = {
   content: string;
   replies: CourseComment[];
   created_at: string;
+  is_approved: boolean;
 };
 
 // Course Progress Types
@@ -110,6 +111,13 @@ export type CourseDetails = {
     level: "beginner" | "intermediate" | "advanced" | string;
     is_enrolled?: boolean;
     progress_percentage?: number;
+    requires_identity_verification?: boolean;
+    // New capacity fields
+    has_capacity_limit?: boolean;
+    capacity?: number;
+    available_spots?: number;
+    is_full?: boolean;
+    student_count?: number;
   };
   chapters: CourseChapter[];
   comments: CourseComment[];
@@ -123,7 +131,6 @@ export type Course = {
   thumbnail: string;
   description: string;
   price: number;
-  rating: number;
   totalLessons?: number;
   completedLessons?: number;
   createdAt: string;
@@ -133,4 +140,13 @@ export type Course = {
   level?: "beginner" | "intermediate" | "advanced";
   is_enrolled?: boolean;
   progress_percentage?: number;
+  discounted_price?: number;
+  discount_percentage?: number;
+  requires_identity_verification?: boolean;
+  // New capacity fields
+  has_capacity_limit?: boolean;
+  capacity?: number;
+  available_spots?: number;
+  is_full?: boolean;
+  student_count?: number;
 };

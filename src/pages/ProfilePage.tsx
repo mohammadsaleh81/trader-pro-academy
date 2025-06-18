@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { Wallet, User, Bookmark, Calendar } from "lucide-react";
+import { Wallet, User, Bookmark, Calendar, Shield, CheckCircle2 } from "lucide-react";
 
 const ProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -33,12 +33,6 @@ const ProfilePage: React.FC = () => {
       path: "/my-courses"
     },
     {
-      icon: <Wallet className="h-5 w-5" />,
-      title: "کیف پول",
-      description: "مدیریت تراکنش‌ها و موجودی کیف پول",
-      path: "/wallet"
-    },
-    {
       icon: <Bookmark className="h-5 w-5" />,
       title: "نشان‌های من",
       description: "محتوای ذخیره شده شما",
@@ -55,48 +49,69 @@ const ProfilePage: React.FC = () => {
   return (
     <Layout>
       <div className="trader-container py-6">
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6 scale-in">
-          <div className="flex items-center">
-            <div className="w-20 h-20 rounded-full overflow-hidden ml-4">
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold mb-1">{user.name}</h1>
-              <p className="text-gray-500 text-sm">{user.email}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-4">
-          {menuItems.map((item, index) => (
-            <Link
-              key={index}
-              to={item.path}
-              className={`bg-white rounded-xl shadow-md p-4 flex items-center hover:shadow-lg transition-all duration-300 hover:bg-gray-50 ${
-                mounted ? "opacity-0 animate-slide-in" : ""
-              }`}
-              style={{ 
-                animationDelay: mounted ? `${index * 100}ms` : '0ms',
-                animationFillMode: "forwards" 
-              }}
-            >
-              <div className="w-10 h-10 rounded-full bg-trader-50 text-trader-500 flex items-center justify-center ml-4">
-                {item.icon}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name || 'تصویر پروفایل'}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="h-8 w-8 text-gray-400" />
+                )}
               </div>
               <div>
-                <h3 className="font-bold text-base">{item.title}</h3>
-                <p className="text-gray-500 text-sm">{item.description}</p>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl font-bold">{user.name || 'کاربر'}</h1>
+                  {user.identity_verified && (
+                    <div className="flex items-center gap-1 text-sm text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>احراز شده</span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-gray-500">{user.phone}</p>
               </div>
-            </Link>
-          ))}
+            </div>
           
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {menuItems.map((item, index) => (
+              <Link
+                key={index}
+                to={item.path}
+                className="flex items-center gap-4 p-4 rounded-lg border border-gray-100 hover:border-trader-500 transition-colors duration-200"
+              >
+                <div className="p-2 rounded-lg bg-gray-50 text-trader-500">
+                  {item.icon}
+                </div>
+                <div>
+                  <h3 className="font-medium">{item.title}</h3>
+                  <p className="text-sm text-gray-500">{item.description}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {!user.identity_verified && (
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <Link
+                to="/identity-verification"
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-trader-500 transition-colors duration-200"
+              >
+                <Shield className="h-4 w-4" />
+                <span>تکمیل احراز هویت</span>
+              </Link>
+            </div>
+          )}
+
           <button
-            onClick={() => logout()}
-            className="mt-4 w-full py-3 border border-red-500 text-red-500 rounded-xl font-medium hover:bg-red-50 transition-colors duration-200 btn-click"
+            onClick={logout}
+            className="mt-6 w-full py-3 border border-red-500 text-red-500 rounded-xl font-medium hover:bg-red-50 transition-colors duration-200"
           >
             خروج از حساب کاربری
           </button>

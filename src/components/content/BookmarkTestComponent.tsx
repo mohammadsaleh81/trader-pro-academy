@@ -7,6 +7,7 @@ import EnhancedContentActions from "./EnhancedContentActions";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { formatAuthor } from "@/lib/utils";
 
 const BookmarkTestComponent: React.FC = () => {
   const { articles, bookmarks, isLoading } = useContent();
@@ -89,7 +90,7 @@ const BookmarkTestComponent: React.FC = () => {
                         {article.summary || article.description || "خلاصه‌ای در دسترس نیست"}
                       </p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>نویسنده: {article.author}</span>
+                        <span>نویسنده: {formatAuthor(article.author)}</span>
                         <span>تاریخ: {new Date(article.date).toLocaleDateString('fa-IR')}</span>
                         <span>بازدید: {article.view_count}</span>
                       </div>

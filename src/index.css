@@ -1,6 +1,12 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
-@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap');
+
+/* Backup font for Persian text */
+@font-face {
+  font-family: 'Vazirmatn-Fallback';
+  src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
@@ -75,41 +81,41 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-vazirmatn;
+    @apply bg-background text-foreground;
+    font-family: 'Vazirmatn', 'Vazirmatn-Fallback', 'Tahoma', 'Segoe UI', 'Arial Unicode MS', sans-serif;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    unicode-bidi: embed;
+    direction: rtl;
   }
   
-  /* Enhanced Touch Device Optimizations */
+  /* Touch Device Optimizations */
   .touch-device button:active,
   .touch-device a:active,
   .touch-device [role="button"]:active {
     @apply scale-95 transition-transform duration-100;
   }
   
-  /* Enhanced hover effects */
-  @media (hover: hover) {
-    .group:hover .group-hover\:scale-110 {
-      transform: scale(1.1);
-    }
-    
-    .group:hover .group-hover\:scale-105 {
-      transform: scale(1.05);
-    }
-  }
-
-  /* ... keep existing code (RTL Support and other styles) */
-  
   /* RTL Support with cross-browser fixes */
   html[dir="rtl"] {
-    @apply font-vazirmatn;
+    font-family: 'Vazirmatn', 'Vazirmatn-Fallback', 'Tahoma', 'Segoe UI', 'Arial Unicode MS', sans-serif;
   }
   
   html[dir="ltr"] {
-    @apply font-montserrat;
+    font-family: 'Montserrat', 'Segoe UI', 'Arial', sans-serif;
+  }
+
+  /* Ensure proper text encoding for Persian characters */
+  html[dir="rtl"] * {
+    unicode-bidi: embed;
+  }
+
+  /* Force UTF-8 encoding for all text elements */
+  html, body, div, span, p, h1, h2, h3, h4, h5, h6 {
+    unicode-bidi: embed;
+    font-synthesis: weight style;
   }
 
   /* RTL text alignment fixes for Firefox and Safari */
@@ -195,39 +201,39 @@
   }
   
   .trader-card {
-    @apply bg-card rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-border;
+    @apply bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300;
   }
   
   .trader-btn-primary {
-    @apply bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 transition-all duration-200 font-medium min-h-[44px] min-w-[44px] hover:scale-105;
+    @apply bg-trader-500 text-white py-2 px-4 rounded-md hover:bg-trader-600 transition-colors duration-200 font-medium min-h-[44px] min-w-[44px];
     touch-action: manipulation;
     -webkit-appearance: none;
     appearance: none;
   }
   
   .trader-btn-outline {
-    @apply border border-primary text-primary py-2 px-4 rounded-md hover:bg-accent hover:text-accent-foreground transition-all duration-200 font-medium min-h-[44px] min-w-[44px] hover:scale-105;
+    @apply border border-trader-500 text-trader-500 py-2 px-4 rounded-md hover:bg-trader-50 transition-colors duration-200 font-medium min-h-[44px] min-w-[44px];
     touch-action: manipulation;
     -webkit-appearance: none;
     appearance: none;
   }
   
   .trader-input {
-    @apply w-full rounded-md border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent min-h-[44px] transition-all duration-300;
+    @apply w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-trader-500 focus:border-transparent min-h-[44px];
     -webkit-appearance: none;
     appearance: none;
   }
   
   .progress-bar {
-    @apply h-2 bg-muted rounded-full overflow-hidden;
+    @apply h-2 bg-gray-200 rounded-full overflow-hidden;
     touch-action: manipulation;
   }
   
   .progress-value {
-    @apply h-full bg-primary transition-all duration-500;
+    @apply h-full bg-trader-500 transition-all duration-300;
   }
 
-  /* Enhanced Animation Classes */
+  /* Animation Classes */
   .fade-in {
     @apply animate-fade-in;
   }
@@ -240,17 +246,17 @@
     @apply animate-scale-in;
   }
   
-  /* Enhanced Micro-interactions */
+  /* Micro-interactions */
   .bookmark-btn {
-    @apply transition-all duration-300 hover:scale-125;
+    @apply transition-transform duration-200;
   }
   
   .bookmark-btn:active {
-    @apply scale-110;
+    @apply scale-125;
   }
   
   .btn-click {
-    @apply transition-all duration-200 hover:scale-105;
+    @apply transition-transform duration-100;
     touch-action: manipulation;
   }
   
@@ -262,7 +268,7 @@
     @apply transition-all duration-300;
   }
   
-  /* Enhanced Page transitions */
+  /* Page transitions */
   .page-transition {
     @apply animate-fade-in;
   }
@@ -299,28 +305,13 @@
     justify-content: center;
   }
 
-  /* Enhanced Dark Mode transitions */
-  .dark-transition {
-    @apply transition-colors duration-300;
-  }
-
-  /* Glassmorphism effect */
-  .glass-effect {
-    @apply backdrop-blur-md bg-background/80 border border-border/50;
-  }
-
-  /* Enhanced hover states */
-  .hover-lift {
-    @apply transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-lg;
-  }
-
   /* Audio Player Styles */
   .slider {
     -webkit-appearance: none;
     appearance: none;
     height: 8px;
     border-radius: 4px;
-    background: hsl(var(--muted));
+    background: #e5e7eb;
     outline: none;
     opacity: 0.7;
     transition: opacity 0.2s;
@@ -336,30 +327,61 @@
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: hsl(var(--primary));
+    background: #464696;
     cursor: pointer;
-    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.2);
-    transition: all 0.2s;
+    box-shadow: 0 0 0 3px rgba(70, 70, 150, 0.2);
   }
 
   .slider::-moz-range-thumb {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: hsl(var(--primary));
+    background: #464696;
     cursor: pointer;
     border: none;
-    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.2);
-    transition: all 0.2s;
+    box-shadow: 0 0 0 3px rgba(70, 70, 150, 0.2);
   }
 
   .slider::-webkit-slider-thumb:hover {
-    background: hsl(var(--primary) / 0.9);
-    transform: scale(1.1);
+    background: #3A3A7A;
   }
 
   .slider::-moz-range-thumb:hover {
-    background: hsl(var(--primary) / 0.9);
-    transform: scale(1.1);
+    background: #3A3A7A;
+  }
+
+  /* PWA Styles */
+  .pwa-popup {
+    animation: slideInFromBottom 0.3s ease-out;
+  }
+
+  @keyframes slideInFromBottom {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .pwa-backdrop {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  /* Touch improvements for PWA */
+  .touch-device .pwa-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .pwa-install-step {
+    transition: all 0.2s ease;
+  }
+
+  .pwa-install-step:hover {
+    background-color: rgba(70, 70, 150, 0.05);
   }
 }

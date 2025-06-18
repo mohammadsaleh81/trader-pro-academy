@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import ContentListWithLinks from "@/components/content/ContentListWithLinks";
@@ -32,7 +31,7 @@ const ContentHubPage: React.FC = () => {
   };
 
   const [activeTab, setActiveTab] = useState<ContentTab>(getInitialTab());
-  const { articles, podcasts, videos, webinars, files, loadingStates } = useData();
+  const { articles, podcasts, videos, webinars, files, isLoading } = useData();
   const [key, setKey] = useState(0);
 
   useEffect(() => {
@@ -71,13 +70,9 @@ const ContentHubPage: React.FC = () => {
   };
 
   const isCurrentTabLoading = () => {
-    if (!loadingStates) {
-      return false;
-    }
-    
     switch (activeTab) {
-      case "articles": return loadingStates.articles || false;
-      case "videos": return loadingStates.videos || false;
+      case "articles": return isLoading.articles;
+      case "videos": return isLoading.videos;
       default: return false;
     }
   };

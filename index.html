@@ -1,10 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>مسترتریدر آکادمی | Mr. Trader Academy</title>
     <meta name="description" content="مسترتریدر آکادمی - آموزش تریدینگ، ارزهای دیجیتال و فارکس" />
     <meta name="author" content="Mr. Trader Academy" />
@@ -18,14 +18,88 @@
     <meta name="twitter:site" content="@MrTraderAcademy" />
     <meta name="twitter:image" content="/lovable-uploads/970ac420-2fc4-450d-9177-b465e09c7857.png" />
     
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Mr Trader Academy">
+    <meta name="msapplication-TileColor" content="#000000">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="apple-touch-fullscreen" content="yes">
+    
+    <!-- iOS Specific Meta Tags -->
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-orientation" content="portrait">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- PWA Icons -->
     <link rel="icon" href="/lovable-uploads/970ac420-2fc4-450d-9177-b465e09c7857.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/lovable-uploads/970ac420-2fc4-450d-9177-b465e09c7857.png">
+    <link rel="apple-touch-icon" sizes="57x57" href="/lovable-uploads/970ac420-2fc4-450d-9177-b465e09c7857.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/lovable-uploads/970ac420-2fc4-450d-9177-b465e09c7857.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/lovable-uploads/970ac420-2fc4-450d-9177-b465e09c7857.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/lovable-uploads/970ac420-2fc4-450d-9177-b465e09c7857.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/lovable-uploads/970ac420-2fc4-450d-9177-b465e09c7857.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/lovable-uploads/970ac420-2fc4-450d-9177-b465e09c7857.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/lovable-uploads/970ac420-2fc4-450d-9177-b465e09c7857.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/lovable-uploads/970ac420-2fc4-450d-9177-b465e09c7857.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/lovable-uploads/970ac420-2fc4-450d-9177-b465e09c7857.png">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Icon Centering CSS -->
+    <link rel="stylesheet" href="/icon-center.css">
+    
+    <!-- Font Preconnections -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    
+    <!-- Font Preloads for Better Loading -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    
+    <!-- Fallback for JavaScript disabled -->
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    </noscript>
   </head>
 
   <body class="font-vazirmatn">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- PWA Debug Script (only in development) -->
+    <script src="/pwa-debug.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('✅ SW registered successfully:', registration);
+              
+              // Check for updates
+              registration.addEventListener('updatefound', () => {
+                console.log('🔄 SW update found');
+                const newWorker = registration.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      console.log('🆕 New SW installed, ready to activate');
+                    }
+                  });
+                }
+              });
+            })
+            .catch(registrationError => {
+              console.error('❌ SW registration failed:', registrationError);
+            });
+        });
+      } else {
+        console.warn('⚠️ Service Worker not supported in this browser');
+      }
+    </script>
   </body>
 </html>

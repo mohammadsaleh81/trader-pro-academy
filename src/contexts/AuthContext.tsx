@@ -12,25 +12,26 @@ export type User = {
   avatar?: string;
   thumbnail?: string;
   isProfileComplete: boolean;
+  identity_verified: boolean;
   first_name?: string;
   last_name?: string;
   phone_number?: string;
 };
 
-type AuthContextType = {
+export type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   error: string | null;
-  phoneNumber: string;
+  phoneNumber: string | null;
   setPhoneNumber: (phone: string) => void;
   requestOTP: (phone: string) => Promise<any>;
   verifyOTP: (otp: string) => Promise<void>;
   login: (phone: string, otp: string) => Promise<void>;
   completeProfile: (name: string, email: string) => Promise<void>;
-  updateProfile: (profileData: Partial<User>) => void;
+  updateProfile: (profileData: Partial<User>) => Promise<void>;
   updateAvatar: (avatarUrl: string) => void;
   logout: () => void;
-  devOTP: string | null;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,32 +41,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string>("");
-  const [devOTP, setDevOTP] = useState<string | null>(null);
 
   useEffect(() => {
     const initAuth = async () => {
+      console.log('AuthContext: Initializing authentication...');
+      setIsLoading(true);
+      
       try {
-        const stored = localStorage.getItem(TOKEN_STORAGE_KEY);
-        if (stored) {
-          const userData = await api.getProfile();
+        // Test API connection first
+        const isConnected = await api.testApiConnection();
+        console.log('AuthContext: API connection test result:', isConnected);
+        
+        if (!isConnected) {
+          console.warn('AuthContext: API connection failed, but continuing...');
+        }
+        
+        const tokens = api.getStoredTokens();
+        console.log('AuthContext: Stored tokens found:', !!tokens);
+        
+        if (tokens) {
+          try {
+            const userProfile = await api.getProfile();
           const avatarData = await api.getAvatar();
           
           // Convert API user format to our app's user format
           setUser({
-            id: String(userData.id),
-            phone: userData.phone_number,
-            name: `${userData.first_name} ${userData.last_name}`.trim(),
-            email: userData.email,
-            isProfileComplete: true,
+              id: String(userProfile.id),
+              phone: userProfile.phone_number,
+              name: `${userProfile.first_name} ${userProfile.last_name}`.trim(),
+              email: userProfile.email,
+              isProfileComplete: !!(userProfile.first_name && userProfile.last_name),
             avatar: avatarData.avatar,
-            first_name: userData.first_name,
-            last_name: userData.last_name,
-            phone_number: userData.phone_number,
+              first_name: userProfile.first_name,
+              last_name: userProfile.last_name,
+              phone_number: userProfile.phone_number,
           });
+            console.log('AuthContext: User restored from stored tokens');
+          } catch (error) {
+            console.error('AuthContext: Error restoring user session:', error);
+            api.logout();
+          }
         }
       } catch (error) {
-        console.error('Failed to initialize auth:', error);
-        api.logout();
+        console.error('AuthContext: Initialization error:', error);
       } finally {
         setIsLoading(false);
       }
@@ -75,51 +93,106 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const requestOTP = async (phone: string) => {
+    console.log("=== AuthContext: requestOTP START ===");
     console.log("AuthContext: requestOTP called with phone:", phone);
+    console.log("AuthContext: Current phoneNumber state:", phoneNumber);
     setIsLoading(true);
     setError(null);
     
     try {
+      console.log("=== AuthContext: CALLING API ===");
       const response = await api.requestOTP(phone);
+      console.log("=== AuthContext: API SUCCESS ===");
       console.log("AuthContext: OTP response received:", response);
+      
+      // Set phone number in context after successful request
+      console.log("AuthContext: Setting phoneNumber to:", phone);
       setPhoneNumber(phone);
-      setDevOTP(response.code);
-      console.log("AuthContext: Phone and devOTP set successfully");
+      
       return response;
     } catch (err) {
+      console.log("=== AuthContext: API FAILED ===");
       console.error("AuthContext: Error in requestOTP:", err);
-      setError(err instanceof Error ? err.message : "خطا در ارسال کد تایید");
+      
+      let errorMessage = "خطا در ارسال کد تایید";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      console.log("AuthContext: Setting error:", errorMessage);
+      setError(errorMessage);
       throw err;
     } finally {
+      console.log("=== AuthContext: requestOTP END ===");
       setIsLoading(false);
     }
   };
 
   const verifyOTP = async (otp: string) => {
+    console.log("=== AuthContext: verifyOTP START ===");
     console.log("AuthContext: verifyOTP called with otp:", otp, "and phone:", phoneNumber);
     setIsLoading(true);
     setError(null);
     
+    if (!phoneNumber) {
+      console.error("AuthContext: No phone number set");
+      const errorMsg = "شماره تلفن تعریف نشده است";
+      setError(errorMsg);
+      setIsLoading(false);
+      throw new Error(errorMsg);
+    }
+    
     try {
+      console.log("=== AuthContext: CALLING VERIFY OTP API ===");
       const response = await api.verifyOTP(phoneNumber, otp);
+      console.log("=== AuthContext: VERIFY OTP SUCCESS ===");
+      console.log("AuthContext: verifyOTP response:", response);
+      
+      console.log("=== AuthContext: GETTING AVATAR ===");
       const avatarData = await api.getAvatar();
+      console.log("AuthContext: Avatar data:", avatarData);
+      
+      // Check if profile is complete
+      const isProfileComplete = !!(response.user.first_name && response.user.last_name);
+      console.log("AuthContext: Profile complete check:", {
+        first_name: response.user.first_name,
+        last_name: response.user.last_name,
+        isProfileComplete
+      });
       
       // Convert API user format to our app's user format
-      setUser({
+      const userData = {
         id: String(response.user.id),
         phone: response.user.phone_number,
-        name: `${response.user.first_name} ${response.user.last_name}`.trim(),
+        name: `${response.user.first_name || ''} ${response.user.last_name || ''}`.trim(),
         email: response.user.email,
-        isProfileComplete: true,
+        isProfileComplete: isProfileComplete,
+        identity_verified: response.user.identity_verified || false,
         avatar: avatarData.avatar,
         first_name: response.user.first_name,
         last_name: response.user.last_name,
         phone_number: response.user.phone_number,
-      });
+      };
+      
+      console.log("=== AuthContext: SETTING USER ===");
+      console.log("AuthContext: Setting user data:", userData);
+      setUser(userData);
+      
+      console.log("AuthContext: OTP verified successfully, isProfileComplete:", isProfileComplete);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "کد تایید نامعتبر است");
+      console.log("=== AuthContext: VERIFY OTP FAILED ===");
+      console.error("AuthContext: Error in verifyOTP:", err);
+      
+      let errorMessage = "کد تایید نامعتبر است";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      console.log("AuthContext: Setting error:", errorMessage);
+      setError(errorMessage);
       throw err;
     } finally {
+      console.log("=== AuthContext: verifyOTP END ===");
       setIsLoading(false);
     }
   };
@@ -131,23 +204,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const completeProfile = async (name: string, email: string) => {
+    console.log('AuthContext: completeProfile called with:', { name, email });
     setIsLoading(true);
     setError(null);
     
+    // Check if user is authenticated
+    const tokens = localStorage.getItem('auth_tokens');
+    if (!tokens) {
+      throw new Error('کاربر احراز هویت نشده است. لطفاً دوباره وارد شوید');
+    }
+    
     try {
-      const [firstName, ...lastNameParts] = name.split(' ');
-      const lastName = lastNameParts.join(' ');
+      // Split name more carefully and ensure we have meaningful parts
+      const nameParts = name.trim().split(/\s+/).filter(part => part.length > 0);
       
-      const updatedUser = await api.updateProfile({
-        first_name: firstName,
-        last_name: lastName,
-        email: email,
+      // If only one word is provided, use it as first name
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+      
+      console.log('AuthContext: Name parts:', { 
+        originalName: name,
+        nameParts, 
+        firstName, 
+        lastName 
       });
       
+      // Validate that we have at least a first name
+      if (!firstName || firstName.length < 2) {
+        throw new Error('نام وارد شده نامعتبر است');
+      }
+      
+      const profileData = {
+        first_name: firstName,
+        last_name: lastName,
+        email: email ? email.trim() : '', // Ensure email is clean
+      };
+      
+      console.log('AuthContext: Sending profile data to API:', profileData);
+      
+      const updatedUser = await api.updateProfile(profileData);
+      console.log('AuthContext: Received updated user from API:', updatedUser);
+      
       const avatarData = await api.getAvatar();
+      console.log('AuthContext: Received avatar data:', avatarData);
       
       // Convert API user format to our app's user format
-      setUser({
+      const newUser = {
         id: String(updatedUser.id),
         phone: updatedUser.phone_number,
         name: `${updatedUser.first_name} ${updatedUser.last_name}`.trim(),
@@ -157,39 +259,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         first_name: updatedUser.first_name,
         last_name: updatedUser.last_name,
         phone_number: updatedUser.phone_number,
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "خطا در تکمیل پروفایل");
-      throw err;
+      };
+      
+      console.log('AuthContext: Setting new user state:', newUser);
+      setUser(newUser);
+      
+    } catch (err: any) {
+      console.error('AuthContext: Error in completeProfile:', err);
+      
+      let errorMessage = "خطا در تکمیل پروفایل";
+      
+      if (err.message && err.message.includes('Failed to update profile')) {
+        // Parse the specific error from API response
+        if (err.message.includes('400')) {
+          errorMessage = "اطلاعات وارد شده نامعتبر است";
+        } else if (err.message.includes('401')) {
+          errorMessage = "احراز هویت نامعتبر است. لطفاً دوباره وارد شوید";
+        } else if (err.message.includes('422')) {
+          errorMessage = "فرمت اطلاعات وارد شده صحیح نیست";
+        } else if (err.message.includes('first_name')) {
+          errorMessage = "نام وارد شده نامعتبر است";
+        } else if (err.message.includes('email')) {
+          errorMessage = "ایمیل وارد شده نامعتبر است";
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updateProfile = (profileData: Partial<User>) => {
+  const updateProfile = async (profileData: Partial<User>) => {
     if (!user) return;
+    
+    setError(null);
     
     // Convert our app's user format to API format
     const apiProfileData = {
-      first_name: profileData.first_name || profileData.name ? profileData.name?.split(' ')[0] : undefined,
-      last_name: profileData.last_name || profileData.name ? profileData.name?.split(' ').slice(1).join(' ') : undefined,
+      first_name: profileData.first_name || (profileData.name ? profileData.name?.split(' ')[0] : undefined),
+      last_name: profileData.last_name || (profileData.name ? profileData.name?.split(' ').slice(1).join(' ') : undefined),
       email: profileData.email,
     };
     
-    api.updateProfile(apiProfileData)
-      .then(updatedUser => {
-        setUser({
-          ...user,
-          name: `${updatedUser.first_name} ${updatedUser.last_name}`.trim(),
-          email: updatedUser.email,
-          first_name: updatedUser.first_name,
-          last_name: updatedUser.last_name,
-        });
-      })
-      .catch(err => {
-        console.error('Failed to update profile:', err);
-        setError("خطا در بروزرسانی پروفایل");
+    console.log('AuthContext: updateProfile called with data:', profileData);
+    console.log('AuthContext: Converted to API format:', apiProfileData);
+    
+    try {
+      const updatedUser = await api.updateProfile(apiProfileData);
+      console.log('AuthContext: Profile updated successfully:', updatedUser);
+      
+      setUser({
+        ...user,
+        name: `${updatedUser.first_name} ${updatedUser.last_name}`.trim(),
+        email: updatedUser.email,
+        first_name: updatedUser.first_name,
+        last_name: updatedUser.last_name,
       });
+    } catch (err: any) {
+      console.error('AuthContext: Failed to update profile:', err);
+      setError("خطا در بروزرسانی پروفایل");
+      throw err;
+    }
   };
 
   const updateAvatar = (avatarUrl: string) => {
@@ -210,7 +344,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setPhoneNumber("");
     setError(null);
-    setDevOTP(null);
     
     // Clear all cache and localStorage
     clearAllCache();
@@ -224,23 +357,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, 100);
   };
 
+  const refreshUser = async () => {
+    try {
+      const response = await api.getProfile();
+      const avatarData = await api.getAvatar();
+      
+      // Check if profile is complete
+      const isProfileComplete = !!(response.first_name && response.last_name);
+      
+      // Convert API user format to our app's user format
+      const userData = {
+        id: String(response.id),
+        phone: response.phone_number,
+        name: `${response.first_name || ''} ${response.last_name || ''}`.trim(),
+        email: response.email,
+        isProfileComplete: isProfileComplete,
+        identity_verified: response.identity_verified || false,
+        avatar: avatarData.avatar,
+        first_name: response.first_name,
+        last_name: response.last_name,
+        phone_number: response.phone_number,
+      };
+      
+      setUser(userData);
+    } catch (err) {
+      console.error('Error refreshing user data:', err);
+    }
+  };
+
+  const value = {
+    user,
+    isLoading,
+    error,
+    phoneNumber,
+    setPhoneNumber,
+    requestOTP,
+    verifyOTP,
+    login,
+    logout,
+    completeProfile,
+    updateProfile,
+    updateAvatar,
+    refreshUser,
+  };
+
   return (
     <AuthContext.Provider 
-      value={{ 
-        user, 
-        isLoading, 
-        error, 
-        phoneNumber, 
-        setPhoneNumber,
-        requestOTP, 
-        verifyOTP, 
-        login,
-        completeProfile,
-        updateProfile,
-        updateAvatar,
-        logout,
-        devOTP
-      }}
+      value={value}
     >
       {children}
     </AuthContext.Provider>

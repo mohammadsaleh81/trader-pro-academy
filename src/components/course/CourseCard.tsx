@@ -1,15 +1,19 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingCart, Loader, Wallet, CheckCircle } from "lucide-react";
+import { ShoppingCart, Loader, Wallet, CheckCircle, Shield, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ProgressBar from "@/components/ui/progress-bar";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "@/hooks/use-toast";
 import { clearPendingCourse } from "@/lib/cache";
+import { formatCurrency, formatPrice } from "@/utils/currency";
 import api from "@/lib/axios";
+import { notificationService } from "@/lib/notification-service";
+import { checkIdentityVerificationForPurchase, getCapacityStatus, canPurchaseCourse } from "@/lib/utils";
 
 type CourseCardProps = {
   id: string;
@@ -17,23 +21,38 @@ type CourseCardProps = {
   instructor: string;
   thumbnail: string;
   price: number;
-  rating: number;
   progress?: number;
   isFree?: boolean;
   is_enrolled?: boolean;
+  discounted_price?: number;
+  discount_percentage?: number;
+  requires_identity_verification?: boolean;
+  has_capacity_limit?: boolean;
+  capacity?: number;
+  available_spots?: number;
+  is_full?: boolean;
+  student_count?: number;
 };
 
-const CourseCard: React.FC<CourseCardProps> = React.memo(({
-  id,
-  title,
-  instructor,
-  thumbnail,
-  price,
-  rating,
-  progress,
-  isFree = false,
-  is_enrolled
-}) => {
+const CourseCard: React.FC<CourseCardProps> = React.memo((props) => {
+  const {
+    id,
+    title,
+    instructor,
+    thumbnail,
+    price,
+    progress,
+    isFree = false,
+    is_enrolled,
+    discounted_price,
+    discount_percentage,
+    requires_identity_verification,
+    has_capacity_limit,
+    capacity,
+    available_spots,
+    is_full,
+    student_count
+  } = props;
   const navigate = useNavigate();
   const { user } = useAuth();
   const { myCourses, wallet, enrollCourse } = useData();
@@ -42,15 +61,8 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
   const [showPurchaseConfirm, setShowPurchaseConfirm] = useState(false);
   
   const isEnrolled = is_enrolled || false;
-
-  // Helper function for formatting currency
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('fa-IR').format(amount);
-  };
-
-  const formatCurrencyWithUnit = (amount: number): string => {
-    return `${formatCurrency(amount)} تومان`;
-  };
+  const capacityStatus = getCapacityStatus({ has_capacity_limit, capacity, available_spots, is_full });
+  const canPurchase = canPurchaseCourse({ has_capacity_limit, is_full });
 
   const handlePurchaseConfirm = async () => {
     setShowPurchaseConfirm(false);
@@ -70,6 +82,14 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
           description: `دوره ${title} با موفقیت خریداری شد`,
         });
 
+        // ارسال notification برای خرید موفق دوره
+        try {
+          await notificationService.sendCoursePurchaseNotification(title, id);
+          console.log('Course purchase notification sent successfully');
+        } catch (notificationError) {
+          console.warn('Failed to send course purchase notification:', notificationError);
+        }
+
         // Refresh wallet to show updated balance
         refetchWallet();
 
@@ -78,16 +98,19 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
     } catch (error: any) {
       console.error('Error processing purchase:', error);
       
+      // Handle specific enrollment errors
       if (error.response?.status === 400) {
         const errorData = error.response.data;
         let errorMsg = "خطا در پردازش خرید";
         
-        if (errorData?.course_id?.[0]) {
-          errorMsg = errorData.course_id[0];
-        } else if (errorData?.non_field_errors?.[0]) {
+        if (errorData?.non_field_errors?.[0]) {
           errorMsg = errorData.non_field_errors[0];
+        } else if (errorData?.course_id?.[0]) {
+          errorMsg = errorData.course_id[0];
         } else if (errorData?.detail) {
           errorMsg = errorData.detail;
+        } else if (errorData?.message) {
+          errorMsg = errorData.message;
         }
         
         toast({
@@ -136,6 +159,28 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
         return;
       }
 
+      // Check capacity before proceeding
+      if (!canPurchase) {
+        toast({
+          title: "ظرفیت تکمیل شده",
+          description: "ظرفیت این دوره تکمیل شده است. لطفاً دوره‌های دیگر را بررسی کنید.",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+        return;
+      }
+
+      // Check identity verification requirements
+      if (!checkIdentityVerificationForPurchase(
+        { requires_identity_verification: requires_identity_verification, title: title },
+        user,
+        navigate,
+        toast
+      )) {
+        setIsProcessing(false);
+        return;
+      }
+
       // For free courses, just enroll directly
       if (isFree || price === 0) {
         try {
@@ -152,15 +197,30 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
               description: `شما با موفقیت در دوره ${title} ثبت‌نام شدید`,
             });
 
+            // ارسال notification برای ثبت‌نام موفق در دوره رایگان
+            try {
+              await notificationService.sendCourseEnrollmentNotification(title, id);
+              console.log('Course enrollment notification sent successfully');
+            } catch (notificationError) {
+              console.warn('Failed to send course enrollment notification:', notificationError);
+            }
+
             navigate(`/learn/${id}`);
           }
         } catch (error: any) {
           console.error('Error processing free enrollment:', error);
           
           if (error.response?.status === 400 || error.response?.status === 409) {
+            const errorData = error.response.data;
+            let errorMsg = "شما قبلاً در این دوره ثبت‌نام کرده‌اید";
+            
+            if (errorData?.non_field_errors?.[0]) {
+              errorMsg = errorData.non_field_errors[0];
+            }
+            
             toast({
               title: "خطا",
-              description: "شما قبلاً در این دوره ثبت‌نام کرده‌اید",
+              description: errorMsg,
               variant: "destructive",
             });
           } else {
@@ -182,7 +242,7 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
         
         toast({
           title: "موجودی ناکافی",
-          description: `برای خرید این دوره نیاز به ${shortfall.toLocaleString()} تومان شارژ اضافی دارید`,
+          description: `برای خرید این دوره نیاز به ${formatCurrency(shortfall)} شارژ اضافی دارید`,
           variant: "destructive",
         });
         
@@ -206,77 +266,202 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
       });
       setIsProcessing(false);
     }
-  }, [user, isFree, isEnrolled, wallet, price, id, title, navigate, enrollCourse]);
+  }, [user, isFree, isEnrolled, wallet, price, id, title, navigate, enrollCourse, requires_identity_verification, canPurchase]);
 
   const handleImageError = React.useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const target = e.target as HTMLImageElement;
     target.src = "/placeholder-course.jpg";
   }, []);
 
-  console.log(is_enrolled);
+  console.log('CourseCard Debug:', { 
+    id, 
+    title, 
+    price, 
+    isFree, 
+    is_enrolled,
+    discounted_price,
+    discount_percentage,
+    hasDiscount: discount_percentage && discount_percentage > 0
+  });
 
   return (
-    <div className="bg-card text-card-foreground rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 h-full flex flex-col min-h-[280px] group hover:scale-[1.02] hover:-translate-y-1 border border-border">
-      <Link to={isEnrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
-        <div className="relative h-40 w-full overflow-hidden rounded-t-lg">
-          <img
-            src={thumbnail || "/placeholder-course.jpg"}
-            alt={title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            onError={handleImageError}
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          {isEnrolled && progress !== undefined && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent py-2 px-3">
-              <ProgressBar 
-                percentage={progress}
-                height="sm"
-                color="bg-orange-500"
-                backgroundColor="bg-white/30"
-                className="mb-1"
+    <>
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300 w-full max-w-md mx-auto min-h-[340px] sm:min-h-[380px] flex flex-col">
+        {/* Course Image */}
+        <Link to={`/courses/${id}`} className="block">
+          <div className="relative">
+            <div className="w-full aspect-[5/3] bg-gray-100 rounded-t-xl flex items-center justify-center overflow-hidden">
+              <img
+                src={thumbnail || "/placeholder-course.jpg"}
+                alt={title}
+                className="max-w-full max-h-full object-contain"
               />
-              <p className="text-white text-xs text-center font-medium">
-                {progress}% تکمیل شده
-              </p>
             </div>
-          )}
-        </div>
-      </Link>
-      <div className="p-3 flex-1 flex flex-col">
-        <Link to={isEnrolled ? `/learn/${id}` : `/courses/${id}`} className="block">
-          <h3 className="font-bold text-sm line-clamp-2 mb-1 min-h-[2.5rem] group-hover:text-primary transition-colors duration-300">{title}</h3>
-          <p className="text-muted-foreground text-xs mb-2 group-hover:text-foreground/80 transition-colors duration-300">مدرس: {instructor}</p>
-        </Link>
-        <div className="mt-auto">
-          <div className="flex items-center justify-between mb-3">
-            <div></div>
-            {!isEnrolled && (
-              <p className={`font-bold ${isFree ? "text-green-600" : "text-trader-500"} text-sm transition-colors duration-300`}>
-                {isFree ? "رایگان" : `${price.toLocaleString()} تومان`}
-              </p>
-            )}
             {isEnrolled && (
-              <p className="font-bold text-green-600 text-sm">
-                ادامه یادگیری
-              </p>
+              <div className="absolute top-2 right-2">
+                <Badge className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-md">
+                  <CheckCircle className="h-3 w-3 ml-1" />
+                  ثبت‌نام شده
+                </Badge>
+              </div>
+            )}
+            {requires_identity_verification && !isEnrolled && (
+              <div className="absolute top-2 left-2">
+                <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-200 text-xs px-2 py-0.5 rounded-md">
+                  <Shield className="h-3 w-3 ml-1" />
+                  احراز هویت
+                </Badge>
+              </div>
+            )}
+            {/* Capacity Status Badge */}
+            {has_capacity_limit && (
+              <div className="absolute bottom-2 left-2">
+                <Badge 
+                  variant="secondary" 
+                  className={`text-xs px-2 py-0.5 rounded-md ${
+                    capacityStatus.color === 'red' 
+                      ? 'bg-red-100 text-red-800 border-red-200' 
+                      : capacityStatus.color === 'orange'
+                      ? 'bg-orange-100 text-orange-800 border-orange-200'
+                      : 'bg-blue-100 text-blue-800 border-blue-200'
+                  }`}
+                >
+                  <Users className="h-3 w-3 ml-1" />
+                  {capacityStatus.text}
+                </Badge>
+              </div>
             )}
           </div>
-          <Button 
-            variant={isEnrolled ? "outline" : "default"}
-            className={`w-full text-xs py-2 h-8 transition-all duration-300 hover:scale-105 ${isEnrolled ? 'border-green-500 text-green-600 hover:bg-green-50' : ''}`}
-            onClick={handleQuickBuy}
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <Loader className="h-4 w-4 animate-spin mx-auto" />
-            ) : (
-              <>
-                {!isEnrolled && <ShoppingCart className="h-4 w-4 ml-1" />}
-                {isEnrolled ? "ادامه یادگیری" : isFree ? "ثبت‌نام رایگان" : "خرید سریع"}
-              </>
-            )}
-          </Button>
+        </Link>
+
+        {/* Course Content */}
+        <div className="p-1.5 flex flex-col flex-grow">
+          <Link to={`/courses/${id}`} className="block">
+            <h3 className="font-bold text-sm mb-1 text-gray-800 hover:text-trader-600 transition-colors line-clamp-2">
+              {title}
+            </h3>
+            <p className="text-gray-600 text-xs mb-1 line-clamp-1">مدرس: {instructor}</p>
+          </Link>
+
+          {/* Progress Bar for Enrolled Courses */}
+          {isEnrolled && progress !== undefined && (
+            <div className="mb-1">
+              <div className="flex justify-between text-[11px] text-gray-600 mb-0.5">
+                <span>پیشرفت</span>
+                <span>{progress}%</span>
+              </div>
+              <ProgressBar percentage={progress} height="sm" className="h-1.5" />
+            </div>
+          )}
+
+          {/* Price Section */}
+          <div className="flex items-center justify-between mb-1 min-h-[22px]">
+            <div className="flex items-center flex-wrap gap-1">
+              <Wallet className="h-3 w-3 text-gray-500 ml-1" />
+              {isFree ? (
+                <>
+                  <span className="text-green-600 font-bold text-xs">رایگان</span>
+                  {/* Placeholder for price/discount to keep height equal */}
+                  <span className="invisible text-xs">---</span>
+                </>
+              ) : (
+                <div className="flex items-center gap-1">
+                  {discounted_price ? (
+                    <>
+                      <span className="text-gray-400 line-through text-xs">
+                        {formatPrice(price)}
+                      </span>
+                      <span className="text-trader-600 font-bold text-xs">
+                        {formatPrice(discounted_price)}
+                      </span>
+                      {discount_percentage && (
+                        <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs px-1.5 py-0.5">
+                          {discount_percentage}% تخفیف
+                        </Badge>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-trader-600 font-bold text-xs">
+                        {formatPrice(price)}
+                      </span>
+                      {/* Placeholder for discount badge to keep height equal */}
+                      <span className="invisible text-xs">---</span>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Capacity Information */}
+          {has_capacity_limit && (
+            <div className="mb-1 p-1 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-gray-600">ظرفیت دوره:</span>
+                <span className={`font-medium ${
+                  capacityStatus.color === 'red' 
+                    ? 'text-red-600' 
+                    : capacityStatus.color === 'orange'
+                    ? 'text-orange-600'
+                    : 'text-blue-600'
+                }`}>
+                  {capacityStatus.text}
+                </span>
+              </div>
+              {capacity && available_spots !== undefined && (
+                <div className="mt-0.5">
+                  <div className="flex justify-between text-[10px] text-gray-500">
+                    <span>دانشجویان: {student_count || (capacity - available_spots)}</span>
+                    <span>کل: {capacity}</span>
+                  </div>
+                  <div className="mt-0.5 bg-gray-200 rounded-full h-1">
+                    <div 
+                      className={`h-1 rounded-full ${
+                        capacityStatus.color === 'red' 
+                          ? 'bg-red-500' 
+                          : capacityStatus.color === 'orange'
+                          ? 'bg-orange-500'
+                          : 'bg-blue-500'
+                      }`}
+                      style={{ width: `${((capacity - available_spots) / capacity) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="mt-auto">
+            <Button 
+              variant={isEnrolled ? "outline" : "default"}
+              className={`w-full text-xs py-1 h-7 ${
+                isEnrolled 
+                  ? 'border-green-500 text-green-600 hover:bg-green-50' 
+                  : isFree 
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-trader-600 hover:bg-trader-700 text-white'
+              }`}
+              onClick={handleQuickBuy}
+              disabled={isProcessing || (!isEnrolled && !canPurchase)}
+            >
+              {isProcessing ? (
+                <Loader className="h-4 w-4 animate-spin mx-auto" />
+              ) : (
+                <>
+                  {!isEnrolled && <ShoppingCart className="h-4 w-4 ml-1" />}
+                  {isEnrolled 
+                    ? "ادامه یادگیری" 
+                    : !canPurchase 
+                      ? "ظرفیت تکمیل شده"
+                      : isFree 
+                        ? "ثبت‌نام در دوره رایگان" 
+                        : "خرید سریع"
+                  }
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -288,7 +473,7 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
           </DialogHeader>
           <div className="py-4">
             {/* Course Info */}
-            <div className="bg-muted rounded-lg p-4 mb-6">
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
               <div className="flex items-center">
                 <img
                   src={thumbnail || "/placeholder-course.jpg"}
@@ -297,46 +482,56 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
                 />
                 <div>
                   <h3 className="font-bold text-lg">{title}</h3>
-                  <p className="text-muted-foreground text-sm">مدرس: {instructor}</p>
+                  <p className="text-gray-600 text-sm">مدرس: {instructor}</p>
+                  {requires_identity_verification && (
+                    <div className="flex items-center mt-1">
+                      <Shield className="h-4 w-4 text-amber-600 ml-1" />
+                      <span className="text-amber-600 text-sm">نیاز به احراز هویت</span>
+                    </div>
+                  )}
+                  {/* Capacity Info in Dialog */}
+                  {has_capacity_limit && (
+                    <div className="flex items-center mt-1">
+                      <Users className="h-4 w-4 text-blue-600 ml-1" />
+                      <span className={`text-sm ${
+                        capacityStatus.color === 'red' 
+                          ? 'text-red-600' 
+                          : capacityStatus.color === 'orange'
+                          ? 'text-orange-600'
+                          : 'text-blue-600'
+                      }`}>
+                        {capacityStatus.text}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Purchase Details */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div className="flex items-center">
-                  <ShoppingCart className="h-5 w-5 text-blue-600 ml-2" />
-                  <span className="text-blue-800 dark:text-blue-400">مبلغ دوره:</span>
-                </div>
-                <span className="font-bold text-blue-600">{formatCurrencyWithUnit(price)}</span>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
-                <div className="flex items-center">
-                  <Wallet className="h-5 w-5 text-green-600 ml-2" />
-                  <span className="text-green-800 dark:text-green-400">موجودی فعلی شما:</span>
-                </div>
-                <span className="font-bold text-green-600">{formatCurrencyWithUnit(wallet?.balance || 0)}</span>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg">
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-orange-600 ml-2" />
-                  <span className="text-orange-800 dark:text-orange-400">موجودی پس از خرید:</span>
-                </div>
-                <span className="font-bold text-orange-600">
-                  {formatCurrencyWithUnit((wallet?.balance || 0) - price)}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-600">قیمت دوره:</span>
+                <span className="font-bold text-lg">
+                  {isFree ? "رایگان" : formatPrice(price)}
                 </span>
               </div>
-            </div>
-
-            {/* Confirmation Message */}
-            <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-              <p className="text-yellow-800 dark:text-yellow-400 text-center">
-                مبلغ <span className="font-bold">{formatCurrencyWithUnit(price)}</span> از کیف پول شما 
-                برای خرید دوره <span className="font-bold">"{title}"</span> کم می‌شود.
-              </p>
+              
+              {wallet && (
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span className="text-gray-600">موجودی کیف پول:</span>
+                  <span className="font-bold">{formatCurrency(wallet.balance)}</span>
+                </div>
+              )}
+              
+              {!isFree && wallet && (
+                <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                  <span className="text-gray-600">موجودی پس از خرید:</span>
+                  <span className="font-bold text-green-600">
+                    {formatCurrency(wallet.balance - price)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           
@@ -359,7 +554,7 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }, (prevProps, nextProps) => {
   return (
@@ -368,13 +563,20 @@ const CourseCard: React.FC<CourseCardProps> = React.memo(({
     prevProps.instructor === nextProps.instructor &&
     prevProps.thumbnail === nextProps.thumbnail &&
     prevProps.price === nextProps.price &&
-    prevProps.rating === nextProps.rating &&
     prevProps.progress === nextProps.progress &&
     prevProps.isFree === nextProps.isFree &&
-    prevProps.is_enrolled === nextProps.is_enrolled
+    prevProps.is_enrolled === nextProps.is_enrolled &&
+    prevProps.discounted_price === nextProps.discounted_price &&
+    prevProps.discount_percentage === nextProps.discount_percentage &&
+    prevProps.requires_identity_verification === nextProps.requires_identity_verification &&
+    prevProps.has_capacity_limit === nextProps.has_capacity_limit &&
+    prevProps.capacity === nextProps.capacity &&
+    prevProps.available_spots === nextProps.available_spots &&
+    prevProps.is_full === nextProps.is_full &&
+    prevProps.student_count === nextProps.student_count
   );
 });
 
-CourseCard.displayName = 'CourseCard';
+CourseCard.displayName = "CourseCard";
 
 export default CourseCard;

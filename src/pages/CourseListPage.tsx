@@ -1,13 +1,13 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
-import { useData } from "@/contexts/DataContext";
+import { useCourse } from "@/contexts/CourseContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, ChevronDown } from "lucide-react";
 import CourseCard from "@/components/course/CourseCard";
 import CourseCardSkeleton from "@/components/course/CourseCardSkeleton";
-import { Course } from "@/contexts/DataContext";
+import PaginationControls from "@/components/ui/pagination-controls";
+import { Course } from "@/types/course";
 import {
   Popover,
   PopoverContent,
@@ -15,14 +15,24 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { coursesApi } from "@/lib/api";
 
 const CourseListPage = () => {
-  const { courses, loadingStates } = useData();
+  const { courses, isLoading, pagination } = useCourse();
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [paginatedCourses, setPaginatedCourses] = useState<Course[]>([]);
+  const [currentPagination, setCurrentPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    hasNext: false,
+    hasPrevious: false
+  });
 
   // Collect all unique categories
   const allCategories = Array.from(
@@ -34,48 +44,73 @@ const CourseListPage = () => {
     new Set(courses.map((course) => course.level).filter(Boolean))
   );
 
-  // Filter courses based on search term and filters
-  useEffect(() => {
-    if (loadingStates?.courses) {
-      setFilteredCourses([]);
-      return;
+  // Load paginated courses with filters
+  const loadCoursesWithFilters = async (page: number = 1) => {
+    try {
+      const response = await coursesApi.getAll(page, 12);
+      let result = [...response.results];
+      
+      console.log('CourseListPage Debug - Raw API Response:', response.results.map(course => ({
+        id: course.id,
+        title: course.title,
+        price: course.price,
+        discounted_price: course.discounted_price,
+        discount_percentage: course.discount_percentage
+      })));
+      
+      // Apply client-side filters
+      if (searchTerm) {
+        result = result.filter(
+          (course) =>
+            course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            course.instructor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            course.description.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+      
+      if (selectedCategories.length > 0) {
+        result = result.filter((course) =>
+          course.categories.some((cat) => selectedCategories.includes(cat))
+        );
+      }
+      
+      if (selectedLevels.length > 0) {
+        result = result.filter((course) => 
+          course.level && selectedLevels.includes(course.level)
+        );
+      }
+      
+      if (priceRange === "free") {
+        result = result.filter((course) => course.price === 0);
+      } else if (priceRange === "paid") {
+        result = result.filter((course) => course.price > 0);
+      }
+      
+      setPaginatedCourses(result);
+      setCurrentPagination({
+        currentPage: response.current_page,
+        totalPages: response.total_pages,
+        totalCount: result.length, // Use filtered count
+        hasNext: !!response.next,
+        hasPrevious: !!response.previous
+      });
+    } catch (error) {
+      console.error('Error loading courses:', error);
+      setPaginatedCourses([]);
     }
+  };
 
-    let result = [...courses];
-    
-    // Filter by search term
-    if (searchTerm) {
-      result = result.filter(
-        (course) =>
-          course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          course.instructor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          course.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    // Filter by selected categories
-    if (selectedCategories.length > 0) {
-      result = result.filter((course) =>
-        course.categories.some((cat) => selectedCategories.includes(cat))
-      );
-    }
-    
-    // Filter by selected levels
-    if (selectedLevels.length > 0) {
-      result = result.filter((course) => 
-        course.level && selectedLevels.includes(course.level)
-      );
-    }
-    
-    // Filter by price range
-    if (priceRange === "free") {
-      result = result.filter((course) => course.price === 0);
-    } else if (priceRange === "paid") {
-      result = result.filter((course) => course.price > 0);
-    }
-    
-    setFilteredCourses(result);
-  }, [searchTerm, courses, selectedCategories, selectedLevels, priceRange, loadingStates?.courses]);
+  // Load courses on initial render and when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    loadCoursesWithFilters(1);
+  }, [searchTerm, selectedCategories, selectedLevels, priceRange]);
+
+  // Handle page changes
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    loadCoursesWithFilters(page);
+  };
 
   const toggleCategory = (category: string) => {
     setSelectedCategories(prev =>
@@ -125,14 +160,14 @@ const CourseListPage = () => {
                 className="pr-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                disabled={loadingStates?.courses}
+                disabled={isLoading.courses}
               />
             </div>
             
             <div className="flex gap-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="flex gap-2" disabled={loadingStates?.courses}>
+                  <Button variant="outline" className="flex gap-2" disabled={isLoading.courses}>
                     <Filter className="h-4 w-4" />
                     فیلترها
                     <ChevronDown className="h-4 w-4" />
@@ -214,7 +249,7 @@ const CourseListPage = () => {
                             رایگان
                           </Label>
                         </div>
-                        <div className="flex items-center">
+                        {/* <div className="flex items-center">
                           <Checkbox
                             id="price-paid"
                             checked={priceRange === "paid"}
@@ -226,7 +261,7 @@ const CourseListPage = () => {
                           >
                             پولی
                           </Label>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
                     
@@ -244,7 +279,7 @@ const CourseListPage = () => {
           </div>
           
           {/* Selected Filters */}
-          {!loadingStates?.courses && (selectedCategories.length > 0 || selectedLevels.length > 0 || priceRange !== "all") && (
+          {(selectedCategories.length > 0 || selectedLevels.length > 0 || priceRange !== "all") && (
             <div className="flex flex-wrap gap-2 mt-4">
               {selectedCategories.map((category) => (
                 <div
@@ -295,27 +330,42 @@ const CourseListPage = () => {
         
         {/* Courses Grid */}
         <div className="mb-8">
-          {loadingStates?.courses ? (
+          {isLoading.courses ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {Array.from({ length: 12 }).map((_, index) => (
                 <CourseCardSkeleton key={`skeleton-${index}`} />
               ))}
             </div>
-          ) : filteredCourses.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filteredCourses.map((course) => (
-                <CourseCard
-                  key={course.id}
-                  id={course.id}
-                  title={course.title}
-                  instructor={course.instructor}
-                  thumbnail={course.thumbnail}
-                  price={course.price}
-                  rating={course.rating}
-                  isFree={course.price === 0}
+          ) : paginatedCourses.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {paginatedCourses.map((course) => (
+                  <CourseCard
+                    key={course.id}
+                    id={course.id}
+                    title={course.title}
+                    instructor={course.instructor}
+                    thumbnail={course.thumbnail}
+                    price={course.price}
+                    isFree={course.price === 0}
+                    is_enrolled={course.is_enrolled}
+                    discounted_price={course.discounted_price}
+                    discount_percentage={course.discount_percentage}
+                    requires_identity_verification={course.requires_identity_verification}
+                  />
+                ))}
+              </div>
+              
+              {/* Pagination Controls */}
+              <div className="mt-8">
+                <PaginationControls
+                  pagination={currentPagination}
+                  onPageChange={handlePageChange}
+                  isLoading={isLoading.courses}
+                  itemsName="دوره"
                 />
-              ))}
-            </div>
+              </div>
+            </>
           ) : (
             <div className="text-center py-12">
               <p className="text-lg text-gray-500">هیچ دوره‌ای با فیلترهای انتخاب شده یافت نشد.</p>

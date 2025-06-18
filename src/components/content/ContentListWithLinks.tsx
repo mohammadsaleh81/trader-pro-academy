@@ -1,9 +1,9 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { ItemType } from "@/contexts/DataContext";
 import { Article, Podcast, Video, Webinar, File } from "@/contexts/DataContext";
+import { formatAuthor } from "@/lib/utils";
 
 type ContentItem = Article | Podcast | Video | Webinar | File;
 
@@ -17,6 +17,7 @@ const typeToPlural: Record<ItemType, string> = {
   podcast: "podcasts",
   video: "videos",
   webinar: "webinars",
+  livestream: "livestreams",
   file: "files",
   course: "courses",
 };
@@ -42,20 +43,8 @@ const ContentListWithLinks: React.FC<ContentListProps> = ({ items, type }) => {
                 <img
                   src={item.thumbnail}
                   alt={item.title}
-                  className="w-full h-32 object-cover rounded-t-lg"
+                  className="w-full h-32 object-contain rounded-t-lg bg-gray-50"
                 />
-                {type === "podcast" && (
-                  <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-[8px] px-1.5 py-0.5 rounded">
-                    {(item as Podcast).duration}
-                  </div>
-                )}
-                {(type === "video" || type === "webinar") && (
-                  <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-[8px] px-1.5 py-0.5 rounded">
-                    {type === "video" 
-                      ? (item as Video).duration
-                      : (item as Webinar).duration}
-                  </div>
-                )}
               </div>
               <div className="p-2 text-right rtl-card-content">
                 <h3 className="font-semibold text-xs mb-1 line-clamp-1">{item.title}</h3>
@@ -64,7 +53,7 @@ const ContentListWithLinks: React.FC<ContentListProps> = ({ items, type }) => {
                 </p>
                 <div className="flex justify-between text-[8px] text-gray-500">
                   <span>{item.date}</span>
-                  <span>{item.author}</span>
+                  <span>{formatAuthor(item.author)}</span>
                 </div>
               </div>
             </CardContent>

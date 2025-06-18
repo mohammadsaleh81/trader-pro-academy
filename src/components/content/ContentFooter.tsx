@@ -1,10 +1,9 @@
-
 import React from "react";
 import { Clock, Eye, User, Play } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatAuthor } from "@/lib/utils";
 
 interface ContentFooterProps {
-  author?: string;
+  author?: string | any;
   publishDate: string;
   duration?: string;
   viewCount?: number;
@@ -24,7 +23,7 @@ const ContentFooter: React.FC<ContentFooterProps> = ({
         {author && (
           <div className="flex items-center gap-2">
             <User className="h-4 w-4" />
-            <span>{author}</span>
+            <span>{formatAuthor(author)}</span>
           </div>
         )}
         

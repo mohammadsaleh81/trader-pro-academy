@@ -35,7 +35,7 @@ const CourseList: React.FC<CourseListProps> = ({
         </div>
       )}
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
         {isLoading 
           ? Array.from({ length: skeletonCount }).map((_, index) => (
               <CourseCardSkeleton key={`skeleton-${index}`} />
@@ -48,12 +48,14 @@ const CourseList: React.FC<CourseListProps> = ({
                 instructor={course.instructor}
                 thumbnail={course.thumbnail}
                 price={course.price}
-                rating={course.rating}
                 isFree={course.price === 0}
                 is_enrolled={course.is_enrolled}
                 progress={showProgress && course.progress_percentage !== undefined 
                   ? Math.round(course.progress_percentage) 
                   : undefined}
+                discounted_price={course.discounted_price}
+                discount_percentage={course.discount_percentage}
+                requires_identity_verification={course.requires_identity_verification}
               />
             ))
         }

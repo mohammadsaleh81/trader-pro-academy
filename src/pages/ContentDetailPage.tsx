@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -101,7 +100,7 @@ const ContentDetailPage: React.FC = () => {
     fetchContent();
   }, [id, type, navigate, toast, bookmarks]);
 
-  const handleBookmark = React.useCallback(async () => {
+  const handleBookmark = React.useCallback(() => {
     if (!content || !id || !type) return;
     
     const contentType = type.replace(/s$/, '') as "article" | "video" | "podcast";
@@ -111,7 +110,7 @@ const ContentDetailPage: React.FC = () => {
         bookmark => bookmark.itemId === id && bookmark.itemType === contentType
       );
       if (bookmarkToRemove) {
-        await removeBookmark(id);
+        removeBookmark(bookmarkToRemove.id);
         setIsBookmarked(false);
         toast({
           title: "نشان حذف شد",
@@ -119,7 +118,7 @@ const ContentDetailPage: React.FC = () => {
         });
       }
     } else {
-      await addBookmark(id);
+      addBookmark(id, contentType, "user1");
       setIsBookmarked(true);
       toast({
         title: "به نشان‌ها اضافه شد",
@@ -173,7 +172,8 @@ const ContentDetailPage: React.FC = () => {
               
               <div className="flex justify-end mb-6">
                 <ContentActions 
-                  articleId={id!}
+                  isBookmarked={isBookmarked}
+                  onBookmark={handleBookmark}
                   title={content.title}
                 />
               </div>

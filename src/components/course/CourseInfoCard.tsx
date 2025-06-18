@@ -1,12 +1,13 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Loader, Play, Clock, BookOpen, Award } from "lucide-react";
+import { ShoppingCart, Loader, Play, Clock, BookOpen, Award, Shield, Users } from "lucide-react";
 import { CourseDetails } from "@/contexts/DataContext";
 import ProgressCircle from "@/components/ui/progress-circle";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { formatPrice, formatCurrency } from "@/utils/currency";
+import { Badge } from "@/components/ui/badge";
+import { getCapacityStatus, canPurchaseCourse } from "@/lib/utils";
 
 interface CourseInfoCardProps {
   courseData: CourseDetails;
@@ -29,12 +30,8 @@ const CourseInfoCard: React.FC<CourseInfoCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const userProgress = courseData.user_progress;
-  const isMobile = useIsMobile();
-
-  // On mobile, this component is hidden in favor of CourseMobileActions
-  if (isMobile) {
-    return null;
-  }
+  const capacityStatus = getCapacityStatus(courseData.info);
+  const canPurchase = canPurchaseCourse(courseData.info);
 
   return (
     <Card className="sticky top-8">
@@ -44,79 +41,110 @@ const CourseInfoCard: React.FC<CourseInfoCardProps> = ({
           <img
             src={courseData.info.thumbnail}
             alt={courseData.info.title}
-            className="w-full h-48 object-cover rounded-lg"
+            className="w-full h-48 object-contain rounded-lg bg-gray-50"
           />
+          {courseData.info.requires_identity_verification && !isEnrolled && (
+            <div className="mt-3 flex justify-center">
+              <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-200">
+                <Shield className="h-4 w-4 ml-1" />
+                نیاز به احراز هویت
+              </Badge>
+            </div>
+          )}
+          {/* Capacity Status Badge */}
+          {courseData.info.has_capacity_limit && (
+            <div className="mt-3 flex justify-center">
+              <Badge 
+                variant="secondary" 
+                className={`${
+                  capacityStatus.color === 'red' 
+                    ? 'bg-red-100 text-red-800 border-red-200' 
+                    : capacityStatus.color === 'orange'
+                    ? 'bg-orange-100 text-orange-800 border-orange-200'
+                    : 'bg-blue-100 text-blue-800 border-blue-200'
+                }`}
+              >
+                <Users className="h-4 w-4 ml-1" />
+                {capacityStatus.text}
+              </Badge>
+            </div>
+          )}
         </div>
 
         {/* Price or Progress */}
-        {isEnrolled ? (
-          <div className="mb-6">
-            <div className="text-center mb-4">
-              <div className="text-2xl font-bold text-green-600 mb-2">دوره خریداری شده</div>
-              <div className="text-sm text-gray-600">پیشرفت شما در این دوره</div>
+        <div className="mb-6">
+          {isEnrolled ? (
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-4">
+                <ProgressCircle
+                  percentage={userProgress?.course_progress.completion_percentage || 0}
+                  size={80}
+                  strokeWidth={8}
+                  color="text-green-600"
+                  backgroundColor="text-gray-200"
+                />
+              </div>
+              <p className="text-sm text-gray-600 mb-2">
+                پیشرفت کلی دوره
+              </p>
+              <p className="text-2xl font-bold text-green-600">
+                {userProgress?.course_progress.completion_percentage || 0}%
+              </p>
             </div>
-            
-            {/* Progress Circle */}
-            <div className="flex justify-center mb-4">
-              <ProgressCircle 
-                percentage={userProgress?.course_progress.completion_percentage || 0}
-                size="lg"
-                color="text-orange-600"
-              />
-            </div>
-
-            {/* Progress Details */}
-            <div className="space-y-3 text-sm bg-gray-50 rounded-lg p-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 flex items-center">
-                  <BookOpen className="h-4 w-4 ml-1" />
-                  دروس تکمیل شده:
-                </span>
-                <span className="font-medium">
-                  {userProgress?.course_progress.completed_lessons || 0} از {courseData.info.total_lessons}
-                </span>
+          ) : (
+            <div className="text-center">
+              <div className="mb-4">
+                {isFree ? (
+                  <div className="text-4xl font-bold text-green-600">رایگان</div>
+                ) : (
+                  <div>
+                    <div className="text-4xl font-bold text-trader-600">
+                      {formatPrice(coursePrice)}
+                    </div>
+                    <div className="text-sm text-gray-500 mt-1">تومان</div>
+                  </div>
+                )}
               </div>
               
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 flex items-center">
-                  <Clock className="h-4 w-4 ml-1" />
-                  زمان مشاهده:
-                </span>
-                <span className="font-medium">
-                  {Math.floor((userProgress?.course_progress.watched_duration || 0) / 60)} از {Math.floor(courseData.info.total_duration / 60)} دقیقه
-                </span>
-              </div>
-
-              {userProgress?.next_lesson && (
-                <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                  <div className="text-sm text-orange-800 font-medium mb-1">درس بعدی:</div>
-                  <div className="text-sm text-orange-700">{userProgress.next_lesson.title}</div>
+              {/* Capacity Information */}
+              {courseData.info.has_capacity_limit && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="text-gray-600">ظرفیت دوره:</span>
+                    <span className={`font-medium ${
+                      capacityStatus.color === 'red' 
+                        ? 'text-red-600' 
+                        : capacityStatus.color === 'orange'
+                        ? 'text-orange-600'
+                        : 'text-blue-600'
+                    }`}>
+                      {capacityStatus.text}
+                    </span>
+                  </div>
+                  {courseData.info.capacity && courseData.info.available_spots !== undefined && (
+                    <div>
+                      <div className="flex justify-between text-xs text-gray-500 mb-1">
+                        <span>تعداد دانشجویان: {courseData.info.student_count || (courseData.info.capacity - courseData.info.available_spots)}</span>
+                        <span>ظرفیت کل: {courseData.info.capacity}</span>
+                      </div>
+                      <div className="bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full ${
+                            capacityStatus.color === 'red' 
+                              ? 'bg-red-500' 
+                              : capacityStatus.color === 'orange'
+                              ? 'bg-orange-500'
+                              : 'bg-blue-500'
+                          }`}
+                          style={{ width: `${((courseData.info.capacity - courseData.info.available_spots) / courseData.info.capacity) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          </div>
-        ) : (
-          <div className="text-center mb-6">
-            <div className="text-3xl font-bold text-orange-600" dir="rtl">
-              {isFree ? "رایگان" : `${coursePrice.toLocaleString()} تومان`}
-            </div>
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-6 text-center">
-          <div>
-            <div className="text-2xl font-bold text-orange-600">{courseData.info.total_lessons}</div>
-            <div className="text-sm text-gray-600">درس</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-orange-600">{Math.floor(courseData.info.total_duration / 60)}</div>
-            <div className="text-sm text-gray-600">دقیقه</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-orange-600">{courseData.info.total_chapters}</div>
-            <div className="text-sm text-gray-600">سرفصل</div>
-          </div>
+          )}
         </div>
 
         {/* Action Button */}
@@ -131,16 +159,21 @@ const CourseInfoCard: React.FC<CourseInfoCardProps> = ({
             </Button>
           ) : (
             <Button
-              className="w-full py-3 bg-orange-600 hover:bg-orange-700"
+              className="w-full py-3 bg-trader-600 hover:bg-trader-700"
               onClick={isFree ? onEnroll : onPurchase}
-              disabled={isProcessing}
+              disabled={isProcessing || !canPurchase}
             >
               {isProcessing ? (
                 <Loader className="h-4 w-4 animate-spin mx-auto" />
               ) : (
                 <>
                   <ShoppingCart className="h-4 w-4 ml-2" />
-                  {isFree ? "ثبت‌نام رایگان" : "خرید دوره"}
+                  {!canPurchase 
+                    ? "ظرفیت تکمیل شده"
+                    : isFree 
+                      ? "ثبت‌نام در دوره رایگان" 
+                      : "خرید دوره"
+                  }
                 </>
               )}
             </Button>
@@ -160,65 +193,32 @@ const CourseInfoCard: React.FC<CourseInfoCardProps> = ({
         </div>
 
         {/* Course Details */}
-        <div className="mt-8 space-y-4 border-t pt-6">
-          <h3 className="font-bold text-lg text-right">اطلاعات دوره</h3>
-          
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">مدرس:</span>
-              <span className="font-medium">{courseData.info.instructor}</span>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">سطح دوره:</span>
-              <span className="font-medium">
-                {courseData.info.level === 'beginner' ? 'مقدماتی' : 
-                 courseData.info.level === 'intermediate' ? 'متوسط' : 
-                 courseData.info.level === 'advanced' ? 'پیشرفته' : courseData.info.level}
-              </span>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">تاریخ بروزرسانی:</span>
-              <span className="font-medium">{new Date(courseData.info.updated_at).toLocaleDateString('fa-IR')}</span>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">تعداد دانشجو:</span>
-              <span className="font-medium">{courseData.info.total_students?.toLocaleString() || '0'}</span>
-            </div>
-
-            {courseData.info.average_rating && courseData.info.average_rating > 0 && (
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">امتیاز:</span>
-                <span className="font-medium">{courseData.info.average_rating.toFixed(1)} از 5</span>
-              </div>
-            )}
+        <div className="mt-6 space-y-3 text-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-gray-600">تعداد فصل‌ها:</span>
+            <span className="font-medium">{courseData.info.total_chapters}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-600">تعداد درس‌ها:</span>
+            <span className="font-medium">{courseData.info.total_lessons}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-600">مدت زمان:</span>
+            <span className="font-medium">{courseData.info.total_duration} دقیقه</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-600">سطح:</span>
+            <span className="font-medium">{courseData.info.level}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-600">زبان:</span>
+            <span className="font-medium">{courseData.info.language}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-600">تعداد دانشجویان:</span>
+            <span className="font-medium">{courseData.info.total_students}</span>
           </div>
         </div>
-
-        {/* Chapter Progress for Enrolled Users */}
-        {isEnrolled && userProgress?.chapter_progress && userProgress.chapter_progress.length > 0 && (
-          <div className="mt-8 space-y-4 border-t pt-6">
-            <h3 className="font-bold text-lg text-right">پیشرفت فصل‌ها</h3>
-            <div className="space-y-3">
-              {userProgress.chapter_progress.map((chapter) => (
-                <div key={chapter.id} className="bg-gray-50 rounded-lg p-3">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium">{chapter.title}</span>
-                    <span className="text-sm text-gray-600">{Math.round(chapter.progress_percentage)}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-orange-500 rounded-full transition-all duration-300"
-                      style={{ width: `${chapter.progress_percentage}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

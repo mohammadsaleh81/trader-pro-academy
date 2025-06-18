@@ -27,11 +27,14 @@ export function ProfileForm() {
         setSuccess(false);
         setIsLoading(true);
 
+        console.log('ProfileForm: handleSubmit called with formData:', formData);
+
         try {
             await updateProfile(formData);
             setSuccess(true);
-        } catch (err) {
-            setError('خطا در بروزرسانی پروفایل');
+        } catch (err: any) {
+            console.error('ProfileForm: Error updating profile:', err);
+            setError(err?.message || 'خطا در بروزرسانی پروفایل');
         } finally {
             setIsLoading(false);
         }

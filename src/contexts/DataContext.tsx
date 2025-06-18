@@ -26,6 +26,7 @@ export const useData = () => {
   const isAnyLoading = courseContext.isLoading.courses || 
                       contentContext.isLoading.articles || 
                       contentContext.isLoading.videos || 
+                      contentContext.isLoading.livestreams ||
                       walletContext.isLoading;
 
   return {
@@ -40,6 +41,7 @@ export const useData = () => {
     podcasts: contentContext.podcasts,
     videos: contentContext.videos,
     webinars: contentContext.webinars,
+    livestreams: contentContext.livestreams,
     files: contentContext.files,
     bookmarks: contentContext.bookmarks,
     comments: contentContext.comments,
@@ -60,6 +62,7 @@ export const useData = () => {
       courses: courseContext.isLoading.courses,
       articles: contentContext.isLoading.articles,
       videos: contentContext.isLoading.videos,
+      livestreams: contentContext.isLoading.livestreams,
       wallet: walletContext.isLoading
     },
     

@@ -7,7 +7,10 @@ import { toast } from "@/hooks/use-toast";
 import { CheckCircle, XCircle, Loader2, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { clearPendingCourse } from "@/lib/cache";
+import { formatCurrency } from "@/utils/currency";
 import api from "@/lib/axios";
+import { notificationService } from "@/lib/notification-service";
+import { checkIdentityVerificationForPurchase } from "@/lib/utils";
 
 const PaymentVerifyPage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,11 +32,6 @@ const PaymentVerifyPage: React.FC = () => {
     price: number;
   } | null>(null);
   const verificationStarted = useRef(false);
-
-  // Helper function for formatting currency
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('fa-IR').format(amount);
-  };
 
   // Check for pending course after successful payment
   const checkAndPurchasePendingCourse = async (newBalance: number) => {
@@ -64,6 +62,37 @@ const PaymentVerifyPage: React.FC = () => {
       try {
         console.log(`Attempting to purchase pending course: ${course.title}`);
         
+        // Check identity verification requirements for the pending course
+        try {
+          const courseResponse = await api.get(`/crs/courses/${course.id}/`);
+          const courseData = courseResponse.data;
+          
+          // Check capacity first
+          if (courseData.has_capacity_limit && courseData.is_full) {
+            toast({
+              title: "ظرفیت تکمیل شده",
+              description: "ظرفیت این دوره تکمیل شده است. لطفاً دوره‌های دیگر را بررسی کنید.",
+              variant: "destructive",
+            });
+            clearPendingCourse();
+            setIsPurchasing(false);
+            return;
+          }
+          
+          if (!checkIdentityVerificationForPurchase(
+            { requires_identity_verification: courseData.requires_identity_verification, title: course.title },
+            user,
+            navigate,
+            toast
+          )) {
+            setIsPurchasing(false);
+            return;
+          }
+        } catch (error) {
+          console.error('Error fetching course details for verification checks:', error);
+          // Continue with purchase if we can't fetch course details
+        }
+        
         const enrollResponse = await api.post(`/crs/courses/${course.id}/enroll/`, {
           course_id: parseInt(course.id)
         });
@@ -82,6 +111,14 @@ const PaymentVerifyPage: React.FC = () => {
             description: `دوره "${course.title}" با موفقیت خریداری شد`,
           });
 
+          // ارسال notification برای خرید موفق دوره بعد از شارژ کیف پول
+          try {
+            await notificationService.sendCoursePurchaseNotification(course.title, course.id);
+            console.log('Course purchase notification sent successfully after wallet recharge');
+          } catch (notificationError) {
+            console.warn('Failed to send course purchase notification:', notificationError);
+          }
+
           // Navigate to course after a delay
           setTimeout(() => {
             navigate(`/learn/${course.id}`);
@@ -90,26 +127,45 @@ const PaymentVerifyPage: React.FC = () => {
       } catch (error: any) {
         console.error('Error purchasing pending course:', error);
         
-        let errorMessage = "خطا در خرید دوره";
         if (error.response?.status === 400) {
           const errorData = error.response.data;
-          if (errorData?.course_id?.[0]) {
-            errorMessage = errorData.course_id[0];
-          } else if (errorData?.non_field_errors?.[0]) {
-            errorMessage = errorData.non_field_errors[0];
+          let errorMsg = "خطا در پردازش خرید";
+          
+          if (errorData?.non_field_errors?.[0]) {
+            errorMsg = errorData.non_field_errors[0];
+          } else if (errorData?.course_id?.[0]) {
+            errorMsg = errorData.course_id[0];
           } else if (errorData?.detail) {
-            errorMessage = errorData.detail;
+            errorMsg = errorData.detail;
+          } else if (errorData?.message) {
+            errorMsg = errorData.message;
           }
+          
+          toast({
+            title: "خطا در خرید",
+            description: errorMsg,
+            variant: "destructive",
+          });
+        } else if (error.response?.status === 402) {
+          toast({
+            title: "موجودی ناکافی",
+            description: "موجودی کیف پول شما برای خرید این دوره کافی نیست",
+            variant: "destructive",
+          });
         } else if (error.response?.status === 409) {
-          errorMessage = "شما قبلاً در این دوره ثبت‌نام کرده‌اید";
+          toast({
+            title: "خطا",
+            description: "شما قبلاً در این دوره ثبت‌نام کرده‌اید",
+            variant: "destructive",
+          });
           clearPendingCourse();
+        } else {
+          toast({
+            title: "خطا",
+            description: "خطا در پردازش خرید. لطفاً دوباره تلاش کنید.",
+            variant: "destructive",
+          });
         }
-
-        toast({
-          title: "خطا در خرید دوره",
-          description: errorMessage,
-          variant: "destructive",
-        });
       } finally {
         setIsPurchasing(false);
       }

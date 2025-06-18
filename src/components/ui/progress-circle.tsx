@@ -16,7 +16,7 @@ const ProgressCircle: React.FC<ProgressCircleProps> = ({
   strokeWidth = 8,
   className,
   showText = true,
-  color = "text-orange-600"
+  color = "text-trader-600"
 }) => {
   const sizeMap = {
     sm: 16,

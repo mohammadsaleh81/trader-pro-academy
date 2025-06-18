@@ -74,18 +74,20 @@ const HeroCarousel: React.FC = () => {
                   <img
                     src={slide.image}
                     alt={slide.title}
-                    className="w-full h-full object-cover brightness-[0.7]"
+                    className="w-full h-full object-cover"
                   />
-                  <div className={`absolute inset-0 bg-gradient-to-${isRtl ? 'r' : 'l'} from-trader-500/50 to-blue-900/60 flex items-center ${isRtl ? 'justify-start' : 'justify-end'}`}>
-                    <div className={`text-white ${isRtl ? 'text-left' : 'text-right'} p-4 md:p-8 max-w-md ${isRtl ? 'ml-0 md:ml-6' : 'mr-0 md:mr-6'}`}>
-                      <h2 className="text-sm md:text-lg mb-1 font-light">{slide.title}</h2>
-                      <h1 className="text-xl md:text-3xl lg:text-4xl font-bold mb-3">{slide.subtitle}</h1>
-                      <a 
-                        href={slide.buttonLink} 
-                        className="inline-block bg-trader-500 hover:bg-trader-600 text-white text-xs md:text-sm px-4 py-1.5 rounded-full transition-colors duration-300"
-                      >
-                        {slide.buttonText}
-                      </a>
+                  <div className={`absolute inset-0 flex items-center ${isRtl ? 'justify-start' : 'justify-end'}`}>
+                    <div className={`${isRtl ? 'text-left' : 'text-right'} p-4 md:p-8 max-w-md ${isRtl ? 'ml-0 md:ml-6' : 'mr-0 md:mr-6'}`}>
+                      <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+                        <h2 className="text-sm md:text-lg mb-1 font-light text-gray-700">{slide.title}</h2>
+                        <h1 className="text-xl md:text-3xl lg:text-4xl font-bold mb-3 text-gray-900">{slide.subtitle}</h1>
+                        <a 
+                          href={slide.buttonLink} 
+                          className="inline-block text-white text-xs md:text-sm px-4 py-1.5 rounded-full transition-colors duration-300"
+                        >
+                          {slide.buttonText}
+                        </a>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -101,7 +103,7 @@ const HeroCarousel: React.FC = () => {
             key={slide.id} 
             className={cn(
               "h-2.5 w-2.5", 
-              index === activeSlide ? "text-trader-500" : "text-gray-300"
+              index === activeSlide ? "text-trader-300" : "text-gray-300"
             )} 
           />
         ))}

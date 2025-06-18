@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import CourseList from "@/components/course/CourseList";
@@ -7,7 +6,7 @@ import { useData } from "@/contexts/DataContext";
 import HeroCarousel from "@/components/hero/HeroCarousel";
 import ContentCategories from "@/components/content-categories/ContentCategories";
 import SectionTitle from "@/components/section-title/SectionTitle";
-import { BookOpen, FileText, Headphones, Video } from "lucide-react";
+import { BookOpen, FileText, Headphones, Video, Shield } from "lucide-react";
 import CarouselCard from "@/components/ui/carousel-card";
 import CourseCard from "@/components/course/CourseCard";
 import CourseCardSkeleton from "@/components/course/CourseCardSkeleton";
@@ -51,7 +50,7 @@ const HomePage: React.FC = () => {
               ? Array.from({ length: 5 }).map((_, index) => (
                   <CourseCardSkeleton key={`skeleton-${index}`} />
                 ))
-              : courses.slice(0, 8).map((course, index) => (
+              : courses.slice(0, 8).map((course) => (
                   <CourseCard
                     key={course.id}
                     id={course.id}
@@ -59,9 +58,10 @@ const HomePage: React.FC = () => {
                     instructor={course.instructor}
                     thumbnail={course.thumbnail}
                     price={course.price}
-                    rating={course.rating}
-                    isFree={index % 3 === 0}
+                    isFree={course.price === 0}
                     is_enrolled={course.is_enrolled}
+                    discounted_price={course.discounted_price}
+                    discount_percentage={course.discount_percentage}
                   />
                 ))
             }
@@ -88,7 +88,7 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Latest Videos */}
-        <section className="mb-6 bg-gray-50 py-4 -mx-4 sm:-mx-6 lg:-mx-8">
+        {/* <section className="mb-6 bg-gray-50 py-4 -mx-4 sm:-mx-6 lg:-mx-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <SectionTitle 
               title="ویدیوهای آموزشی" 
@@ -104,7 +104,7 @@ const HomePage: React.FC = () => {
               skeletonCount={8}
             />
           </div>
-        </section>
+        </section> */}
 
         {/* Latest Podcasts */}
         <section className="mb-6 bg-gray-50 py-4 -mx-4 sm:-mx-6 lg:-mx-8">
@@ -124,6 +124,23 @@ const HomePage: React.FC = () => {
             />
           </div>
         </section>
+
+        {/* Identity Verification Test Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">دوره‌های نیازمند احراز هویت</h2>
+            <div className="flex items-center text-sm text-amber-600">
+              <Shield className="h-4 w-4 ml-1" />
+              <span>نیاز به احراز هویت</span>
+            </div>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <p className="text-amber-800 text-sm">
+              این بخش برای تست سیستم احراز هویت طراحی شده است. دوره‌هایی که نیاز به احراز هویت دارند 
+              با نشانگر مخصوص نمایش داده می‌شوند و کاربران باید ابتدا احراز هویت خود را تکمیل کنند.
+            </p>
+          </div>
+        </div>
       </div>
     </Layout>
   );

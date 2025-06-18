@@ -76,7 +76,7 @@ const ContentActions: React.FC<ContentActionsProps> = ({
         {isProcessing ? (
           <Loader className="h-5 w-5 animate-spin" />
         ) : currentlyBookmarked ? (
-          <Bookmark className="h-5 w-5 fill-current text-orange-600" />
+          <Bookmark className="h-5 w-5 fill-current text-trader-600" />
         ) : (
           <BookmarkPlus className="h-5 w-5" />
         )}

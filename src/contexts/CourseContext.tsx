@@ -1,14 +1,25 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api from "@/lib/axios";
 import { Course, CourseDetails } from "@/types/course";
+import { coursesApi } from "@/lib/api";
+import { PaginationState } from "@/types/pagination";
+import { useAuth } from "./AuthContext";
 
 interface CourseContextType {
   courses: Course[];
   myCourses: Course[];
   enrollCourse: (courseId: string) => void;
   fetchCourseDetails: (slug: string, forceRefresh?: boolean) => Promise<CourseDetails | null>;
+  loadMoreCourses: () => Promise<void>;
+  loadMoreMyCourses: () => Promise<void>;
+  refreshMyCourses: () => Promise<void>;
   isLoading: {
     courses: boolean;
+    myCourses: boolean;
+  };
+  pagination: {
+    courses: PaginationState;
+    myCourses: PaginationState;
   };
   refreshCourseDetails: (slug: string) => Promise<CourseDetails | null>;
   clearCourseCache: () => void;
@@ -17,19 +28,40 @@ interface CourseContextType {
 const CourseContext = createContext<CourseContextType | undefined>(undefined);
 
 export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isLoading: authLoading } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [myCourses, setMyCourses] = useState<Course[]>([]);
   const [courseDetailsCache, setCourseDetailsCache] = useState<Record<string, CourseDetails>>({});
   const [isLoading, setIsLoading] = useState({
-    courses: true
+    courses: true,
+    myCourses: false
   });
+  const [pagination, setPagination] = useState({
+    courses: { currentPage: 1, totalPages: 1, totalCount: 0, hasNext: false, hasPrevious: false },
+    myCourses: { currentPage: 1, totalPages: 1, totalCount: 0, hasNext: false, hasPrevious: false }
+  });
+
+  // Utility function to sync enrollment status between courses and myCourses
+  const updateCoursesEnrollmentStatus = (myCoursesData: Course[]) => {
+    const myCoursesIds = new Set(myCoursesData.map(course => course.id));
+    setCourses(prevCourses => 
+      prevCourses.map(course => ({
+        ...course,
+        is_enrolled: myCoursesIds.has(course.id)
+      }))
+    );
+  };
 
   // Clear all course cache and reset state
   const clearCourseCache = () => {
     setCourses([]);
     setMyCourses([]);
     setCourseDetailsCache({});
-    setIsLoading({ courses: true });
+    setIsLoading({ courses: true, myCourses: false });
+    setPagination({
+      courses: { currentPage: 1, totalPages: 1, totalCount: 0, hasNext: false, hasPrevious: false },
+      myCourses: { currentPage: 1, totalPages: 1, totalCount: 0, hasNext: false, hasPrevious: false }
+    });
   };
 
   // Listen for logout event to clear cache
@@ -74,52 +106,24 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return fetchCourseDetails(slug, true);
   };
 
-  // Fetch courses from API - works for both logged in and non-logged in users
+  // Fetch courses from API - use new paginated API
   useEffect(() => {
     const fetchCourses = async () => {
       try {
         setIsLoading(prev => ({ ...prev, courses: true }));
+        const response = await coursesApi.getAll(1, 10);
         
-        // Try to get auth token but don't require it
-        const auth = localStorage.getItem('auth_tokens');
-        let headers = {};
-        
-        if (auth) {
-          try {
-            const tokens = JSON.parse(auth);
-            if (tokens.access) {
-              headers = {
-                'Authorization': `Bearer ${tokens.access}`
-              };
-            }
-          } catch (e) {
-            console.log('Invalid auth token, proceeding without authentication');
+        setCourses(response.results);
+        setPagination(prev => ({
+          ...prev,
+          courses: {
+            currentPage: response.current_page,
+            totalPages: response.total_pages,
+            totalCount: response.count,
+            hasNext: !!response.next,
+            hasPrevious: !!response.previous
           }
-        }
-        
-        const response = await api.get('/crs/courses/', { headers });
-        
-        // Transform API data to match our Course type
-        const transformedCourses = response.data.map((course: any) => ({
-          id: course.id.toString(),
-          title: course.title,
-          instructor: course.instructor_name || "Unknown Instructor",
-          thumbnail: course.thumbnail,
-          description: course.description || "",
-          price: parseFloat(course.price || '0'),
-          rating: course.rating_avg || 0,
-          totalLessons: course.total_lessons || undefined,
-          completedLessons: course.completed_lessons || undefined,
-          createdAt: course.created,
-          updatedAt: course.updated || course.created,
-          categories: course.tags || [],
-          duration: course.total_duration ? `${course.total_duration} دقیقه` : undefined,
-          level: course.level as "beginner" | "intermediate" | "advanced",
-          is_enrolled: course.is_enrolled || false,
-          progress_percentage: course.progress_percentage || 0
         }));
-
-        setCourses(transformedCourses);
       } catch (error) {
         console.error('Error fetching courses:', error);
         setCourses([]);
@@ -131,63 +135,69 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     fetchCourses();
   }, []);
 
-  // Fetch my courses from API
+  // Effect to sync enrollment status when both courses and myCourses are loaded
+  useEffect(() => {
+    if (courses.length > 0 && !isLoading.myCourses) {
+      updateCoursesEnrollmentStatus(myCourses);
+    }
+  }, [courses.length, myCourses.length, isLoading.myCourses]);
+
+  // Fetch my courses from API - use new paginated API
   useEffect(() => {
     const fetchMyCourses = async () => {
       try {
-        const auth = localStorage.getItem('auth_tokens');
-        if (!auth) {
+        // Wait until auth is loaded
+        if (authLoading) {
+          return;
+        }
+
+        // Check if user is authenticated
+        if (!user) {
+          console.log('CourseContext: User not authenticated, clearing myCourses');
           setMyCourses([]);
+          setIsLoading(prev => ({ ...prev, myCourses: false }));
           return;
         }
         
-        const access_token = JSON.parse(auth).access;
+        console.log('CourseContext: User authenticated, fetching myCourses');
+        setIsLoading(prev => ({ ...prev, myCourses: true }));
+        const response = await coursesApi.getMyCourses(1, 10);
         
-        const response = await api.get('/crs/my-courses/', {
-          headers: {
-            'Authorization': `Bearer ${access_token}`
+        console.log('CourseContext: myCourses fetched:', response.results);
+        setMyCourses(response.results);
+        setPagination(prev => ({
+          ...prev,
+          myCourses: {
+            currentPage: response.current_page,
+            totalPages: response.total_pages,
+            totalCount: response.count,
+            hasNext: !!response.next,
+            hasPrevious: !!response.previous
           }
-        });
-        
-        // Transform API data to match our Course type
-        const transformedCourses = response.data.map((course: any) => {
-          return {
-            id: course.id.toString(),
-            title: course.title,
-            instructor: course.instructor_name || "مدرس ناشناس",
-            thumbnail: course.thumbnail,
-            description: course.description || "",
-            price: parseFloat(course.price || '0'),
-            rating: course.rating_avg || 0,
-            totalLessons: course.total_lessons,
-            completedLessons: course.completed_lessons,
-            createdAt: course.created,
-            updatedAt: course.updated || course.created,
-            categories: course.tags || [],
-            duration: course.total_duration ? `${course.total_duration} دقیقه` : undefined,
-            level: course.level as "beginner" | "intermediate" | "advanced",
-            is_enrolled: true,
-            progress_percentage: course.progress_percentage || 0
-          };
-        });
+        }));
 
-        setMyCourses(transformedCourses);
+        // Update courses with enrollment status based on myCourses
+        updateCoursesEnrollmentStatus(response.results);
       } catch (error) {
         console.error('Error fetching my courses:', error);
         setMyCourses([]);
+      } finally {
+        setIsLoading(prev => ({ ...prev, myCourses: false }));
       }
     };
 
     fetchMyCourses();
-  }, []);
+  }, [user, authLoading]);
 
   const enrollCourse = (courseId: string) => {
     const course = courses.find((c) => c.id === courseId);
     if (course && !myCourses.find((c) => c.id === courseId)) {
-      const enrolledCourse = { ...course, completedLessons: 0, is_enrolled: true };
-      setMyCourses([...myCourses, enrolledCourse]);
+      const enrolledCourse = { ...course, completedLessons: 0, is_enrolled: true, progress_percentage: 0 };
       
-      // Update courses list to reflect enrollment
+      // Update myCourses first
+      setMyCourses(prev => [enrolledCourse, ...prev]);
+      
+      // Update courses list to reflect enrollment immediately
       setCourses(prevCourses => prevCourses.map(c => 
         c.id === courseId ? { ...c, is_enrolled: true } : c
       ));
@@ -203,6 +213,89 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         });
         return newCache;
       });
+      
+      // Force refresh my courses list from server (this will also sync the enrollment status)
+      refreshMyCourses();
+    }
+  };
+
+  const refreshMyCourses = async () => {
+    try {
+      // Check if user is authenticated
+      if (!user) {
+        console.log('CourseContext: User not authenticated, clearing myCourses');
+        setMyCourses([]);
+        return;
+      }
+      
+      console.log('CourseContext: Refreshing myCourses for user:', user.id);
+      const response = await coursesApi.getMyCourses(1, 10);
+      console.log('CourseContext: myCourses refreshed:', response.results);
+      
+      setMyCourses(response.results);
+      setPagination(prev => ({
+        ...prev,
+        myCourses: {
+          currentPage: response.current_page,
+          totalPages: response.total_pages,
+          totalCount: response.count,
+          hasNext: !!response.next,
+          hasPrevious: !!response.previous
+        }
+      }));
+
+      // Update courses with enrollment status based on refreshed myCourses
+      updateCoursesEnrollmentStatus(response.results);
+    } catch (error) {
+      console.error('Error refreshing my courses:', error);
+    }
+  };
+
+  const loadMoreCourses = async () => {
+    if (!pagination.courses.hasNext || isLoading.courses) return;
+    
+    try {
+      setIsLoading(prev => ({ ...prev, courses: true }));
+      const response = await coursesApi.getAll(pagination.courses.currentPage + 1, 10);
+      setCourses(prev => [...prev, ...response.results]);
+      setPagination(prev => ({
+        ...prev,
+        courses: {
+          currentPage: response.current_page,
+          totalPages: response.total_pages,
+          totalCount: response.count,
+          hasNext: !!response.next,
+          hasPrevious: !!response.previous
+        }
+      }));
+    } catch (error) {
+      console.error('Error loading more courses:', error);
+    } finally {
+      setIsLoading(prev => ({ ...prev, courses: false }));
+    }
+  };
+
+  const loadMoreMyCourses = async () => {
+    if (!pagination.myCourses.hasNext || isLoading.myCourses) return;
+    
+    try {
+      setIsLoading(prev => ({ ...prev, myCourses: true }));
+      const response = await coursesApi.getMyCourses(pagination.myCourses.currentPage + 1, 10);
+      setMyCourses(prev => [...prev, ...response.results]);
+      setPagination(prev => ({
+        ...prev,
+        myCourses: {
+          currentPage: response.current_page,
+          totalPages: response.total_pages,
+          totalCount: response.count,
+          hasNext: !!response.next,
+          hasPrevious: !!response.previous
+        }
+      }));
+    } catch (error) {
+      console.error('Error loading more my courses:', error);
+    } finally {
+      setIsLoading(prev => ({ ...prev, myCourses: false }));
     }
   };
 
@@ -213,8 +306,12 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         myCourses,
         enrollCourse,
         fetchCourseDetails,
+        loadMoreCourses,
+        loadMoreMyCourses,
+        refreshMyCourses,
         refreshCourseDetails,
         isLoading,
+        pagination,
         clearCourseCache
       }}
     >

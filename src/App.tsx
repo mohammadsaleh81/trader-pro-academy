@@ -6,11 +6,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { DataProvider } from "./contexts/DataContext";
+import PushNotificationPrompt from "@/components/ui/push-notification-prompt";
+import { usePWAAutoReload } from "@/hooks/usePWAAutoReload";
+import { PWAStatusIndicator } from "@/components/PWAStatusIndicator";
 import HomePage from "./pages/HomePage";
 import ContentHubPage from "./pages/ContentHubPage";
 import ContentDetailPage from "./pages/ContentDetailPage";
 import ArticleDetailPage from "./pages/ArticleDetailPage";
 import PodcastDetailPage from "./pages/PodcastDetailPage";
+import LivestreamDetailPage from "./pages/LivestreamDetailPage";
 import MyCoursesPage from "./pages/MyCoursesPage";
 import BookmarksPage from "./pages/BookmarksPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -28,6 +32,11 @@ import NotFound from "./pages/NotFound";
 import PaymentVerifyPage from "./pages/PaymentVerifyPage";
 import CommentTestPage from "./pages/CommentTestPage";
 import BookmarkTestPage from "./pages/BookmarkTestPage";
+import PWATestPage from "./pages/PWATestPage";
+import PWADebugPage from "./pages/PWADebugPage";
+import NotificationTest from "./pages/NotificationTest";
+import AppInstallPage from "./pages/AppInstallPage";
+import IdentityVerificationPage from "./pages/IdentityVerificationPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 
@@ -37,7 +46,7 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 1000 * 60 * 10, // 10 minutes
       retry: 3,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
     },
   },
 });
@@ -61,7 +70,17 @@ const VideoRedirect: React.FC = () => {
   
   return <Navigate to={`/content/video/${id}`} replace />;
 };
+// PWA Wrapper component to handle auto-reload
+const PWAWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { manualReload } = usePWAAutoReload();
+  
+  // Expose manual reload to global scope for testing
+  React.useEffect(() => {
+    (window as any).pwaReload = manualReload;
+  }, [manualReload]);
 
+  return <>{children}</>;
+};
 const App: React.FC = () => {
   console.log('App: Initializing application');
   
@@ -70,9 +89,12 @@ const App: React.FC = () => {
       <TooltipProvider>
         <AuthProvider>
           <DataProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+            <PWAWrapper>
+              <Toaster />
+              <Sonner />
+              <PushNotificationPrompt />
+              <PWAStatusIndicator />
+              <BrowserRouter>
               <Routes>
                 {/* Public Routes */}
                 <Route element={<PublicRoute />}>
@@ -81,6 +103,7 @@ const App: React.FC = () => {
 
                 {/* Semi-Public Routes */}
                 <Route path="/" element={<HomePage />} />
+                <Route path="/install" element={<AppInstallPage />} />
                 <Route path="/about-us" element={<AboutUsPage />} />
                 <Route path="/contact-us" element={<ContactUsPage />} />
                 <Route path="/content" element={<ContentHubPage />} />
@@ -95,12 +118,19 @@ const App: React.FC = () => {
                 {/* Podcast routes */}
                 <Route path="/podcasts/:id" element={<PodcastDetailPage />} />
                 
+                {/* Livestream routes */}
+                <Route path="/livestreams/:id" element={<LivestreamDetailPage />} />
+                <Route path="/webinars/:id" element={<LivestreamDetailPage />} />
+                
                 <Route path="/courses" element={<CourseListPage />} />
                 <Route path="/courses/:slug" element={<CourseDetailPage />} />
                 
                 {/* Test Routes */}
                 <Route path="/test/comments" element={<CommentTestPage />} />
                 <Route path="/test/bookmarks" element={<BookmarkTestPage />} />
+                <Route path="/test/pwa" element={<PWATestPage />} />
+                <Route path="/test/notifications" element={<NotificationTest />} />
+                <Route path="/debug/pwa" element={<PWADebugPage />} />
                 
                 {/* Payment Verification - Semi-Protected Route */}
                 <Route path="/payment-verify" element={<PaymentVerifyPage />} />
@@ -112,6 +142,7 @@ const App: React.FC = () => {
                   <Route path="/bookmarks" element={<BookmarksPage />} />
                   <Route path="/wallet" element={<WalletPage />} />
                   <Route path="/orders" element={<OrdersPage />} />
+                  <Route path="/identity-verification" element={<IdentityVerificationPage />} />
                   
                   {/* Learn Page - Protected Route */}
                   <Route path="/learn/:courseId" element={<LearnPage />} />
@@ -129,8 +160,9 @@ const App: React.FC = () => {
                 {/* Fallback Routes */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </BrowserRouter>
-          </DataProvider>
+              </BrowserRouter>
+            </PWAWrapper>
+            </DataProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

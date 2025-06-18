@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,8 +16,6 @@ export interface Comment {
     first_name: string;
     last_name: string;
     thumbnail?: string;
-    username?: string;
-    email?: string;
   };
   author?: {
     id: string;
@@ -26,12 +23,12 @@ export interface Comment {
     last_name: string;
     username?: string;
     email?: string;
-    thumbnail?: string;
   };
   content: string;
   created_at: string;
   replies?: Comment[];
   parent?: string | null;
+  is_approved: boolean;
 }
 
 interface CommentSectionProps {
@@ -67,6 +64,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
       content: apiComment.content,
       created_at: apiComment.created_at,
       parent: apiComment.parent,
+      is_approved: apiComment.is_approved,
       replies: apiComment.replies?.map(reply => transformComment(reply)) || []
     };
   };
@@ -87,12 +85,19 @@ const CommentSection: React.FC<CommentSectionProps> = ({
         case 'podcast':
           apiComments = await api.getPodcastComments(contentId);
           break;
+        case 'course':
+          // For now, courses use the same comment system as articles
+          // This can be updated when course-specific comment API is available
+          apiComments = [];
+          break;
         default:
           apiComments = [];
       }
 
       const transformedComments = apiComments.map(transformComment);
-      setComments(transformedComments);
+      // Filter comments to show only approved ones or user's own comments
+      const filteredComments = transformedComments.filter(shouldDisplayComment);
+      setComments(filteredComments);
     } catch (error) {
       console.error('Error loading comments:', error);
       toast({
@@ -147,27 +152,32 @@ const CommentSection: React.FC<CommentSectionProps> = ({
         case 'podcast':
           newApiComment = await api.createPodcastComment(contentId, commentData);
           break;
+        case 'course':
+          // For now, courses don't support comments
+          throw new Error('نظرات دوره‌ها هنوز پشتیبانی نمی‌شود');
         default:
           throw new Error('نوع محتوای نامعلوم');
       }
 
       const newComment_transformed = transformComment(newApiComment);
       
-      // Add to local state
-      if (replyTo) {
-        // Add as reply
-        setComments(prev => prev.map(comment => {
-          if (comment.id === replyTo) {
-            return {
-              ...comment,
-              replies: [newComment_transformed, ...(comment.replies || [])]
-            };
-          }
-          return comment;
-        }));
-      } else {
-        // Add as new top-level comment
-        setComments(prev => [newComment_transformed, ...prev]);
+      // Only add to local state if comment should be displayed (approved or user's own)
+      if (shouldDisplayComment(newComment_transformed)) {
+        if (replyTo) {
+          // Add as reply
+          setComments(prev => prev.map(comment => {
+            if (comment.id === replyTo) {
+              return {
+                ...comment,
+                replies: [newComment_transformed, ...(comment.replies || [])]
+              };
+            }
+            return comment;
+          }));
+        } else {
+          // Add as new top-level comment
+          setComments(prev => [newComment_transformed, ...prev]);
+        }
       }
 
       setNewComment("");
@@ -179,7 +189,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
 
       toast({
         title: "نظر ثبت شد",
-        description: "نظر شما با موفقیت ثبت شد",
+        description: "نظر شما ثبت شد و پس از تایید منتشر خواهد شد",
       });
     } catch (error) {
       console.error('Error submitting comment:', error);
@@ -280,15 +290,36 @@ const CommentSection: React.FC<CommentSectionProps> = ({
     const author = comment.author || comment.user;
     if (!author) return 'کاربر ناشناس';
     const fullName = `${author.first_name || ''} ${author.last_name || ''}`.trim();
-    return fullName || author.username || author.email || 'کاربر';
+    if (fullName) return fullName;
+    
+    // Check if author has username or email (only for author type)
+    if ('username' in author && author.username) return author.username;
+    if ('email' in author && author.email) return author.email;
+    
+    return 'کاربر';
   };
 
   const getUserThumbnail = (comment: Comment) => {
     const author = comment.author || comment.user;
-    return author?.thumbnail;
+    if (!author) return undefined;
+    
+    // Check if author has thumbnail property
+    if ('thumbnail' in author) return author.thumbnail;
+    
+    return undefined;
   };
 
   const canDeleteComment = (comment: Comment) => {
+    const author = comment.author || comment.user;
+    return user && author && user.id === author.id;
+  };
+
+  // Check if comment should be displayed (approved comments or user's own comments)
+  const shouldDisplayComment = (comment: Comment) => {
+    // Always show approved comments
+    if (comment.is_approved) return true;
+    
+    // Show user's own comments even if not approved yet
     const author = comment.author || comment.user;
     return user && author && user.id === author.id;
   };
@@ -314,7 +345,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   };
 
   const renderComment = (comment: Comment, isReply: boolean = false) => (
-    <Card key={comment.id} className={`${isReply ? 'mr-8 border-r-2 border-orange-200' : 'border-l-4 border-trader-200'}`}>
+            <Card key={comment.id} className={`${isReply ? 'mr-8 border-r-2 border-trader-200' : 'border-l-4 border-trader-200'}`}>
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-3">
@@ -401,7 +432,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
         {/* Replies */}
         {comment.replies && comment.replies.length > 0 && (
           <div className="mt-4 space-y-3">
-            {comment.replies.map(reply => renderComment(reply, true))}
+            {comment.replies.filter(shouldDisplayComment).map(reply => renderComment(reply, true))}
           </div>
         )}
       </CardContent>

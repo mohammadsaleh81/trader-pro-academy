@@ -4,18 +4,20 @@ import ContentCardSkeleton from "./ContentCardSkeleton";
 import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import CarouselCard from "../ui/carousel-card";
+import { formatAuthor } from "@/lib/utils";
 import { 
   Article, 
   Podcast, 
   Video, 
   Webinar, 
   File as FileType,
-  CourseUser 
+  CourseUser,
+  Livestream
 } from "@/contexts/DataContext";
 
 type ContentListProps<T> = {
   items: T[];
-  type: "article" | "podcast" | "video" | "webinar" | "file";
+  type: "article" | "podcast" | "video" | "webinar" | "file" | "livestream";
   title?: string;
   viewAllLink?: string;
   showCarousel?: boolean;
@@ -23,7 +25,7 @@ type ContentListProps<T> = {
   skeletonCount?: number;
 };
 
-type ContentItem = Article | Podcast | Video | Webinar | FileType;
+type ContentItem = Article | Podcast | Video | Webinar | FileType | Livestream;
 
 const ContentList = <T extends ContentItem>({ 
   items, 
@@ -35,18 +37,6 @@ const ContentList = <T extends ContentItem>({
   skeletonCount = 4
 }: ContentListProps<T>) => {
   
-  // Helper function to format author
-  const formatAuthor = (author: string | CourseUser | undefined): string => {
-    if (!author) return "نویسنده";
-    if (typeof author === 'string') {
-      return author;
-    }
-    if (typeof author === 'object' && author !== null) {
-      return `${author.first_name || ''} ${author.last_name || ''}`.trim() || author.username || author.email || "نویسنده";
-    }
-    return "نویسنده";
-  };
-
   const renderContentCard = (item: ContentItem, contentType: string, key: string) => {
     if (contentType === "podcast") {
       const podcast = item as unknown as Podcast;
@@ -97,6 +87,23 @@ const ContentList = <T extends ContentItem>({
           date={webinar.date}
           author={formatAuthor(webinar.author)}
           duration={webinar.duration}
+          className="h-full"
+        />
+      );
+    }
+    
+    if (contentType === "livestream") {
+      const livestream = item as unknown as Livestream;
+      return (
+        <ContentCard
+          key={`${key}-${livestream.id}`}
+          id={livestream.id}
+          title={livestream.title}
+          description={livestream.description}
+          thumbnail={livestream.thumbnail}
+          type={contentType as "livestream"}
+          date={livestream.created_at}
+          author={formatAuthor(livestream.author)}
           className="h-full"
         />
       );

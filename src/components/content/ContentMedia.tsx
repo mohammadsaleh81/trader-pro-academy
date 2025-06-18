@@ -26,7 +26,7 @@ const ContentMedia: React.FC<ContentMediaProps> = ({ content }) => {
         )}
       </div>
     );
-  } else if ('audio_file' in content) { // It's a podcast
+  } else if ('audio_url' in content) { // It's a podcast
     return (
       <div className="w-full bg-gray-100 rounded-lg mb-6 p-6 flex items-center">
         <div className="flex-1">

@@ -1,5 +1,6 @@
-import { API_BASE_URL, API_ENDPOINTS, TOKEN_STORAGE_KEY } from './config';
+import { API_BASE_URL, API_ENDPOINTS, TOKEN_STORAGE_KEY, API_BASE_URL_FALLBACK } from "./config";
 import axios from './axios';
+import { PaginatedResponse } from '@/types/pagination';
 
 interface AuthTokens {
     access: string;
@@ -14,6 +15,7 @@ interface User {
     email: string;
     is_phone_verified: boolean;
     isProfileComplete: boolean;
+    identity_verified: boolean;
     thumbnail?: string;
 }
 
@@ -31,131 +33,6 @@ interface VerifyOTPResponse {
 
 interface AvatarResponse {
     avatar: string;
-}
-
-// Course interfaces
-export interface Course {
-    id: string;
-    title: string;
-    slug: string;
-    description: string;
-    thumbnail: string | null;
-    price: number;
-    discount_price?: number;
-    instructor_name: string;
-    duration: string;
-    level: string;
-    category: {
-        id: string;
-        name: string;
-        slug: string;
-    };
-    tags: Array<{
-        id: string;
-        name: string;
-        slug: string;
-    }>;
-    chapters: Chapter[];
-    total_lessons: number;
-    total_duration: string;
-    created_at: string;
-    is_enrolled: boolean;
-    progress_percentage: number;
-}
-
-export interface Chapter {
-    id: string;
-    title: string;
-    order: number;
-    lessons: Lesson[];
-}
-
-export interface Lesson {
-    id: string;
-    title: string;
-    description: string;
-    order: number;
-    duration: string;
-    video_url?: string;
-    content?: string;
-    is_completed: boolean;
-    is_locked: boolean;
-}
-
-// Order interfaces
-export interface Order {
-    id: string;
-    course: {
-        id: string;
-        title: string;
-        slug: string;
-        thumbnail: string;
-        price: number;
-    };
-    amount: number;
-    status: string;
-    payment_method: string;
-    created_at: string;
-    updated_at: string;
-}
-
-export interface CreateOrderRequest {
-    course_id: string;
-    payment_method: 'wallet' | 'gateway';
-}
-
-export interface CreateOrderResponse {
-    order_id: string;
-    payment_url?: string;
-    redirect_url?: string;
-    amount: number;
-    status: string;
-}
-
-// Payment interfaces
-export interface PaymentRequest {
-    order_id: string;
-    amount: number;
-    callback_url: string;
-}
-
-export interface PaymentResponse {
-    payment_url: string;
-    authority: string;
-    status: string;
-}
-
-export interface PaymentVerifyRequest {
-    authority: string;
-    status: string;
-}
-
-export interface PaymentVerifyResponse {
-    status: string;
-    ref_id?: string;
-    order_id: string;
-    amount: number;
-}
-
-// Wallet interfaces
-export interface Wallet {
-    id: string;
-    balance: number;
-    currency: string;
-    updated_at: string;
-}
-
-export interface Transaction {
-    id: string;
-    type: 'deposit' | 'withdraw' | 'purchase';
-    amount: number;
-    description: string;
-    status: string;
-    created_at: string;
-    order?: {
-        id: string;
-        course_title: string;
-    };
 }
 
 // Comment interfaces
@@ -176,12 +53,14 @@ export interface CommentBase {
     is_approved: boolean;
 }
 
+// Article comment interface
 export interface ArticleComment extends CommentBase {
     article: string;
     parent: string | null;
     replies: ArticleComment[];
 }
 
+// Media comment interface (for videos, podcasts, etc.)
 export interface MediaComment extends CommentBase {
     content_type: string;
     object_id: string;
@@ -190,6 +69,7 @@ export interface MediaComment extends CommentBase {
     replies: MediaComment[];
 }
 
+// Create comment interfaces
 export interface CreateArticleComment {
     content: string;
     parent?: string | null;
@@ -276,7 +156,7 @@ class ApiService {
         return headers;
     }
 
-    private getStoredTokens(): AuthTokens | null {
+    public getStoredTokens(): AuthTokens | null {
         const stored = localStorage.getItem(TOKEN_STORAGE_KEY);
         return stored ? JSON.parse(stored) : null;
     }
@@ -289,67 +169,163 @@ class ApiService {
         localStorage.removeItem(TOKEN_STORAGE_KEY);
     }
 
-    // Auth methods
     async requestOTP(phoneNumber: string): Promise<RequestOTPResponse> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.REQUEST_OTP}`, {
-            method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify({ phone_number: phoneNumber }),
-        });
+        console.log('API: requestOTP called with:', phoneNumber);
+        console.log('API: Using URL:', `${API_BASE_URL}${API_ENDPOINTS.REQUEST_OTP}`);
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.REQUEST_OTP}`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({ phone_number: phoneNumber }),
+            });
 
-        if (!response.ok) {
-            throw new Error('Failed to request OTP');
+            console.log('API: requestOTP response status:', response.status);
+            console.log('API: requestOTP response headers:', response.headers);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API: requestOTP failed:', errorText);
+                throw new Error(`Failed to request OTP: ${response.status} - ${errorText}`);
+            }
+
+            const data = await response.json();
+            console.log('API: requestOTP success:', data);
+            return data;
+        } catch (error) {
+            console.error('API: requestOTP error with primary URL:', error);
+            
+            // Try fallback URL if primary fails and we're in development
+            if (process.env.NODE_ENV === 'development') {
+                console.log('API: Trying fallback URL:', `${API_BASE_URL_FALLBACK}${API_ENDPOINTS.REQUEST_OTP}`);
+                
+                try {
+                    const response = await fetch(`${API_BASE_URL_FALLBACK}${API_ENDPOINTS.REQUEST_OTP}`, {
+                        method: 'POST',
+                        headers: this.getHeaders(),
+                        body: JSON.stringify({ phone_number: phoneNumber }),
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Failed to request OTP from fallback: ${response.status} - ${errorText}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('API: requestOTP success with fallback:', data);
+                    return data;
+                } catch (fallbackError) {
+                    console.error('API: requestOTP fallback also failed:', fallbackError);
+                    throw error; // Throw original error
+                }
+            }
+            
+            throw error;
         }
-
-        return response.json();
     }
 
     async verifyOTP(phoneNumber: string, code: string): Promise<VerifyOTPResponse> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.VERIFY_OTP}`, {
-            method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify({ phone_number: phoneNumber, code }),
-        });
+        console.log('API: verifyOTP called with:', phoneNumber, code);
+        console.log('API: Using URL:', `${API_BASE_URL}${API_ENDPOINTS.VERIFY_OTP}`);
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.VERIFY_OTP}`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({ phone_number: phoneNumber, code }),
+            });
 
-        if (!response.ok) {
-            throw new Error('Failed to verify OTP');
+            console.log('API: verifyOTP response status:', response.status);
+
+            if (!response.ok) { 
+                const errorData = await response.json().catch(() => ({}));
+                console.error('API: verifyOTP failed:', errorData);
+                throw new Error(errorData.error || `Failed to verify OTP: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('API: verifyOTP success:', data);
+            
+            this.setStoredTokens({
+                access: data.access,
+                refresh: data.refresh,
+            });
+
+            return data;
+        } catch (error) {
+            console.error('API: verifyOTP error with primary URL:', error);
+            
+            // Try fallback URL if primary fails and we're in development
+            if (process.env.NODE_ENV === 'development') {
+                console.log('API: Trying fallback URL for verifyOTP:', `${API_BASE_URL_FALLBACK}${API_ENDPOINTS.VERIFY_OTP}`);
+                
+                try {
+                    const response = await fetch(`${API_BASE_URL_FALLBACK}${API_ENDPOINTS.VERIFY_OTP}`, {
+                        method: 'POST',
+                        headers: this.getHeaders(),
+                        body: JSON.stringify({ phone_number: phoneNumber, code }),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error || `Failed to verify OTP from fallback: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('API: verifyOTP success with fallback:', data);
+                    
+                    this.setStoredTokens({
+                        access: data.access,
+                        refresh: data.refresh,
+                    });
+
+                    return data;
+                } catch (fallbackError) {
+                    console.error('API: verifyOTP fallback also failed:', fallbackError);
+                    throw error; // Throw original error
+                }
+            }
+            
+            throw error;
         }
-
-        const data = await response.json();
-        this.setStoredTokens({
-            access: data.access,
-            refresh: data.refresh,
-        });
-
-        return data;
     }
 
-    // Profile methods
     async getProfile(): Promise<User> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE}`, {
+        const response = await fetch('http://127.0.0.1:8000/user/profile/', {
             method: 'GET',
-            headers: this.getHeaders(true),
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('auth_tokens')?.split('"')[3]}`,
+            },
         });
 
         if (!response.ok) {
-            throw new Error('Failed to get profile');
+            throw new Error('خطا در دریافت اطلاعات پروفایل');
         }
 
         return response.json();
     }
 
     async updateProfile(data: Partial<User>): Promise<User> {
+        console.log('API: updateProfile called with data:', data);
+        console.log('API: Using endpoint:', `${API_BASE_URL}${API_ENDPOINTS.PROFILE}`);
+        
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE}`, {
             method: 'PUT',
             headers: this.getHeaders(true),
             body: JSON.stringify(data),
         });
 
+        console.log('API: updateProfile response status:', response.status);
+        
         if (!response.ok) {
-            throw new Error('Failed to update profile');
+            const errorText = await response.text();
+            console.error('API: updateProfile failed:', errorText);
+            throw new Error(`Failed to update profile: ${response.status} - ${errorText}`);
         }
 
-        return response.json();
+        const result = await response.json();
+        console.log('API: updateProfile success:', result);
+        return result;
     }
 
     async getAvatar(): Promise<AvatarResponse> {
@@ -370,7 +346,7 @@ class ApiService {
         formData.append('avatar', file);
 
         const headers = this.getHeaders(true);
-        delete headers['Content-Type'];
+        delete headers['Content-Type']; // Let the browser set the correct content type for FormData
 
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AVATAR}`, {
             method: 'POST',
@@ -398,154 +374,6 @@ class ApiService {
         return response.json();
     }
 
-    // Course methods
-    async getCourses(): Promise<Course[]> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COURSES}`, {
-            method: 'GET',
-            headers: this.getHeaders(),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get courses');
-        }
-
-        return response.json();
-    }
-
-    async getCourseBySlug(slug: string): Promise<Course> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COURSE_DETAIL(slug)}`, {
-            method: 'GET',
-            headers: this.getHeaders(),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get course');
-        }
-
-        return response.json();
-    }
-
-    async getMyCourses(): Promise<Course[]> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.MY_COURSES}`, {
-            method: 'GET',
-            headers: this.getHeaders(true),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get my courses');
-        }
-
-        return response.json();
-    }
-
-    async enrollCourse(courseId: string): Promise<void> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COURSE_ENROLL(courseId)}`, {
-            method: 'POST',
-            headers: this.getHeaders(true),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to enroll in course');
-        }
-    }
-
-    // Order methods
-    async createOrder(orderData: CreateOrderRequest): Promise<CreateOrderResponse> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.ORDER_CREATE}`, {
-            method: 'POST',
-            headers: this.getHeaders(true),
-            body: JSON.stringify(orderData),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to create order');
-        }
-
-        return response.json();
-    }
-
-    async getMyOrders(): Promise<Order[]> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.MY_ORDERS}`, {
-            method: 'GET',
-            headers: this.getHeaders(true),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get orders');
-        }
-
-        return response.json();
-    }
-
-    async getOrderById(orderId: string): Promise<Order> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.ORDER_DETAIL(orderId)}`, {
-            method: 'GET',
-            headers: this.getHeaders(true),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get order');
-        }
-
-        return response.json();
-    }
-
-    // Payment methods
-    async requestPayment(paymentData: PaymentRequest): Promise<PaymentResponse> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PAYMENT_REQUEST}`, {
-            method: 'POST',
-            headers: this.getHeaders(true),
-            body: JSON.stringify(paymentData),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to request payment');
-        }
-
-        return response.json();
-    }
-
-    async verifyPayment(verifyData: PaymentVerifyRequest): Promise<PaymentVerifyResponse> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PAYMENT_VERIFY}`, {
-            method: 'POST',
-            headers: this.getHeaders(true),
-            body: JSON.stringify(verifyData),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to verify payment');
-        }
-
-        return response.json();
-    }
-
-    // Wallet methods
-    async getWallet(): Promise<Wallet> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.WALLET_BALANCE}`, {
-            method: 'GET',
-            headers: this.getHeaders(true),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get wallet');
-        }
-
-        return response.json();
-    }
-
-    async getTransactions(): Promise<Transaction[]> {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.WALLET_TRANSACTIONS}`, {
-            method: 'GET',
-            headers: this.getHeaders(true),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get transactions');
-        }
-
-        return response.json();
-    }
-
     login = this.verifyOTP;
 
     logout(): void {
@@ -553,6 +381,8 @@ class ApiService {
     }
 
     // Comment methods
+    
+    // Article comments
     async getArticleComments(articleId: string): Promise<ArticleComment[]> {
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.ARTICLE_COMMENTS(articleId)}`, {
             method: 'GET',
@@ -580,6 +410,7 @@ class ApiService {
         return response.json();
     }
 
+    // Video comments
     async getVideoComments(videoId: string): Promise<MediaComment[]> {
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.VIDEO_COMMENTS(videoId)}`, {
             method: 'GET',
@@ -607,6 +438,7 @@ class ApiService {
         return response.json();
     }
 
+    // Podcast comments
     async getPodcastComments(podcastId: string): Promise<MediaComment[]> {
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PODCAST_COMMENTS(podcastId)}`, {
             method: 'GET',
@@ -634,6 +466,7 @@ class ApiService {
         return response.json();
     }
 
+    // Generic media comments
     async getMediaComments(contentType: string, objectId: string): Promise<MediaComment[]> {
         const url = `${API_BASE_URL}${API_ENDPOINTS.MEDIA_COMMENTS}?content_type=${contentType}&object_id=${objectId}`;
         const response = await fetch(url, {
@@ -662,6 +495,7 @@ class ApiService {
         return response.json();
     }
 
+    // Update comment
     async updateMediaComment(commentId: string, content: string): Promise<MediaComment> {
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.MEDIA_COMMENT_DETAIL(commentId)}`, {
             method: 'PUT',
@@ -676,6 +510,7 @@ class ApiService {
         return response.json();
     }
 
+    // Delete comment
     async deleteMediaComment(commentId: string): Promise<void> {
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.MEDIA_COMMENT_DETAIL(commentId)}`, {
             method: 'DELETE',
@@ -686,9 +521,36 @@ class ApiService {
             throw new Error('Failed to delete comment');
         }
     }
+
+    // Test API connection
+    async testApiConnection(): Promise<boolean> {
+        try {
+            console.log('Testing API connection to:', API_BASE_URL);
+            
+            // Test with a simple GET request that doesn't require auth
+            const response = await fetch(`${API_BASE_URL}/content/articles/?page=1&page_size=1`, {
+                method: 'GET',
+                headers: this.getHeaders(),
+            });
+
+            console.log('API connection test status:', response.status);
+            
+            if (response.ok) {
+                console.log('API connection successful');
+                return true;
+            } else {
+                console.log('API connection failed with status:', response.status);
+                return false;
+            }
+        } catch (error) {
+            console.error('API connection test error:', error);
+            return false;
+        }
+    }
 }
 
 export const api = new ApiService();
+export type { User, AuthTokens, RequestOTPResponse, VerifyOTPResponse, AvatarResponse };
 
 // Helper function to convert relative thumbnail paths to absolute URLs
 const convertThumbnailToAbsoluteUrl = (thumbnail: string | null): string | null => {
@@ -699,24 +561,56 @@ const convertThumbnailToAbsoluteUrl = (thumbnail: string | null): string | null 
 
 // Articles API
 export const articlesApi = {
-    getAll: async (): Promise<Article[]> => {
-        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.ARTICLES}`);
-        return response.data.map((article: any) => ({
-            ...article,
-            id: article.id.toString(),
-            category: {
-                ...article.category,
-                id: article.category.id.toString()
-            },
-            tags: article.tags.map((tag: any) => ({
-                ...tag,
-                id: tag.id.toString()
-            })),
-            thumbnail: convertThumbnailToAbsoluteUrl(article.thumbnail),
-            description: article.summary || "",
-            date: article.published,
-            author: article.author || "نویسنده"
-        }));
+    getAll: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Article>> => {
+        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.ARTICLES}?page=${page}&page_size=${pageSize}`);
+        
+        // If response is not paginated (for backward compatibility)
+        if (Array.isArray(response.data)) {
+            return {
+                count: response.data.length,
+                total_pages: 1,
+                current_page: 1,
+                next: null,
+                previous: null,
+                results: response.data.map((article: any) => ({
+                    ...article,
+                    id: article.id.toString(),
+                    category: {
+                        ...article.category,
+                        id: article.category.id.toString()
+                    },
+                    tags: article.tags.map((tag: any) => ({
+                        ...tag,
+                        id: tag.id.toString()
+                    })),
+                    thumbnail: convertThumbnailToAbsoluteUrl(article.thumbnail),
+                    description: article.summary || "",
+                    date: article.published,
+                    author: article.author || "نویسنده"
+                }))
+            };
+        }
+        
+        // If response is paginated
+        return {
+            ...response.data,
+            results: response.data.results.map((article: any) => ({
+                ...article,
+                id: article.id.toString(),
+                category: {
+                    ...article.category,
+                    id: article.category.id.toString()
+                },
+                tags: article.tags.map((tag: any) => ({
+                    ...tag,
+                    id: tag.id.toString()
+                })),
+                thumbnail: convertThumbnailToAbsoluteUrl(article.thumbnail),
+                description: article.summary || "",
+                date: article.published_at,
+                author: article.author || "نویسنده"
+            }))
+        };
     },
     
     getById: async (id: string): Promise<Article> => {
@@ -742,25 +636,58 @@ export const articlesApi = {
 
 // Videos API
 export const videosApi = {
-    getAll: async (): Promise<Video[]> => {
-        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.VIDEOS}`);
-        return response.data.map((video: any) => ({
-            ...video,
-            id: video.id.toString(),
-            author: typeof video.author === 'object' 
-                ? `${video.author.first_name} ${video.author.last_name}`.trim() || video.author.username || video.author.email
-                : video.author || "نویسنده",
-            category: {
-                ...video.category,
-                id: video.category.id.toString()
-            },
-            tags: video.tags.map((tag: any) => ({
-                ...tag,
-                id: tag.id.toString()
-            })),
-            thumbnail: convertThumbnailToAbsoluteUrl(video.thumbnail),
-            date: video.published_at || video.created_at
-        }));
+    getAll: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Video>> => {
+        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.VIDEOS}?page=${page}&page_size=${pageSize}`);
+        
+        // If response is not paginated (for backward compatibility)
+        if (Array.isArray(response.data)) {
+            return {
+                count: response.data.length,
+                total_pages: 1,
+                current_page: 1,
+                next: null,
+                previous: null,
+                results: response.data.map((video: any) => ({
+                    ...video,
+                    id: video.id.toString(),
+                    author: typeof video.author === 'object' 
+                        ? `${video.author.first_name} ${video.author.last_name}`.trim() || video.author.username || video.author.email
+                        : video.author || "نویسنده",
+                    category: {
+                        ...video.category,
+                        id: video.category.id.toString()
+                    },
+                    tags: video.tags.map((tag: any) => ({
+                        ...tag,
+                        id: tag.id.toString()
+                    })),
+                    thumbnail: convertThumbnailToAbsoluteUrl(video.thumbnail),
+                    date: video.published_at || video.created_at
+                }))
+            };
+        }
+        
+        // If response is paginated
+        return {
+            ...response.data,
+            results: response.data.results.map((video: any) => ({
+                ...video,
+                id: video.id.toString(),
+                author: typeof video.author === 'object' 
+                    ? `${video.author.first_name} ${video.author.last_name}`.trim() || video.author.username || video.author.email
+                    : video.author || "نویسنده",
+                category: {
+                    ...video.category,
+                    id: video.category.id.toString()
+                },
+                tags: video.tags.map((tag: any) => ({
+                    ...tag,
+                    id: tag.id.toString()
+                })),
+                thumbnail: convertThumbnailToAbsoluteUrl(video.thumbnail),
+                date: video.published_at || video.created_at
+            }))
+        };
     },
     
     getById: async (id: string): Promise<Video> => {
@@ -852,6 +779,7 @@ export const bookmarksApi = {
         }
     },
     
+    // Helper function to check if an article is bookmarked
     isBookmarked: async (articleId: string): Promise<boolean> => {
         try {
             const bookmarks = await bookmarksApi.getAll();
@@ -862,6 +790,7 @@ export const bookmarksApi = {
         }
     },
     
+    // Helper function to find bookmark by article ID
     findByArticleId: async (articleId: string): Promise<BookmarkResponse | null> => {
         try {
             const bookmarks = await bookmarksApi.getAll();
@@ -880,7 +809,9 @@ export interface Podcast {
     slug: string;
     description: string;
     thumbnail: string | null;
-    audio_file: string;
+    audio_type: string;
+    audio_file: string | null;
+    audio_url: string;
     duration: string;
     episode_number?: number;
     season_number?: number;
@@ -906,26 +837,98 @@ export interface Podcast {
     date: string;
 }
 
+// Livestream interface
+export interface Livestream {
+    id: number;
+    title: string;
+    slug: string;
+    description: string;
+    thumbnail: string;
+    stream_url: string | null;
+    start_at: string | null;
+    stream_status: "live" | "scheduled" | "ended";
+    max_viewers: number;
+    current_viewers: number;
+    author: {
+        id: number;
+        username: string | null;
+        email: string;
+        first_name: string;
+        last_name: string;
+    };
+    category: {
+        id: number;
+        name: string;
+        slug: string;
+        description: string;
+        created_at: string;
+    };
+    tags: Array<{
+        id: number;
+        name: string;
+        slug: string;
+    }>;
+    status: string;
+    featured: boolean;
+    created_at: string;
+    updated_at: string;
+    published_at: string | null;
+    view_count: number;
+}
+
 export const podcastsApi = {
-    getAll: async (): Promise<Podcast[]> => {
-        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.PODCASTS}`);
-        return response.data.map((podcast: any) => ({
-            ...podcast,
-            id: podcast.id.toString(),
-            author: typeof podcast.author === 'object' 
-                ? `${podcast.author.first_name} ${podcast.author.last_name}`.trim() || podcast.author.username || podcast.author.email
-                : podcast.author || "نویسنده",
-            category: {
-                ...podcast.category,
-                id: podcast.category.id.toString()
-            },
-            tags: podcast.tags.map((tag: any) => ({
-                ...tag,
-                id: tag.id.toString()
-            })),
-            thumbnail: convertThumbnailToAbsoluteUrl(podcast.thumbnail),
-            date: podcast.published_at || podcast.created_at
-        }));
+    getAll: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Podcast>> => {
+        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.PODCASTS}?page=${page}&page_size=${pageSize}`);
+        
+        // If response is not paginated (for backward compatibility)
+        if (Array.isArray(response.data)) {
+            return {
+                count: response.data.length,
+                total_pages: 1,
+                current_page: 1,
+                next: null,
+                previous: null,
+                results: response.data.map((podcast: any) => ({
+                    ...podcast,
+                    id: podcast.id.toString(),
+                    author: typeof podcast.author === 'object' 
+                        ? `${podcast.author.first_name} ${podcast.author.last_name}`.trim() || podcast.author.username || podcast.author.email
+                        : podcast.author || "نویسنده",
+                    category: {
+                        ...podcast.category,
+                        id: podcast.category.id.toString()
+                    },
+                    tags: podcast.tags.map((tag: any) => ({
+                        ...tag,
+                        id: tag.id.toString()
+                    })),
+                    thumbnail: convertThumbnailToAbsoluteUrl(podcast.thumbnail),
+                    date: podcast.published_at || podcast.created_at
+                }))
+            };
+        }
+        
+        // If response is paginated
+        return {
+            ...response.data,
+            results: response.data.results.map((podcast: any) => ({
+                ...podcast,
+                id: podcast.id.toString(),
+                author: typeof podcast.author === 'object' 
+                    ? `${podcast.author.first_name} ${podcast.author.last_name}`.trim() || podcast.author.username || podcast.author.email
+                    : podcast.author || "نویسنده",
+                category: {
+                    ...podcast.category,
+                    id: podcast.category.id.toString()
+                },
+                tags: podcast.tags.map((tag: any) => ({
+                    ...tag,
+                    id: tag.id.toString()
+                })),
+                thumbnail: convertThumbnailToAbsoluteUrl(podcast.thumbnail),
+                date: podcast.published_at || podcast.created_at
+            }))
+        };
     },
     
     getById: async (id: string): Promise<Podcast> => {
@@ -950,6 +953,184 @@ export const podcastsApi = {
     }
 };
 
+// Livestream API
+export const livestreamsApi = {
+    getAll: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Livestream>> => {
+        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.LIVESTREAMS}?page=${page}&page_size=${pageSize}`);
+        
+        // If response is not paginated (for backward compatibility)
+        if (Array.isArray(response.data)) {
+            return {
+                count: response.data.length,
+                total_pages: 1,
+                current_page: 1,
+                next: null,
+                previous: null,
+                results: response.data.map((livestream: any) => ({
+                    ...livestream,
+                    thumbnail: convertThumbnailToAbsoluteUrl(livestream.thumbnail)
+                }))
+            };
+        }
+        
+        // If response is paginated
+        return {
+            ...response.data,
+            results: response.data.results.map((livestream: any) => ({
+                ...livestream,
+                thumbnail: convertThumbnailToAbsoluteUrl(livestream.thumbnail)
+            }))
+        };
+    },
+    
+    getById: async (id: string): Promise<Livestream> => {
+        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.LIVESTREAM_DETAIL(parseInt(id))}`);
+        return {
+            ...response.data,
+            thumbnail: convertThumbnailToAbsoluteUrl(response.data.thumbnail)
+        };
+    }
+};
+
+// Course types
+export interface Course {
+    id: string;
+    title: string;
+    instructor: string;
+    thumbnail: string;
+    description: string;
+    price: number;
+    totalLessons?: number;
+    completedLessons?: number;
+    createdAt: string;
+    updatedAt: string;
+    categories: string[];
+    duration?: string;
+    level?: "beginner" | "intermediate" | "advanced";
+    is_enrolled?: boolean;
+    progress_percentage?: number;
+    discounted_price?: number;
+    discount_percentage?: number;
+    requires_identity_verification?: boolean;
+    // New capacity fields
+    has_capacity_limit?: boolean;
+    capacity?: number;
+    available_spots?: number;
+    is_full?: boolean;
+    student_count?: number;
+}
+
+// Courses API
+export const coursesApi = {
+    getAll: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Course>> => {
+        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.COURSES}?page=${page}&page_size=${pageSize}`);
+        
+        // If response is not paginated (for backward compatibility)
+        if (Array.isArray(response.data)) {
+            return {
+                count: response.data.length,
+                total_pages: 1,
+                current_page: 1,
+                next: null,
+                previous: null,
+                results: response.data.map((course: any) => ({
+                    ...course,
+                    id: course.id.toString(),
+                    thumbnail: convertThumbnailToAbsoluteUrl(course.thumbnail)
+                }))
+            };
+        }
+        
+        // If response is paginated
+        return {
+            ...response.data,
+            results: response.data.results.map((course: any) => ({
+                ...course,
+                id: course.id.toString(),
+                thumbnail: convertThumbnailToAbsoluteUrl(course.thumbnail),
+                isFree: course.price === 0,
+                createdAt: course.created_at,
+                updatedAt: course.updated_at,
+                categories: course.tags || [],
+                duration: course.total_duration ? `${course.total_duration} دقیقه` : undefined,
+                level: course.level || undefined,
+                is_enrolled: course.is_enrolled || false,
+                progress_percentage: course.progress_percentage || 0,
+                discounted_price: course.discounted_price,
+                discount_percentage: course.discount_percentage,
+                requires_identity_verification: course.requires_identity_verification || false,
+                // New capacity fields
+                has_capacity_limit: course.has_capacity_limit || false,
+                capacity: course.capacity,
+                available_spots: course.available_spots,
+                is_full: course.is_full || false,
+                student_count: course.student_count
+            }))
+        };
+    },
+    
+    getMyCourses: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Course>> => {
+        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.MY_COURSES}?page=${page}&page_size=${pageSize}`, {
+            headers: {
+                'Authorization': `Bearer ${getAccessToken()}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        // If response is not paginated (for backward compatibility)
+        if (Array.isArray(response.data)) {
+            return {
+                count: response.data.length,
+                total_pages: 1,
+                current_page: 1,
+                next: null,
+                previous: null,
+                results: response.data.map((course: any) => ({
+                    ...course,
+                    id: course.id.toString(),
+                    thumbnail: convertThumbnailToAbsoluteUrl(course.thumbnail)
+                }))
+            };
+        }
+        
+        // If response is paginated
+        return {
+            ...response.data,
+            results: response.data.results.map((course: any) => ({
+                ...course,
+                id: course.id.toString(),
+                thumbnail: convertThumbnailToAbsoluteUrl(course.thumbnail),
+                isFree: course.price === 0,
+                createdAt: course.created_at,
+                updatedAt: course.updated_at,
+                categories: course.tags || [],
+                duration: course.total_duration ? `${course.total_duration} دقیقه` : undefined,
+                level: course.level || undefined,
+                is_enrolled: course.is_enrolled || false,
+                progress_percentage: course.progress_percentage || 0,
+                discounted_price: course.discounted_price,
+                discount_percentage: course.discount_percentage,
+                requires_identity_verification: course.requires_identity_verification || false,
+                // New capacity fields
+                has_capacity_limit: course.has_capacity_limit || false,
+                capacity: course.capacity,
+                available_spots: course.available_spots,
+                is_full: course.is_full || false,
+                student_count: course.student_count
+            }))
+        };
+    },
+    
+    getById: async (id: string): Promise<Course> => {
+        const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.COURSE_DETAIL(id)}`);
+        return {
+            ...response.data,
+            id: response.data.id.toString(),
+            thumbnail: convertThumbnailToAbsoluteUrl(response.data.thumbnail)
+        };
+    }
+};
+
 // Helper function to get access token
 function getAccessToken(): string | null {
     const tokens = localStorage.getItem('auth_tokens');
@@ -963,5 +1144,3 @@ function getAccessToken(): string | null {
     }
     return null;
 }
-
-export type { User, AuthTokens, RequestOTPResponse, VerifyOTPResponse, AvatarResponse };

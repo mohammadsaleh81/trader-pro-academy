@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -55,16 +54,16 @@ export default {
 				},
 				// Custom colors for Mr. Trader Academy
 				trader: {
-					50: '#FFF7ED',
-					100: '#FFEDD5',
-					200: '#FED7AA',
-					300: '#FDBA74',
-					400: '#FB923C',
-					500: '#F97316', // Primary orange
-					600: '#EA580C',
-					700: '#C2410C',
-					800: '#9A3412',
-					900: '#7C2D12',
+					50: '#F5F5F7',
+					100: '#E8E8ED',
+					200: '#D1D1DB',
+					300: '#B5B5C4',
+					400: '#8E8EA8',
+					500: '#464696', // Primary color
+					600: '#3A3A7A',
+					700: '#2F2F61',
+					800: '#26264F',
+					900: '#1F1F3F',
 				},
 			},
 			borderRadius: {
@@ -120,8 +119,9 @@ export default {
                 'ripple': 'ripple 0.6s linear forwards'
 			},
 			fontFamily: {
-				vazirmatn: ['Vazirmatn', 'sans-serif'],
-				montserrat: ['Montserrat', 'sans-serif'],
+				vazirmatn: ['Vazirmatn', 'Vazirmatn-Fallback', 'Tahoma', 'Segoe UI', 'Arial Unicode MS', 'sans-serif'],
+				montserrat: ['Montserrat', 'Segoe UI', 'Arial', 'sans-serif'],
+				sans: ['Vazirmatn', 'Vazirmatn-Fallback', 'Tahoma', 'Segoe UI', 'Arial Unicode MS', 'sans-serif'],
 			},
 		}
 	},

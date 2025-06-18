@@ -58,8 +58,8 @@ const PodcastDetailPage: React.FC = () => {
   }, [id, navigate, toast]);
 
   useEffect(() => {
-    if (podcast && podcast.audio_file) {
-      const audio = new Audio(podcast.audio_file);
+    if (podcast && podcast.audio_url) {
+      const audio = new Audio(podcast.audio_url);
       
       audio.addEventListener('timeupdate', () => {
         setCurrentTime(audio.currentTime);
@@ -213,7 +213,7 @@ const PodcastDetailPage: React.FC = () => {
                       
                       <Button
                         onClick={togglePlayPause}
-                        className="rounded-full w-12 h-12 bg-orange-500 hover:bg-orange-600"
+                        className="rounded-full w-12 h-12 bg-trader-500 hover:bg-trader-600"
                       >
                         {isPlaying ? <Pause size={20} /> : <Play size={20} />}
                       </Button>

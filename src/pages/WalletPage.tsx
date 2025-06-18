@@ -13,6 +13,9 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { clearPendingCourse } from "@/lib/cache";
 import api from "@/lib/axios";
+import { formatNumber, formatCurrency, formatLargeNumber as formatLargeNumberUtil } from "@/utils/currency";
+import { notificationService } from "@/lib/notification-service";
+import { checkIdentityVerificationForPurchase } from "@/lib/utils";
 
 const depositSchema = z.object({
   amount: z
@@ -23,27 +26,23 @@ const depositSchema = z.object({
 
 type DepositFormValues = z.infer<typeof depositSchema>;
 
-// Helper functions for formatting Iranian currency
-const formatCurrency = (amount: number | string): string => {
-  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-  return new Intl.NumberFormat('fa-IR').format(num);
-};
-
+// Helper functions for formatting Iranian currency with local context
 const formatCurrencyWithUnit = (amount: number | string): string => {
-  return `${formatCurrency(amount)} تومان`;
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return formatCurrency(num);
 };
 
 const formatLargeNumber = (amount: number | string): string => {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
   
   if (num >= 1000000000) {
-    return `${formatCurrency(Math.round(num / 1000000000))} میلیارد تومان`;
+    return `${formatNumber(Math.round(num / 1000000000))} میلیارد تومان`;
   } else if (num >= 1000000) {
-    return `${formatCurrency(Math.round(num / 1000000))} میلیون تومان`;
+    return `${formatNumber(Math.round(num / 1000000))} میلیون تومان`;
   } else if (num >= 1000) {
-    return `${formatCurrency(Math.round(num / 1000))} هزار تومان`;
+    return `${formatNumber(Math.round(num / 1000))} هزار تومان`;
   }
-  return formatCurrencyWithUnit(num);
+  return formatCurrency(num);
 };
 
 const WalletPage: React.FC = () => {
@@ -54,6 +53,7 @@ const WalletPage: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [pendingCourse, setPendingCourse] = useState<{id: string, price: number, title: string} | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState("");
 
   const depositForm = useForm<DepositFormValues>({
     resolver: zodResolver(depositSchema),
@@ -167,20 +167,33 @@ const WalletPage: React.FC = () => {
 
   // Complete pending course purchase
   const handleCompletePurchase = async () => {
-    if (!pendingCourse || !wallet) return;
-    
-    if (wallet.balance < pendingCourse.price) {
-      toast({
-        title: "موجودی ناکافی",
-        description: "موجودی کیف پول شما برای خرید این دوره کافی نیست",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!pendingCourse) return;
 
-    setIsPurchasing(true);
+    setIsProcessing(true);
+    setVerificationStatus("در حال تکمیل خرید دوره...");
 
     try {
+      // Check capacity before proceeding
+      try {
+        const courseResponse = await api.get(`/crs/courses/${pendingCourse.id}/`);
+        const courseData = courseResponse.data;
+        
+        if (courseData.has_capacity_limit && courseData.is_full) {
+          toast({
+            title: "ظرفیت تکمیل شده",
+            description: "ظرفیت این دوره تکمیل شده است. لطفاً دوره‌های دیگر را بررسی کنید.",
+            variant: "destructive",
+          });
+          clearPendingCourse();
+          setPendingCourse(null);
+          setIsProcessing(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Error fetching course details for capacity check:', error);
+        // Continue with purchase if we can't fetch course details
+      }
+
       const enrollResponse = await api.post(`/crs/courses/${pendingCourse.id}/enroll/`, {
         course_id: parseInt(pendingCourse.id)
       });
@@ -194,6 +207,14 @@ const WalletPage: React.FC = () => {
           description: `دوره "${pendingCourse.title}" با موفقیت خریداری شد`,
         });
 
+        // ارسال notification برای خرید موفق دوره از صفحه کیف پول
+        try {
+          await notificationService.sendCoursePurchaseNotification(pendingCourse.title, pendingCourse.id);
+          console.log('Course purchase notification sent successfully from wallet page');
+        } catch (notificationError) {
+          console.warn('Failed to send course purchase notification:', notificationError);
+        }
+
         // Refresh wallet and navigate to course
         refetchWallet();
         navigate(`/learn/${pendingCourse.id}`);
@@ -201,31 +222,49 @@ const WalletPage: React.FC = () => {
     } catch (error: any) {
       console.error('Error completing purchase:', error);
       
-      let errorMessage = "خطا در خرید دوره";
       if (error.response?.status === 400) {
         const errorData = error.response.data;
-        if (errorData?.course_id?.[0]) {
-          errorMessage = errorData.course_id[0];
-        } else if (errorData?.non_field_errors?.[0]) {
-          errorMessage = errorData.non_field_errors[0];
+        let errorMsg = "خطا در پردازش خرید";
+        
+        if (errorData?.non_field_errors?.[0]) {
+          errorMsg = errorData.non_field_errors[0];
+        } else if (errorData?.course_id?.[0]) {
+          errorMsg = errorData.course_id[0];
         } else if (errorData?.detail) {
-          errorMessage = errorData.detail;
+          errorMsg = errorData.detail;
+        } else if (errorData?.message) {
+          errorMsg = errorData.message;
         }
+        
+        toast({
+          title: "خطا در خرید",
+          description: errorMsg,
+          variant: "destructive",
+        });
+      } else if (error.response?.status === 402) {
+        toast({
+          title: "موجودی ناکافی",
+          description: "موجودی کیف پول شما برای خرید این دوره کافی نیست",
+          variant: "destructive",
+        });
       } else if (error.response?.status === 409) {
-        errorMessage = "شما قبلاً در این دوره ثبت‌نام کرده‌اید";
+        toast({
+          title: "خطا",
+          description: "شما قبلاً در این دوره ثبت‌نام کرده‌اید",
+          variant: "destructive",
+        });
         clearPendingCourse();
         setPendingCourse(null);
-      } else if (error.response?.status === 402) {
-        errorMessage = "موجودی کیف پول شما برای خرید این دوره کافی نیست";
+      } else {
+        toast({
+          title: "خطا",
+          description: "خطا در پردازش خرید. لطفاً دوباره تلاش کنید.",
+          variant: "destructive",
+        });
       }
-
-      toast({
-        title: "خطا در خرید",
-        description: errorMessage,
-        variant: "destructive",
-      });
     } finally {
-      setIsPurchasing(false);
+      setIsProcessing(false);
+      setVerificationStatus("");
     }
   };
 
@@ -497,7 +536,7 @@ const WalletPage: React.FC = () => {
                       </div>
                       
                       {/* Amount adjustment buttons */}
-                      <div className="flex items-center justify-center gap-4 mt-3">
+                      {/* <div className="flex items-center justify-center gap-4 mt-3">
                         <button
                           type="button"
                           onClick={() => {
@@ -507,9 +546,9 @@ const WalletPage: React.FC = () => {
                           className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
                         >
                           <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="text-sm text-gray-600 px-2">+ / - ۱۰ هزار تومان</span>
-                        <button
+                        </button> */}
+                        {/* <span className="text-sm text-gray-600 px-2">+ / - ۱۰ هزار تومان</span> */}
+                        {/* <button
                           type="button"
                           onClick={() => {
                             const newAmount = (field.value || 0) + 10000;
@@ -518,8 +557,8 @@ const WalletPage: React.FC = () => {
                           className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
                         >
                           <Plus className="h-4 w-4" />
-                        </button>
-                      </div>
+                        </button> */}
+                      {/* </div> */}
 
                       {field.value > 0 && (
                         <p className="text-sm text-blue-600 mt-2">
