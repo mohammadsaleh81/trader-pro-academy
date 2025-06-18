@@ -32,6 +32,101 @@ export interface AuthResponse {
   refresh: string;
 }
 
+// Content Types
+export interface Article {
+  id: string;
+  title: string;
+  content: string;
+  thumbnail?: string;
+  author: string;
+  published: string;
+  created_at: string;
+  tags: string[];
+  view_count?: number;
+  slug?: string;
+}
+
+export interface Video {
+  id: string;
+  title: string;
+  description: string;
+  video_type: string;
+  video_embed?: string;
+  thumbnail?: string;
+  author: string;
+  created_at: string;
+  duration?: string;
+  tags: string[];
+  view_count?: number;
+  slug?: string;
+}
+
+export interface Podcast {
+  id: string;
+  title: string;
+  description: string;
+  audio_url: string;
+  thumbnail?: string;
+  author: string;
+  created_at: string;
+  duration?: string;
+  tags: string[];
+  view_count?: number;
+  slug?: string;
+}
+
+// Comment Types
+export interface ArticleComment {
+  id: string;
+  article: string;
+  author: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    username?: string;
+    email?: string;
+  };
+  content: string;
+  created_at: string;
+  parent?: string | null;
+  replies?: ArticleComment[];
+  is_approved: boolean;
+}
+
+export interface MediaComment {
+  id: string;
+  author: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    username?: string;
+    email?: string;
+  };
+  content: string;
+  created_at: string;
+  parent?: string | null;
+  replies?: MediaComment[];
+  is_approved: boolean;
+}
+
+export interface BookmarkResponse {
+  id: string;
+  user: {
+    id: string;
+    username?: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  article: {
+    id: string;
+    title: string;
+    slug: string;
+    thumbnail?: string;
+  };
+  created_at: string;
+}
+
 // Enhanced API class with better error handling
 class API {
   private baseURL: string;
@@ -170,16 +265,73 @@ class API {
     return this.makeRequest('GET', API_ENDPOINTS.AVATAR);
   }
 
+  async uploadAvatar(file: File): Promise<{ avatar: string }> {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    
+    const tokens = this.getStoredTokens();
+    const config: any = {
+      method: 'POST',
+      url: API_ENDPOINTS.AVATAR,
+      baseURL: this.baseURL,
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 30000, // 30 seconds for file upload
+    };
+
+    if (tokens?.access) {
+      config.headers.Authorization = `Bearer ${tokens.access}`;
+    }
+
+    const response: AxiosResponse<{ avatar: string }> = await axios(config);
+    return response.data;
+  }
+
+  // Comment methods
+  async getArticleComments(articleId: string): Promise<ArticleComment[]> {
+    return this.makeRequest('GET', API_ENDPOINTS.ARTICLE_COMMENTS(articleId), null, false);
+  }
+
+  async createArticleComment(articleId: string, data: { content: string; parent?: string | null }): Promise<ArticleComment> {
+    return this.makeRequest('POST', API_ENDPOINTS.ARTICLE_COMMENTS(articleId), data);
+  }
+
+  async getVideoComments(videoId: string): Promise<MediaComment[]> {
+    return this.makeRequest('GET', API_ENDPOINTS.VIDEO_COMMENTS(videoId), null, false);
+  }
+
+  async createVideoComment(videoId: string, data: { content: string; parent?: string | null }): Promise<MediaComment> {
+    return this.makeRequest('POST', API_ENDPOINTS.VIDEO_COMMENTS(videoId), data);
+  }
+
+  async getPodcastComments(podcastId: string): Promise<MediaComment[]> {
+    return this.makeRequest('GET', API_ENDPOINTS.PODCAST_COMMENTS(podcastId), null, false);
+  }
+
+  async createPodcastComment(podcastId: string, data: { content: string; parent?: string | null }): Promise<MediaComment> {
+    return this.makeRequest('POST', API_ENDPOINTS.PODCAST_COMMENTS(podcastId), data);
+  }
+
+  async updateMediaComment(commentId: string, content: string): Promise<MediaComment> {
+    return this.makeRequest('PUT', API_ENDPOINTS.MEDIA_COMMENT_DETAIL(commentId), { content });
+  }
+
+  async deleteMediaComment(commentId: string): Promise<void> {
+    return this.makeRequest('DELETE', API_ENDPOINTS.MEDIA_COMMENT_DETAIL(commentId));
+  }
+
   // Search methods for the search hook
-  async searchArticles(query: string): Promise<any[]> {
+  async searchArticles(query: string): Promise<Article[]> {
     return this.makeRequest('GET', `${API_ENDPOINTS.ARTICLES}?search=${encodeURIComponent(query)}`, null, false);
   }
 
-  async searchVideos(query: string): Promise<any[]> {
+  async searchVideos(query: string): Promise<Video[]> {
     return this.makeRequest('GET', `${API_ENDPOINTS.VIDEOS}?search=${encodeURIComponent(query)}`, null, false);
   }
 
-  async searchPodcasts(query: string): Promise<any[]> {
+  async searchPodcasts(query: string): Promise<Podcast[]> {
     return this.makeRequest('GET', `${API_ENDPOINTS.PODCASTS}?search=${encodeURIComponent(query)}`, null, false);
   }
 
@@ -191,6 +343,43 @@ class API {
     this.clearStoredTokens();
   }
 }
+
+// API instances for different content types
+export const articlesApi = {
+  getById: async (id: string): Promise<Article> => {
+    return api.makeRequest('GET', API_ENDPOINTS.ARTICLE_DETAIL(Number(id)), null, false);
+  }
+};
+
+export const videosApi = {
+  getById: async (id: string): Promise<Video> => {
+    return api.makeRequest('GET', API_ENDPOINTS.VIDEO_DETAIL(Number(id)), null, false);
+  }
+};
+
+export const podcastsApi = {
+  getById: async (id: string): Promise<Podcast> => {
+    return api.makeRequest('GET', API_ENDPOINTS.PODCAST_DETAIL(Number(id)), null, false);
+  }
+};
+
+export const livestreamsApi = {
+  getById: async (id: string): Promise<any> => {
+    return api.makeRequest('GET', API_ENDPOINTS.LIVESTREAM_DETAIL(Number(id)), null, false);
+  }
+};
+
+export const bookmarksApi = {
+  list: async (): Promise<BookmarkResponse[]> => {
+    return api.makeRequest('GET', API_ENDPOINTS.BOOKMARKS);
+  }
+};
+
+export const coursesApi = {
+  getById: async (id: string): Promise<any> => {
+    return api.makeRequest('GET', API_ENDPOINTS.COURSE_DETAIL(id), null, false);
+  }
+};
 
 // Export single instance
 export const api = new API(API_BASE_URL);

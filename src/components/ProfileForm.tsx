@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/button';
@@ -15,7 +14,7 @@ export function ProfileForm() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [formData, setFormData] = useState<Partial<User>>({
+    const [formData, setFormData] = useState({
         first_name: user?.first_name || '',
         last_name: user?.last_name || '',
         email: user?.email || '',
@@ -89,7 +88,7 @@ export function ProfileForm() {
             <div className="flex flex-col items-center mb-8">
                 <div className="relative group">
                     <Avatar className="w-24 h-24 border-4 border-gray-200">
-                        <AvatarImage src={user.avatar} alt={user.name} />
+                        <AvatarImage src={user.avatar} alt={`${user.first_name} ${user.last_name}`} />
                         <AvatarFallback className="text-xl">
                             {user.first_name?.[0]}{user.last_name?.[0]}
                         </AvatarFallback>
