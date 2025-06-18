@@ -3,8 +3,24 @@ const isLocalhost = window.location.hostname === 'localhost' ||
                    window.location.hostname === '127.0.0.1' ||
                    window.location.hostname.includes('91.99.49.130');
 
-// Primary API URL
-export const API_BASE_URL = 'http://127.0.0.1:8000';
+// Dynamic API URL based on environment
+export const API_BASE_URL = (() => {
+  // If we're in development or on localhost, use the development API
+  if (process.env.NODE_ENV === 'development' || isLocalhost) {
+    return 'http://127.0.0.1:8000';
+  }
+  
+  // In production, try to detect the correct API URL
+  const hostname = window.location.hostname;
+  
+  // If it's a lovable project URL, use the fallback
+  if (hostname.includes('lovableproject.com')) {
+    return 'http://91.99.49.130:8000';
+  }
+  
+  // Default fallback
+  return 'http://91.99.49.130:8000';
+})();
 
 // Fallback API URL for development
 export const API_BASE_URL_FALLBACK = 'http://91.99.49.130:8000';
@@ -63,4 +79,4 @@ export const DEFAULT_IMAGES = {
     PLACEHOLDER_CONTENT: "https://placehold.co/600x400/e2e8f0/64748b?text=No+Image",
 } as const;
 
-export const TOKEN_STORAGE_KEY = 'auth_tokens'; 
+export const TOKEN_STORAGE_KEY = 'auth_tokens';

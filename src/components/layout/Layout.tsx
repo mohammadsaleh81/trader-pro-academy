@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Header from "./Header";
 import MobileNavigation from "./MobileNavigation";
@@ -6,6 +5,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAppInstallRedirect } from "@/hooks/use-app-install-redirect";
 import { Loader } from "lucide-react";
 import ErrorBoundary from "@/components/error/ErrorBoundary";
+import ApiErrorBoundary from "@/components/error/ApiErrorBoundary";
 import PushNotificationPrompt from "@/components/ui/push-notification-prompt";
 
 interface LayoutProps {
@@ -26,10 +26,11 @@ const Layout: React.FC<LayoutProps> = ({
   // Handle app install redirects for mobile users
   useAppInstallRedirect({
     enabled: true,
-    visitThreshold: 1, // بعد از اولین بازدید redirect کن
-    delay: 4000, // 4 ثانیه تاخیر تا PWA prompt آماده شود
-    excludePaths: ['/install', '/login', '/test/', '/debug/', '/pwa-test'], // مسیرهای استثنا
+    visitThreshold: 1,
+    delay: 4000,
+    excludePaths: ['/install', '/login', '/test/', '/debug/', '/pwa-test'],
   });
+
   const [browserInfo, setBrowserInfo] = useState({
     isFirefox: false,
     isSafari: false,
@@ -120,9 +121,11 @@ const Layout: React.FC<LayoutProps> = ({
               <p className="text-lg font-medium text-gray-600">در حال بارگیری...</p>
             </div>
           ) : (
-            <div className={mounted ? "page-transition" : ""}>
-              {children}
-            </div>
+            <ApiErrorBoundary>
+              <div className={mounted ? "page-transition" : ""}>
+                {children}
+              </div>
+            </ApiErrorBoundary>
           )}
         </main>
         {isMobile && <MobileNavigation />}

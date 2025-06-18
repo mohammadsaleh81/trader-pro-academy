@@ -1,113 +1,156 @@
-import { useState, useEffect, useCallback } from 'react';
 
-interface Course {
-  id: number;
-  title: string;
-  slug: string;
-  instructor_name: string;
-  thumbnail: string;
-  price: string;
-  is_free: boolean;
-  status: string;
-  level: string;
-  rating_avg: number;
-  student_count: number;
-  total_duration: number;
-  created_at: string;
-  updated_at: string;
-  is_enrolled: boolean;
-  progress_percentage: number;
-}
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 
-interface Article {
-  id: number;
+interface SearchResult {
+  id: string;
   title: string;
-  slug: string;
+  type: 'article' | 'video' | 'podcast' | 'course';
+  slug?: string;
   thumbnail?: string;
-  excerpt?: string;
-  created_at: string;
+  description?: string;
 }
 
-interface Video {
-  id: number;
-  title: string;
-  slug: string;
-  thumbnail?: string;
-  duration?: number;
-  created_at: string;
+interface UseSearchOptions {
+  enabled?: boolean;
+  minLength?: number;
+  debounceMs?: number;
 }
 
-interface Podcast {
-  id: number;
-  title: string;
-  slug: string;
-  thumbnail?: string;
-  duration?: number;
-  created_at: string;
-}
+export const useSearch = (options: UseSearchOptions = {}) => {
+  const {
+    enabled = true,
+    minLength = 2,
+    debounceMs = 300
+  } = options;
 
-interface SearchResults {
-  courses: Course[] | string;
-  articles: Article[] | string;
-  videos: Video[] | string;
-  podcasts: Podcast[] | string;
-}
-
-export const useSearch = () => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResults | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const debounceTimer = useRef<NodeJS.Timeout>();
 
-  const searchAPI = useCallback(async (searchQuery: string) => {
-    if (!searchQuery.trim()) {
-      setResults(null);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/search/?q=${encodeURIComponent(searchQuery)}`
-      );
-      
-      if (!response.ok) {
-        throw new Error('خطا در جستجو');
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
       }
-
-      const data = await response.json();
-      setResults(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'خطا در جستجو');
-      setResults(null);
-    } finally {
-      setIsLoading(false);
-    }
+    };
   }, []);
 
-  // Debounce search to avoid too many API calls
+  // Debounce search query
   useEffect(() => {
-    const timer = setTimeout(() => {
-      searchAPI(query);
-    }, 300);
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
 
-    return () => clearTimeout(timer);
-  }, [query, searchAPI]);
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, debounceMs);
 
-  const clearSearch = () => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [query, debounceMs]);
+
+  const searchQuery = useQuery({
+    queryKey: ['search', debouncedQuery],
+    queryFn: async (): Promise<SearchResult[]> => {
+      if (!debouncedQuery || debouncedQuery.length < minLength) {
+        return [];
+      }
+
+      try {
+        // Search across multiple content types
+        const [articles, videos, podcasts, courses] = await Promise.allSettled([
+          api.searchArticles(debouncedQuery),
+          api.searchVideos(debouncedQuery),
+          api.searchPodcasts(debouncedQuery),
+          api.searchCourses(debouncedQuery)
+        ]);
+
+        const results: SearchResult[] = [];
+
+        // Process articles
+        if (articles.status === 'fulfilled') {
+          articles.value.forEach((article: any) => {
+            results.push({
+              id: article.id.toString(),
+              title: article.title,
+              type: 'article',
+              slug: article.slug,
+              thumbnail: article.thumbnail,
+              description: article.excerpt
+            });
+          });
+        }
+
+        // Process videos
+        if (videos.status === 'fulfilled') {
+          videos.value.forEach((video: any) => {
+            results.push({
+              id: video.id.toString(),
+              title: video.title,
+              type: 'video',
+              slug: video.slug,
+              thumbnail: video.thumbnail,
+              description: video.description
+            });
+          });
+        }
+
+        // Process podcasts
+        if (podcasts.status === 'fulfilled') {
+          podcasts.value.forEach((podcast: any) => {
+            results.push({
+              id: podcast.id.toString(),
+              title: podcast.title,
+              type: 'podcast',
+              slug: podcast.slug,
+              thumbnail: podcast.thumbnail,
+              description: podcast.description
+            });
+          });
+        }
+
+        // Process courses
+        if (courses.status === 'fulfilled') {
+          courses.value.forEach((course: any) => {
+            results.push({
+              id: course.id.toString(),
+              title: course.title,
+              type: 'course',
+              slug: course.slug,
+              thumbnail: course.thumbnail,
+              description: course.description
+            });
+          });
+        }
+
+        return results;
+      } catch (error) {
+        console.error('Search error:', error);
+        return [];
+      }
+    },
+    enabled: enabled && debouncedQuery.length >= minLength,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1
+  });
+
+  const clearSearch = useCallback(() => {
     setQuery('');
-    setResults(null);
-    setError(null);
-  };
+    setDebouncedQuery('');
+  }, []);
 
   return {
     query,
     setQuery,
-    results,
-    isLoading,
-    error,
-    clearSearch,
+    results: searchQuery.data || [],
+    isLoading: searchQuery.isLoading,
+    error: searchQuery.error,
+    clearSearch
   };
-}; 
+};
