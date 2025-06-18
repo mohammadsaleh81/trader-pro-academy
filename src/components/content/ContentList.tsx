@@ -1,3 +1,4 @@
+
 import React from "react";
 import ContentCard from "./ContentCard";
 import ContentCardSkeleton from "./ContentCardSkeleton";
@@ -48,7 +49,7 @@ const ContentList = <T extends ContentItem>({
           description={podcast.description}
           thumbnail={podcast.thumbnail}
           type={contentType as "podcast"}
-          date={podcast.date}
+          date={'date' in podcast ? podcast.date : podcast.created_at}
           author={formatAuthor(podcast.author)}
           duration={podcast.duration}
           className="h-full"
@@ -66,7 +67,7 @@ const ContentList = <T extends ContentItem>({
           description={video.description}
           thumbnail={video.thumbnail}
           type={contentType as "video"}
-          date={video.date}
+          date={'date' in video ? video.date : video.created_at}
           author={formatAuthor(video.author)}
           duration={video.duration}
           className="h-full"
@@ -135,10 +136,10 @@ const ContentList = <T extends ContentItem>({
         key={`${key}-${article.id}`}
         id={article.id}
         title={article.title}
-        description={article.description}
+        description={'description' in article ? article.description : article.content?.slice(0, 200)}
         thumbnail={article.thumbnail}
         type={contentType as "article"}
-        date={article.date}
+        date={'date' in article ? article.date : article.created_at}
         author={formatAuthor(article.author)}
         className="h-full"
       />

@@ -13,12 +13,13 @@ const apiInstance = axios.create({
 
 // Types
 export interface User {
-  id: number;
+  id: string;
   phone_number: string;
   first_name: string;
   last_name: string;
   email: string;
   identity_verified?: boolean;
+  avatar?: string;
 }
 
 export interface AuthTokens {
@@ -32,15 +33,18 @@ export interface AuthResponse {
   refresh: string;
 }
 
-// Content Types
+// Content Types - Updated to match component expectations
 export interface Article {
   id: string;
   title: string;
   content: string;
+  description: string; // Added missing property
+  summary?: string; // Added missing property
   thumbnail?: string;
   author: string;
   published: string;
   created_at: string;
+  date: string; // Added missing property (alias for created_at)
   tags: string[];
   view_count?: number;
   slug?: string;
@@ -55,6 +59,7 @@ export interface Video {
   thumbnail?: string;
   author: string;
   created_at: string;
+  date: string; // Added missing property
   duration?: string;
   tags: string[];
   view_count?: number;
@@ -69,10 +74,13 @@ export interface Podcast {
   thumbnail?: string;
   author: string;
   created_at: string;
+  date: string; // Added missing property
   duration?: string;
   tags: string[];
   view_count?: number;
   slug?: string;
+  audio_type: string;
+  audio_file: string | null;
 }
 
 // Comment Types
@@ -125,6 +133,16 @@ export interface BookmarkResponse {
     thumbnail?: string;
   };
   created_at: string;
+}
+
+// Paginated Response Type
+export interface PaginatedResponse<T> {
+  results: T[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+  current_page: number;
+  total_pages: number;
 }
 
 // Enhanced API class with better error handling
@@ -182,7 +200,7 @@ class API {
   }
 
   // Enhanced request method with better error handling
-  private async makeRequest<T>(
+  async makeRequest<T>(
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     endpoint: string,
     data?: any,
@@ -344,40 +362,67 @@ class API {
   }
 }
 
-// API instances for different content types
+// API instances for different content types with required methods
 export const articlesApi = {
   getById: async (id: string): Promise<Article> => {
     return api.makeRequest('GET', API_ENDPOINTS.ARTICLE_DETAIL(Number(id)), null, false);
+  },
+  getAll: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Article>> => {
+    return api.makeRequest('GET', `${API_ENDPOINTS.ARTICLES}?page=${page}&page_size=${pageSize}`, null, false);
   }
 };
 
 export const videosApi = {
   getById: async (id: string): Promise<Video> => {
     return api.makeRequest('GET', API_ENDPOINTS.VIDEO_DETAIL(Number(id)), null, false);
+  },
+  getAll: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Video>> => {
+    return api.makeRequest('GET', `${API_ENDPOINTS.VIDEOS}?page=${page}&page_size=${pageSize}`, null, false);
   }
 };
 
 export const podcastsApi = {
   getById: async (id: string): Promise<Podcast> => {
     return api.makeRequest('GET', API_ENDPOINTS.PODCAST_DETAIL(Number(id)), null, false);
+  },
+  getAll: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Podcast>> => {
+    return api.makeRequest('GET', `${API_ENDPOINTS.PODCASTS}?page=${page}&page_size=${pageSize}`, null, false);
   }
 };
 
 export const livestreamsApi = {
   getById: async (id: string): Promise<any> => {
     return api.makeRequest('GET', API_ENDPOINTS.LIVESTREAM_DETAIL(Number(id)), null, false);
+  },
+  getAll: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<any>> => {
+    return api.makeRequest('GET', `${API_ENDPOINTS.LIVESTREAMS}?page=${page}&page_size=${pageSize}`, null, false);
   }
 };
 
 export const bookmarksApi = {
   list: async (): Promise<BookmarkResponse[]> => {
     return api.makeRequest('GET', API_ENDPOINTS.BOOKMARKS);
+  },
+  getAll: async (): Promise<BookmarkResponse[]> => {
+    return api.makeRequest('GET', API_ENDPOINTS.BOOKMARKS);
+  },
+  create: async (articleId: string): Promise<BookmarkResponse> => {
+    return api.makeRequest('POST', API_ENDPOINTS.BOOKMARKS, { article_id: articleId });
+  },
+  delete: async (bookmarkId: string): Promise<void> => {
+    return api.makeRequest('DELETE', API_ENDPOINTS.BOOKMARK_DETAIL(Number(bookmarkId)));
   }
 };
 
 export const coursesApi = {
   getById: async (id: string): Promise<any> => {
     return api.makeRequest('GET', API_ENDPOINTS.COURSE_DETAIL(id), null, false);
+  },
+  getAll: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<any>> => {
+    return api.makeRequest('GET', `${API_ENDPOINTS.COURSES}?page=${page}&page_size=${pageSize}`, null, false);
+  },
+  getMyCourses: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<any>> => {
+    return api.makeRequest('GET', `${API_ENDPOINTS.MY_COURSES}?page=${page}&page_size=${pageSize}`);
   }
 };
 

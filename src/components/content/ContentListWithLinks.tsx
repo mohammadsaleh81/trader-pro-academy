@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,10 +50,10 @@ const ContentListWithLinks: React.FC<ContentListProps> = ({ items, type }) => {
               <div className="p-2 text-right rtl-card-content">
                 <h3 className="font-semibold text-xs mb-1 line-clamp-1">{item.title}</h3>
                 <p className="text-gray-500 text-[10px] line-clamp-1 mb-2">
-                  {item.description}
+                  {'description' in item ? item.description : ('content' in item ? item.content?.slice(0, 50) : '')}
                 </p>
                 <div className="flex justify-between text-[8px] text-gray-500">
-                  <span>{item.date}</span>
+                  <span>{'date' in item ? item.date : ('created_at' in item ? item.created_at : '')}</span>
                   <span>{formatAuthor(item.author)}</span>
                 </div>
               </div>

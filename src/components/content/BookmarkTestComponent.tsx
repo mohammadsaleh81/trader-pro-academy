@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useContent } from "@/contexts/ContentContext";
@@ -87,11 +88,11 @@ const BookmarkTestComponent: React.FC = () => {
                         {article.title}
                       </h3>
                       <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                        {article.summary || article.description || "خلاصه‌ای در دسترس نیست"}
+                        {article.description || article.content?.slice(0, 200) || "خلاصه‌ای در دسترس نیست"}
                       </p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span>نویسنده: {formatAuthor(article.author)}</span>
-                        <span>تاریخ: {new Date(article.date).toLocaleDateString('fa-IR')}</span>
+                        <span>تاریخ: {new Date(article.created_at).toLocaleDateString('fa-IR')}</span>
                         <span>بازدید: {article.view_count}</span>
                       </div>
                     </div>
@@ -205,4 +206,4 @@ const BookmarkTestComponent: React.FC = () => {
   );
 };
 
-export default BookmarkTestComponent; 
+export default BookmarkTestComponent;
