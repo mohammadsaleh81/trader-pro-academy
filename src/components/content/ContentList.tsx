@@ -1,4 +1,3 @@
-
 import React from "react";
 import ContentCard from "./ContentCard";
 import ContentCardSkeleton from "./ContentCardSkeleton";
@@ -38,9 +37,9 @@ const ContentList = <T extends ContentItem>({
   skeletonCount = 4
 }: ContentListProps<T>) => {
   
-  const renderContentCard = (item: ContentItem, contentType: string, key: string) => {
+  const renderContentCard = (item: T, contentType: string, key: string) => {
     if (contentType === "podcast") {
-      const podcast = item as unknown as Podcast;
+      const podcast = item as Podcast;
       return (
         <ContentCard
           key={`${key}-${podcast.id}`}
@@ -49,7 +48,7 @@ const ContentList = <T extends ContentItem>({
           description={podcast.description}
           thumbnail={podcast.thumbnail}
           type={contentType as "podcast"}
-          date={'date' in podcast ? podcast.date : podcast.created_at}
+          date={podcast.date || podcast.created_at}
           author={formatAuthor(podcast.author)}
           duration={podcast.duration}
           className="h-full"
@@ -58,7 +57,7 @@ const ContentList = <T extends ContentItem>({
     }
     
     if (contentType === "video") {
-      const video = item as unknown as Video;
+      const video = item as Video;
       return (
         <ContentCard
           key={`${key}-${video.id}`}
@@ -67,7 +66,7 @@ const ContentList = <T extends ContentItem>({
           description={video.description}
           thumbnail={video.thumbnail}
           type={contentType as "video"}
-          date={'date' in video ? video.date : video.created_at}
+          date={video.date || video.created_at}
           author={formatAuthor(video.author)}
           duration={video.duration}
           className="h-full"
@@ -76,7 +75,7 @@ const ContentList = <T extends ContentItem>({
     }
     
     if (contentType === "webinar") {
-      const webinar = item as unknown as Webinar;
+      const webinar = item as Webinar;
       return (
         <ContentCard
           key={`${key}-${webinar.id}`}
@@ -94,7 +93,7 @@ const ContentList = <T extends ContentItem>({
     }
     
     if (contentType === "livestream") {
-      const livestream = item as unknown as Livestream;
+      const livestream = item as Livestream;
       return (
         <ContentCard
           key={`${key}-${livestream.id}`}
@@ -111,7 +110,7 @@ const ContentList = <T extends ContentItem>({
     }
     
     if (contentType === "file") {
-      const file = item as unknown as FileType;
+      const file = item as FileType;
       return (
         <ContentCard
           key={`${key}-${file.id}`}
@@ -130,16 +129,16 @@ const ContentList = <T extends ContentItem>({
     }
     
     // Default case: article
-    const article = item as unknown as Article;
+    const article = item as Article;
     return (
       <ContentCard
         key={`${key}-${article.id}`}
         id={article.id}
         title={article.title}
-        description={'description' in article ? article.description : article.content?.slice(0, 200)}
+        description={article.description || article.content?.slice(0, 200)}
         thumbnail={article.thumbnail}
         type={contentType as "article"}
-        date={'date' in article ? article.date : article.created_at}
+        date={article.date || article.created_at}
         author={formatAuthor(article.author)}
         className="h-full"
       />

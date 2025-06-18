@@ -20,6 +20,10 @@ export interface User {
   email: string;
   identity_verified?: boolean;
   avatar?: string;
+  // Additional properties for compatibility
+  phone?: string;
+  name?: string;
+  isProfileComplete?: boolean;
 }
 
 export interface AuthTokens {
@@ -38,14 +42,14 @@ export interface Article {
   id: string;
   title: string;
   content: string;
-  description: string; // Added missing property
-  summary?: string; // Added missing property
+  description: string;
+  summary?: string;
   thumbnail?: string;
-  author: string;
-  published: string;
+  author: string | { first_name: string; last_name: string; username?: string; email?: string };
+  published?: string;
   created_at: string;
-  date: string; // Added missing property (alias for created_at)
-  tags: string[];
+  date: string;
+  tags: string[] | { id: string; name: string }[];
   view_count?: number;
   slug?: string;
 }
@@ -57,11 +61,11 @@ export interface Video {
   video_type: string;
   video_embed?: string;
   thumbnail?: string;
-  author: string;
+  author: string | { first_name: string; last_name: string; username?: string; email?: string };
   created_at: string;
-  date: string; // Added missing property
+  date: string;
   duration?: string;
-  tags: string[];
+  tags: string[] | { id: string; name: string }[];
   view_count?: number;
   slug?: string;
 }
@@ -72,15 +76,58 @@ export interface Podcast {
   description: string;
   audio_url: string;
   thumbnail?: string;
-  author: string;
+  author: string | { first_name: string; last_name: string; username?: string; email?: string };
   created_at: string;
-  date: string; // Added missing property
+  date: string;
   duration?: string;
-  tags: string[];
+  tags: string[] | { id: string; name: string }[];
   view_count?: number;
   slug?: string;
   audio_type: string;
   audio_file: string | null;
+  // Additional podcast properties
+  episode_number?: number;
+  season_number?: number;
+  transcript?: string;
+}
+
+// New Livestream type
+export interface Livestream {
+  id: number;
+  title: string;
+  slug: string;
+  description: string;
+  thumbnail: string;
+  stream_url: string | null;
+  start_at: string | null;
+  stream_status: "live" | "scheduled" | "ended";
+  max_viewers: number;
+  current_viewers: number;
+  author: {
+    id: number;
+    username: string | null;
+    email: string;
+    first_name: string;
+    last_name: string;
+  };
+  category: {
+    id: number;
+    name: string;
+    slug: string;
+    description: string;
+    created_at: string;
+  };
+  tags: Array<{
+    id: number;
+    name: string;
+    slug: string;
+  }>;
+  status: string;
+  featured: boolean;
+  created_at: string;
+  updated_at: string;
+  published_at: string | null;
+  view_count: number;
 }
 
 // Comment Types
@@ -133,6 +180,27 @@ export interface BookmarkResponse {
     thumbnail?: string;
   };
   created_at: string;
+}
+
+// Course Type with missing properties
+export interface Course {
+  id: string;
+  title: string;
+  description: string;
+  instructor: string;
+  price: string;
+  created_at: string;
+  updated_at: string;
+  status: string;
+  tags: string[];
+  thumbnail: string;
+  total_duration: number;
+  // Additional course properties
+  discount_percentage?: number;
+  discounted_price?: string;
+  is_enrolled?: boolean;
+  progress_percentage?: number;
+  requires_identity_verification?: boolean;
 }
 
 // Paginated Response Type
@@ -353,7 +421,7 @@ class API {
     return this.makeRequest('GET', `${API_ENDPOINTS.PODCASTS}?search=${encodeURIComponent(query)}`, null, false);
   }
 
-  async searchCourses(query: string): Promise<any[]> {
+  async searchCourses(query: string): Promise<Course[]> {
     return this.makeRequest('GET', `${API_ENDPOINTS.COURSES}?search=${encodeURIComponent(query)}`, null, false);
   }
 
@@ -391,10 +459,10 @@ export const podcastsApi = {
 };
 
 export const livestreamsApi = {
-  getById: async (id: string): Promise<any> => {
+  getById: async (id: string): Promise<Livestream> => {
     return api.makeRequest('GET', API_ENDPOINTS.LIVESTREAM_DETAIL(Number(id)), null, false);
   },
-  getAll: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<any>> => {
+  getAll: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Livestream>> => {
     return api.makeRequest('GET', `${API_ENDPOINTS.LIVESTREAMS}?page=${page}&page_size=${pageSize}`, null, false);
   }
 };
@@ -415,13 +483,13 @@ export const bookmarksApi = {
 };
 
 export const coursesApi = {
-  getById: async (id: string): Promise<any> => {
+  getById: async (id: string): Promise<Course> => {
     return api.makeRequest('GET', API_ENDPOINTS.COURSE_DETAIL(id), null, false);
   },
-  getAll: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<any>> => {
+  getAll: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Course>> => {
     return api.makeRequest('GET', `${API_ENDPOINTS.COURSES}?page=${page}&page_size=${pageSize}`, null, false);
   },
-  getMyCourses: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<any>> => {
+  getMyCourses: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Course>> => {
     return api.makeRequest('GET', `${API_ENDPOINTS.MY_COURSES}?page=${page}&page_size=${pageSize}`);
   }
 };

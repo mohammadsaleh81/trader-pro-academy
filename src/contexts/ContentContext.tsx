@@ -63,6 +63,12 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     livestreams: { currentPage: 1, totalPages: 1, totalCount: 0, hasNext: false, hasPrevious: false }
   });
 
+  // Helper function to transform tags from API response
+  const transformTags = (tags: any[]): string[] => {
+    if (!tags || !Array.isArray(tags)) return [];
+    return tags.map(tag => typeof tag === 'string' ? tag : (tag.name || tag));
+  };
+
   // Helper function to transform API bookmark to our Bookmark type
   const transformBookmark = (apiBookmark: BookmarkResponse): Bookmark => ({
     id: apiBookmark.id.toString(),
@@ -169,7 +175,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         author: podcast.author,
         date: podcast.date,
         duration: podcast.duration,
-        tags: podcast.tags.map(tag => tag.name)
+        tags: transformTags(podcast.tags)
       }));
       setPodcasts(transformedPodcasts);
       setPagination(prev => ({
@@ -312,7 +318,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
           author: podcast.author,
           date: podcast.date,
           duration: podcast.duration,
-          tags: podcast.tags.map(tag => tag.name)
+          tags: transformTags(podcast.tags)
         }));
         setPodcasts(transformedPodcasts);
         setPagination(prev => ({
@@ -507,7 +513,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         author: podcast.author,
         date: podcast.date,
         duration: podcast.duration,
-        tags: podcast.tags.map(tag => tag.name)
+        tags: transformTags(podcast.tags)
       }));
       setPodcasts(prev => [...prev, ...transformedPodcasts]);
       setPagination(prev => ({

@@ -50,10 +50,14 @@ const ContentListWithLinks: React.FC<ContentListProps> = ({ items, type }) => {
               <div className="p-2 text-right rtl-card-content">
                 <h3 className="font-semibold text-xs mb-1 line-clamp-1">{item.title}</h3>
                 <p className="text-gray-500 text-[10px] line-clamp-1 mb-2">
-                  {'description' in item ? item.description : ('content' in item ? item.content?.slice(0, 50) : '')}
+                  {'description' in item && item.description ? item.description : 
+                   ('content' in item && item.content ? item.content.slice(0, 50) : '')}
                 </p>
                 <div className="flex justify-between text-[8px] text-gray-500">
-                  <span>{'date' in item ? item.date : ('created_at' in item ? item.created_at : '')}</span>
+                  <span>
+                    {'date' in item && item.date ? item.date : 
+                     ('created_at' in item && item.created_at ? item.created_at : '')}
+                  </span>
                   <span>{formatAuthor(item.author)}</span>
                 </div>
               </div>
